@@ -1,7 +1,9 @@
 {
-  "name": "electron-app-ui",
-  "version": "0.1.0",
-  "private": true,
+  "name": "electron-starter-app-ui",
+  "version": "1.0.0",
+  "author": "Mathew Parker",
+  "repository": "https://github.com/mbparker/electron-react-dotnet-starter.git",
+  "private": false,
   "main": "app.js",
   "scripts": {
     "buildui": "webpack --mode production",

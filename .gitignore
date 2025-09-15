@@ -419,3 +419,6 @@ FodyWeavers.xsd
 
 # JetBrains cruft
 **/.idea/
+
+# Webpack build output
+dist/
