@@ -1,0 +1,60 @@
+{
+  "appId": "com.tristaradvanced.electron-starter-app.app",
+  "productName": "ElectronStarterApp",
+  "icon": "../resources/icons/icon.png",
+  "copyright": "Copyright© 2025",
+  "buildVersion": "1.0.0",
+  "compression": "maximum",
+  "asar": true,
+  "extraResources": [
+    "preload.js",
+    {
+      "from": "./dist/api",
+      "to": "api",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "files": [
+    "app.js",
+    {
+      "from": "./dist/ui",
+      "to": "./",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "./public",
+      "to": "./",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "linux": {
+    "target": [
+      "appImage"
+    ],
+    "icon": "../resources/icons/",
+    "category": "Utility",
+    "extraResources": [
+    ]
+  },
+  "win": {
+    "target": [
+      "nsis"
+    ],
+    "extraResources": [
+    ]
+  },
+  "mac": {
+    "target": [
+      "dmg"
+    ],
+    "icon": "../resources/icons/icon.icns",
+    "extraResources": [
+    ]
+  }
+}

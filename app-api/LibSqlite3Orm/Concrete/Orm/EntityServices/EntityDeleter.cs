@@ -1,0 +1,60 @@
+using System.Linq.Expressions;
+using System.Runtime.Serialization;
+using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Abstract.Orm.EntityServices;
+using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
+using LibSqlite3Orm.Models.Orm;
+using LibSqlite3Orm.Types.Orm;
+
+namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
+
+public class EntityDeleter : IEntityDeleter
+{
+    private readonly Func<ISqliteConnection> connectionFactory;
+    private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
+    private readonly ISqliteParameterPopulator  parameterPopulator;
+    private readonly ISqliteOrmDatabaseContext context;
+
+    public EntityDeleter(Func<ISqliteConnection> connectionFactory,
+        Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
+        ISqliteParameterPopulator  parameterPopulator, ISqliteOrmDatabaseContext context)
+    {
+        this.connectionFactory = connectionFactory;
+        this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
+        this.parameterPopulator = parameterPopulator;
+        this.context = context;
+    }
+    
+    public int Delete<T>(Expression<Func<T, bool>> predicate)
+    {
+        if (predicate is null) throw new  ArgumentNullException(nameof(predicate));
+        return DeleteInternal(predicate);  
+    }
+
+    public int DeleteAll<T>()
+    {
+        return DeleteInternal<T>(null);
+    }
+    
+    private int DeleteInternal<T>(Expression<Func<T, bool>> predicate)
+    {
+        var synthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Delete, context.Schema);
+        var synthesisResult =
+            synthesizer.Synthesize<T>(new SqliteDmlSqlSynthesisArgs(new SynthesizeDeleteSqlArgs(predicate)));
+        var type = typeof(T);
+        var table = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == type.AssemblyQualifiedName);
+        if (table is not null)
+        {
+            using (var connection = connectionFactory())
+            {
+                connection.Open(context.Filename, true);
+                var cmd = connection.CreateCommand();
+                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters, default);
+                return cmd.ExecuteNonQuery(synthesisResult.SqlText);
+            }
+        }
+
+        throw new InvalidDataContractException($"Type {type.AssemblyQualifiedName} is not mapped in the schema.");    
+    }
+}

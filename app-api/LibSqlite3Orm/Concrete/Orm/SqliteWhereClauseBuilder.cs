@@ -1,0 +1,286 @@
+using System.Collections;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Models.Orm;
+
+namespace LibSqlite3Orm.Concrete.Orm;
+
+public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBuilder
+{
+	private readonly SqliteDbSchema schema;
+	private readonly Dictionary<string, ExtractedParameter> extractedParameters = new(StringComparer.OrdinalIgnoreCase);
+	private StringBuilder sqlBuilder;
+	private SqliteDbSchemaTable table;
+	private string currentMemberDbFieldName;
+	private string currentInStatementValue;
+	private string currentMethodCall;
+
+	public SqliteWhereClauseBuilder(SqliteDbSchema schema)
+	{
+		this.schema = schema;
+	}
+
+	public IReadOnlyDictionary<string, ExtractedParameter> ExtractedParameters => extractedParameters;
+
+	public string Build(Type entityType, Expression expression)
+	{
+		table = schema.Tables.Values.Single(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
+		Console.WriteLine($"Parse where predicate for table ({table.Name}): {expression}");
+		extractedParameters.Clear();
+		sqlBuilder = new StringBuilder();
+		Visit(expression);
+		return sqlBuilder.ToString();
+	}
+
+	protected override Expression VisitUnary(UnaryExpression u)
+	{
+		switch (u.NodeType)
+		{
+			case ExpressionType.Not:
+				sqlBuilder.Append(" NOT ");
+				Visit(u.Operand);
+				break;
+			case ExpressionType.Convert:
+				Visit(u.Operand);
+				break;
+			default:
+				throw new NotSupportedException($"The unary operator '{u.NodeType}' is not supported yet");
+		}
+		
+		return u;
+	}
+
+	protected override Expression VisitBinary(BinaryExpression b)
+	{
+		sqlBuilder.Append("(");
+		Visit(b.Left);
+
+		switch (b.NodeType)
+		{
+			case ExpressionType.And:
+				sqlBuilder.Append(" AND ");
+				break;
+			case ExpressionType.AndAlso:
+				sqlBuilder.Append(" AND ");
+				break;
+			case ExpressionType.Or:
+				sqlBuilder.Append(" OR ");
+				break;
+			case ExpressionType.OrElse:
+				sqlBuilder.Append(" OR ");
+				break;
+			case ExpressionType.Equal:
+				if (IsNullConstant(b.Right))
+				{
+					sqlBuilder.Append(" IS ");
+				}
+				else
+				{
+					sqlBuilder.Append(" = ");
+				}
+				break;
+			case ExpressionType.NotEqual:
+				if (IsNullConstant(b.Right))
+				{
+					sqlBuilder.Append(" IS NOT ");
+				}
+				else
+				{
+					sqlBuilder.Append(" <> ");
+				}
+				break;
+			case ExpressionType.LessThan:
+				sqlBuilder.Append(" < ");
+				break;
+			case ExpressionType.LessThanOrEqual:
+				sqlBuilder.Append(" <= ");
+				break;
+			case ExpressionType.GreaterThan:
+				sqlBuilder.Append(" > ");
+				break;
+			case ExpressionType.GreaterThanOrEqual:
+				sqlBuilder.Append(" >= ");
+				break;
+			default:
+				throw new NotSupportedException($"The binary operator '{b.NodeType}' is not supported yet");
+		}
+
+		Visit(b.Right);
+		sqlBuilder.Append(")");
+		
+		return b;
+	}
+
+	protected override Expression VisitConstant(ConstantExpression c)
+	{
+		IQueryable q = c.Value as IQueryable;
+
+		if (q == null && c.Value == null)
+		{
+			sqlBuilder.Append("NULL");
+		}
+		else if (q == null)
+		{
+			if (BuildingLikeStatement())
+			{
+				sqlBuilder.Append(" LIKE ");
+				if (currentMethodCall.EndsWith(nameof(string.Contains)))
+					sqlBuilder.Append($"'%{c.Value}%'");
+				else if (currentMethodCall.EndsWith(nameof(string.StartsWith)))
+					sqlBuilder.Append($"'{c.Value}%'");
+				else if (currentMethodCall.EndsWith(nameof(string.EndsWith)))
+					sqlBuilder.Append($"'%{c.Value}'");
+				currentMemberDbFieldName = null;
+			}
+			else if (NeedToParameterizeValue())
+			{
+				// Were in the middle of parameterizing - get the name, write out the param reference, and save the value.
+				var paramName = StoreParameterValueAndReturnName(currentMemberDbFieldName, c.Value);
+				currentMemberDbFieldName = null;
+				sqlBuilder.Append($":{paramName}");
+			}
+			else
+			{
+				switch (Type.GetTypeCode(c.Value.GetType()))
+				{
+					case TypeCode.Boolean:
+						sqlBuilder.Append(((bool)c.Value) ? 1 : 0);
+						break;
+
+					case TypeCode.String:
+						sqlBuilder.Append("'");
+						sqlBuilder.Append(c.Value);
+						sqlBuilder.Append("'");
+						break;
+
+					case TypeCode.DateTime:
+						sqlBuilder.Append("'");
+						sqlBuilder.Append(c.Value);
+						sqlBuilder.Append("'");
+						break;
+
+					case TypeCode.Object:
+						if (c.Value.GetType().IsArray)
+						{
+							// The only reason we should get an array is for making an IN statement.
+							// However, we don't know what the field is yet. So just build and store off the value.
+							var isStrArray = c.Value.GetType().GetElementType() == typeof(string);
+							var vals = new List<string>();
+							foreach (var val in (IEnumerable)c.Value)
+							{
+								if (isStrArray)
+									vals.Add($"'{val}'");
+								else
+									vals.Add($"{val}");
+							}
+
+							var sb = new StringBuilder();
+							sb.Append("IN (");
+							sb.Append(string.Join(',', vals));
+							sb.Append(')');
+							currentInStatementValue = sb.ToString();
+							break;
+						}
+						
+						throw new NotSupportedException($"The constant for '{c.Value}' is not supported yet");
+
+					default:
+						sqlBuilder.Append(c.Value);
+						break;
+				}
+			}
+		}
+
+		return c;
+	}
+
+	protected override Expression VisitMember(MemberExpression m)
+	{
+		if (m.Expression is ParameterExpression)
+		{
+			var memberDbField = GetDbFieldNameForMemberName(m.Member.Name);
+			if (BuildingInStatement())
+			{
+				sqlBuilder.Append($"{memberDbField} {currentInStatementValue}");
+				currentInStatementValue = null;
+			}
+			else
+			{
+				// Write out the field name. A visit elsewhere will write out the operator and value operand.
+				sqlBuilder.Append(memberDbField);
+				currentMemberDbFieldName = memberDbField;
+			}
+
+			return m;
+		} 
+		
+		if (m.Expression is ConstantExpression ce)
+		{
+			// Get the value - reading it from the referenced property/field.
+			var value = m.Member.GetValue(ce.Value);
+			Visit(Expression.Constant(value));
+			return m;
+		}
+
+		throw new NotSupportedException($"The member '{m.Member.Name}' is not supported yet");
+	}
+
+	protected override Expression VisitMethodCall(MethodCallExpression mc)
+	{
+		currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
+		Console.WriteLine($"Visiting Method Call: {currentMethodCall}");
+		return base.VisitMethodCall(mc);
+	}
+
+	private bool NeedToParameterizeValue()
+	{
+		return !string.IsNullOrWhiteSpace(currentMemberDbFieldName);
+	}
+
+	private bool BuildingInStatement()
+	{
+		return !string.IsNullOrWhiteSpace(currentInStatementValue);
+	}
+
+	private bool BuildingLikeStatement()
+	{
+		var strName = typeof(string).AssemblyQualifiedName;
+		return currentMethodCall == $"{strName}.{nameof(string.Contains)}" ||
+		       currentMethodCall == $"{strName}.{nameof(string.StartsWith)}" ||
+		       currentMethodCall == $"{strName}.{nameof(string.EndsWith)}";
+	}
+
+	private string GetDbFieldNameForMemberName(string memberName)
+	{
+		return table.Columns.Values.SingleOrDefault(x => x.ModelFieldName == memberName)?.Name ??
+		       throw new InvalidOperationException($"Member declaring type {memberName} does not exist in the schema.");
+	}
+
+	private bool IsNullConstant(Expression exp)
+	{
+		return exp is ConstantExpression { Value: null };
+	}
+
+	private string StoreParameterValueAndReturnName(string dbFieldName, object value)
+	{
+		var name = dbFieldName;
+		var uniqueness = 1;
+		while (!extractedParameters.TryAdd(name, new ExtractedParameter(name, value, dbFieldName)))
+		{
+			// Reuse the original parameter if the values are exactly the same.
+			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
+			if (extractedParameters[name].Value.Equals(value))
+			{
+				Console.WriteLine($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+				return name;
+			}
+
+			name = $"{dbFieldName}{uniqueness++}";
+		}
+
+		Console.WriteLine($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+		return name;
+	}
+}

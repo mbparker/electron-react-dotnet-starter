@@ -1,0 +1,34 @@
+using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Types.Orm;
+
+namespace ElectronAppApiTestHarness;
+
+public class DemoContext : SqliteOrmDatabaseContext
+{
+    public DemoContext(Func<SqliteDbSchemaBuilder> schemaBuilderFactory)
+        : base(schemaBuilderFactory)
+    {
+    }
+    
+    protected override void BuildSchema(SqliteDbSchemaBuilder builder)
+    {
+        var demoEntity = builder.HasTable<DemoEntity>();
+        demoEntity.WithPrimaryKey(x => x.Id).IsAutoIncrement().IsNotNull();
+        demoEntity.WithColumn(x => x.Created).IsNotNull();
+        demoEntity.WithColumn(x => x.Description).IsNotNull().UsingCollation();
+        demoEntity.WithColumn(x => x.Enabled).IsNotNull();
+
+        var demoEntityDetail = builder.HasTable<DemoEntityDetailItem>();
+        demoEntityDetail.WithPrimaryKey(x => x.Id).IsAutoIncrement().IsNotNull();
+        demoEntityDetail.WithColumn(x => x.DemoId).IsNotNull();
+        demoEntityDetail.WithColumn(x => x.NoteText).IsNotNull().UsingCollation();
+        demoEntityDetail
+            .WithForeignKey(x => x.DemoId)
+            .References<DemoEntity>(x => x.Id)
+            .OnDelete(SqliteForeignKeyAction.Cascade)
+            .ReferencedBy<DemoEntity>(x => x.Items);
+        
+        var demoEntityIndex = builder.HasIndex<DemoEntity>();
+        demoEntityIndex.WithColumn(x => x.Description).UsingCollation().SortedAscending();
+    }
+}
