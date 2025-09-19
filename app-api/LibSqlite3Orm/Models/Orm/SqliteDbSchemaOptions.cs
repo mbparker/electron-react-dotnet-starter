@@ -78,7 +78,8 @@ public class SqliteTableForeignKeyOptions
     public MemberInfo[] TableProperties { get; set; }
     public Type ForeignTableType { get; set; }
     public MemberInfo[] ForeignTableProperties { get; set; }
-    public MemberInfo ForeignTableListProperty { get; set; }
+    public MemberInfo ForeignTableDetailListProperty { get; set; }
+    public MemberInfo ForeignTableDetailProperty { get; set; }
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
 }

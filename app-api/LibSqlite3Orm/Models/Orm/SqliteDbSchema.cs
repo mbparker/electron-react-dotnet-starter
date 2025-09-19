@@ -18,12 +18,20 @@ public class SqliteDbSchemaTable
     public SqliteDbSchemaTablePrimaryKeyColumn PrimaryKey { get; set; }
     public List<SqliteDbSchemaTableForeignKey> ForeignKeys { get; set; } = [];
     public string[] CompositePrimaryKeyFields { get; set; } = [];
-    public List<SqliteOneToManyRelationship> DetailProperties { get; set; } = [];
+    public List<SqliteOneToManyRelationship> DetailListProperties { get; set; } = [];
+    public List<SqliteOneToOneRelationship> DetailProperties { get; set; } = [];
 }
 
 public class SqliteOneToManyRelationship
 {
     public string DetailsListPropertyName { get; set; }
+    public string DetailTableName { get; set; }
+    public string DetailTableTypeName { get; set; }
+}
+
+public class SqliteOneToOneRelationship
+{
+    public string DetailsPropertyName { get; set; }
     public string DetailTableName { get; set; }
     public string DetailTableTypeName { get; set; }
 }
@@ -58,7 +66,6 @@ public class SqliteDbSchemaTableForeignKey
     public string ForeignTableName { get; set; }
     public string ForeignTableModelTypeName { get; set; }
     public string[] ForeignTableFields { get; set; }
-    public string ForeignTableDetailsProperty { get; set; }
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
 }

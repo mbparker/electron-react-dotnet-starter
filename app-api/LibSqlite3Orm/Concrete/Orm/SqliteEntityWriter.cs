@@ -27,7 +27,7 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             throw new InvalidDataContractException($"Type {type.AssemblyQualifiedName} is not mapped in the schema.");
     }
 
-    public T Deserialize<T>(SqliteDbSchemaTable table, ISqliteDataRow row, Func<Type, T, object> getDetailsFunc) where T : new()
+    public T Deserialize<T>(SqliteDbSchemaTable table, ISqliteDataRow row, Func<Type, T, object> getDetailsListFunc, Func<Type, T, object> getDetailsFunc) where T : new()
     {
         var entity = new T();
         var type = entity.GetType();
@@ -43,18 +43,32 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             }
         }
 
-        if (getDetailsFunc is not null)
+        if (getDetailsListFunc is not null)
         {
-            foreach (var detailsProp in table.DetailProperties)
+            foreach (var detailsProp in table.DetailListProperties)
             {
                 var member = type.GetMember(detailsProp.DetailsListPropertyName).SingleOrDefault();
                 if (member is not null)
                 {
                     var tableType = Type.GetType(detailsProp.DetailTableTypeName);
-                    var queryable = getDetailsFunc(tableType, entity);
+                    var queryable = getDetailsListFunc(tableType, entity);
                     member.SetValue(entity, queryable);
                 }
-            }
+            }            
+        }
+
+        if (getDetailsFunc is not null)
+        {
+            foreach (var detailsProp in table.DetailProperties)
+            {
+                var member = type.GetMember(detailsProp.DetailsPropertyName).SingleOrDefault();
+                if (member is not null)
+                {
+                    var tableType = Type.GetType(detailsProp.DetailTableTypeName);
+                    var detailEntity = getDetailsFunc(tableType, entity);
+                    member.SetValue(entity, detailEntity);
+                }
+            }             
         }
 
         return entity;

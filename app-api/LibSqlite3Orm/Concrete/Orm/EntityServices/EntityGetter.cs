@@ -47,31 +47,42 @@ public class EntityGetter : IEntityGetter
                 parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters, default);
                 return cmd.ExecuteQuery(synthesisResult.SqlText);
             }
+            
+            object GetDetailsListPropertyValue(Type detailTableType, T recordEntity)
+            {
+                if (includeDetails)
+                {
+                    MethodInfo getDetailsListMethodGeneric = null;
+                    var getDetailsMethod = GetType().GetMethod(nameof(GetDetailsList),
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (getDetailsMethod is not null)
+                        getDetailsListMethodGeneric = getDetailsMethod.MakeGenericMethod(typeof(T), detailTableType);
+                    if (getDetailsListMethodGeneric is not null)
+                        return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
+                }
 
-            MethodInfo getDetailsMethodGeneric = null;
+                return null;
+            }
             
             object GetDetailsPropertyValue(Type detailTableType, T recordEntity)
             {
                 if (includeDetails)
                 {
-                    if (getDetailsMethodGeneric is null)
-                    {
-                        var getDetailsMethod = GetType().GetMethod(nameof(GetDetails),
-                            BindingFlags.NonPublic | BindingFlags.Instance);
-                        if (getDetailsMethod is not null)
-                            getDetailsMethodGeneric = getDetailsMethod.MakeGenericMethod(typeof(T), detailTableType);
-                    }
-
-                    if (getDetailsMethodGeneric is not null)
-                        return getDetailsMethodGeneric.Invoke(this, [recordEntity]);
+                    MethodInfo getDetailsListMethodGeneric = null;
+                    var getDetailsMethod = GetType().GetMethod(nameof(GetDetails),
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (getDetailsMethod is not null)
+                        getDetailsListMethodGeneric = getDetailsMethod.MakeGenericMethod(typeof(T), detailTableType);
+                    if (getDetailsListMethodGeneric is not null)
+                        return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
                 }
 
                 return null;
-            }
+            }            
 
             T DeserializeRow(ISqliteDataRow row)
             {
-                return entityWriter.Deserialize<T>(table, row, GetDetailsPropertyValue);
+                return entityWriter.Deserialize<T>(table, row, GetDetailsListPropertyValue, GetDetailsPropertyValue);
             }
             
             return new SqliteOrderedQueryable<T>(ExecuteQuery, DeserializeRow);
@@ -80,7 +91,12 @@ public class EntityGetter : IEntityGetter
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
     }
 
-    private ISqliteQueryable<TDetails> GetDetails<TTable, TDetails>(TTable record) where TDetails : new()
+    private TDetails GetDetails<TTable, TDetails>(TTable record) where TDetails : new()
+    {
+        return GetDetailsList<TTable, TDetails>(record).AsEnumerable().SingleOrDefault();
+    }
+
+    private ISqliteQueryable<TDetails> GetDetailsList<TTable, TDetails>(TTable record) where TDetails : new()
     {
         // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
         var queryable = Get<TDetails>(includeDetails: true);

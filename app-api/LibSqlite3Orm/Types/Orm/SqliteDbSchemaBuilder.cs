@@ -125,15 +125,25 @@ public class SqliteDbSchemaBuilder
                         fk.ForeignTableName = foreignTable.Name;
                         fk.ForeignTableModelTypeName = foreignTable.ModelTypeName;
                         fk.ForeignTableFields = fko.ForeignTableProperties.Select(x => fko.TableOptions.Columns[x.Name].Name).ToArray();
-                        fk.ForeignTableDetailsProperty = fko.ForeignTableListProperty.Name;
                         fk.UpdateAction = fko.UpdateAction;
                         fk.DeleteAction = fko.DeleteAction;
                         thisTable.ForeignKeys.Add(fk);
-                        foreignTable.DetailProperties.Add(new SqliteOneToManyRelationship
+                        if (fko.ForeignTableDetailListProperty is not null)
                         {
-                            DetailTableName = thisTable.Name, DetailTableTypeName = thisTable.ModelTypeName,
-                            DetailsListPropertyName = fk.ForeignTableDetailsProperty
-                        });
+                            foreignTable.DetailListProperties.Add(new SqliteOneToManyRelationship
+                            {
+                                DetailTableName = thisTable.Name, DetailTableTypeName = thisTable.ModelTypeName,
+                                DetailsListPropertyName = fko.ForeignTableDetailListProperty.Name
+                            });
+                        }
+                        if (fko.ForeignTableDetailProperty is not null)
+                        {
+                            thisTable.DetailProperties.Add(new SqliteOneToOneRelationship
+                            {
+                                DetailTableName = foreignTable.Name, DetailTableTypeName = foreignTable.ModelTypeName,
+                                DetailsPropertyName = fko.ForeignTableDetailProperty.Name
+                            });
+                        }
                     }
                 }
             }
@@ -527,7 +537,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
             var foreignTableTypeName = typeof(TForeignTable).AssemblyQualifiedName;
             if (!string.IsNullOrWhiteSpace(foreignTableTypeName))
             {
-                options.ForeignTableListProperty = exp.Member;
+                options.ForeignTableDetailListProperty = exp.Member;
                 options.TableOptions.SchemaOptions.Tables[foreignTableTypeName].DetailProperties
                     .Add(exp.Member.Name, options);
             }
@@ -537,6 +547,24 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
 
         throw new InvalidExpressionException();
     }
+    
+    public SqliteForeignKeyOptionsBuilder<TTable> ReferencedBy<TForeignTable>(Expression<Func<TTable, TForeignTable>> detailField)
+    {
+        if (detailField.Body is MemberExpression exp)
+        {
+            var foreignTableTypeName = typeof(TForeignTable).AssemblyQualifiedName;
+            if (!string.IsNullOrWhiteSpace(foreignTableTypeName))
+            {
+                options.ForeignTableDetailProperty = exp.Member;
+                options.TableOptions.SchemaOptions.Tables[foreignTableTypeName].DetailProperties
+                    .Add(options.TableOptions.TableType.AssemblyQualifiedName + exp.Member.Name, options);
+            }
+
+            return this;
+        }
+
+        throw new InvalidExpressionException();
+    }      
     
     public SqliteForeignKeyOptionsBuilder<TTable> OnUpdate(SqliteForeignKeyAction action)
     {
