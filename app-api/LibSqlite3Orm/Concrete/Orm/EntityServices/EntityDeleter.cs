@@ -50,7 +50,7 @@ public class EntityDeleter : IEntityDeleter
             {
                 connection.Open(context.Filename, true);
                 var cmd = connection.CreateCommand();
-                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters, default);
+                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
                 return cmd.ExecuteNonQuery(synthesisResult.SqlText);
             }
         }

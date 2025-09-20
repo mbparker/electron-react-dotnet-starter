@@ -28,6 +28,8 @@ public class SqliteDataReader : ISqliteDataReader
     {
         Dispose(false);
     }
+
+    public event EventHandler OnDispose; 
     
     public ISqliteConnection Connection => connection;
 
@@ -63,6 +65,7 @@ public class SqliteDataReader : ISqliteDataReader
             command.Parameters.Clear();
             command = null;
             connection = null;
+            OnDispose?.Invoke(this, EventArgs.Empty);
         }
 
         disposed = true;

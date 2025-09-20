@@ -44,7 +44,7 @@ public class EntityGetter : IEntityGetter
                 var connection = connectionFactory();
                 connection.Open(context.Filename, true);
                 var cmd = connection.CreateCommand();
-                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters, default);
+                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
                 return cmd.ExecuteQuery(synthesisResult.SqlText);
             }
             

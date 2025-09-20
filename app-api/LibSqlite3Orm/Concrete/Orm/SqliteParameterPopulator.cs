@@ -36,6 +36,15 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
         }
     }
 
+    public void Populate<T>(DmlSqlSynthesisResult synthesisResult,
+        ISqliteParameterCollection parameterCollection)
+    {
+        if (synthesisResult.SynthesisKind is SqliteDmlSqlSynthesisKind.Insert or SqliteDmlSqlSynthesisKind.Update)
+            throw new InvalidOperationException(
+                $"Insert and Delete operations must use the overload that accepts the entity as a parameter.");
+        Populate<T>(synthesisResult, parameterCollection, default);
+    }
+
     private void PopulateForSelectOrDelete(DmlSqlSynthesisResult synthesisResult,
         ISqliteParameterCollection parameterCollection)
     {

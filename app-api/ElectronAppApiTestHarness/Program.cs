@@ -40,6 +40,14 @@ using (var container = ContainerRegistration.RegisterDependencies())
         Console.WriteLine($"{item.GetType().Name.ToUpper()}: {item.Id} - {item.DemoEntity.Id} - {item.DemoEntity.Description}");
     }
     
+    using (var reader = orm.ExecuteQuery("SELECT Id, NoteText FROM DemoEntityDetailItem WHERE DemoId = :DemoId", parms => parms.Add("DemoId", 1)))
+    {
+        foreach (var row in reader)
+        {
+            Console.WriteLine($"{row["Id"].ValueAs<string>()} - {row["NoteText"].ValueAs<string>()}");
+        }
+    }  
+    
     entity1.Description += "UPDATED";
     entity1.Enabled = !entity1.Enabled;
     entity2.Description += "UPDATED";

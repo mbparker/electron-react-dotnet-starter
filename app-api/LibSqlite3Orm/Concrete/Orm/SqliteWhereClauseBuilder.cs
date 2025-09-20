@@ -223,7 +223,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			Visit(Expression.Constant(value));
 			return m;
 		}
-
+		
 		if (m.Expression is MemberExpression me)
 		{
 			if (me.Expression is ConstantExpression ce2)
@@ -265,7 +265,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private string GetDbFieldNameForMemberName(string memberName)
 	{
 		return table.Columns.Values.SingleOrDefault(x => x.ModelFieldName == memberName)?.Name ??
-		       throw new InvalidOperationException($"Member declaring type {memberName} does not exist in the schema.");
+		       throw new InvalidOperationException(
+			       $"Declaring type of member {memberName} does not exist in the schema.");
 	}
 
 	private bool IsNullConstant(Expression exp)

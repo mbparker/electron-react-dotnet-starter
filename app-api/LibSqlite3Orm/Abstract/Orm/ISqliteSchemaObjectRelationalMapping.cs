@@ -7,6 +7,9 @@ public interface ISqliteSchemaObjectRelationalMapping<TContext> where TContext :
 {
     TContext Context { get; }
 
+    int ExecuteNonQuery(string sql, Action<ISqliteParameterCollectionAddTo> populateParamsAction = null);
+    ISqliteDataReader ExecuteQuery(string sql, Action<ISqliteParameterCollectionAddTo> populateParamsAction = null);
+    
     bool Insert<T>(T entity);
     int InsertMany<T>(IEnumerable<T> entities);
     bool Update<T>(T entity);

@@ -12,12 +12,13 @@ public class SqliteObjectRelationalMapping<TContext> : SqliteSchemaObjectRelatio
     private readonly ISqliteFileOperations fileOperations;
     private readonly ISqliteDbFactory dbFactory;
 
-    public SqliteObjectRelationalMapping(Func<TContext> contextFactory,
+    public SqliteObjectRelationalMapping(Func<ISqliteConnection> connectionFactory, 
+        Func<TContext> contextFactory,
         Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory,
         ISqliteDbSchemaMigrator<TContext> migrator,
         ISqliteFileOperations fileOperations,
         ISqliteDbFactory dbFactory)
-        : base(contextFactory, entityServicesFactory)
+        : base(connectionFactory, contextFactory, entityServicesFactory)
     {
         this.migrator = migrator;
         this.fileOperations = fileOperations;
