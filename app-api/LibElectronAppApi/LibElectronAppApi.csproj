@@ -11,8 +11,7 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="8.2.1" />
-      <PackageReference Include="CsvHelper" Version="33.0.1" />
-      <PackageReference Include="Magick.NET-Q8-x64" Version="14.8.1" />
+      <PackageReference Include="Magick.NET-Q8-x64" Version="14.8.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
     </ItemGroup>

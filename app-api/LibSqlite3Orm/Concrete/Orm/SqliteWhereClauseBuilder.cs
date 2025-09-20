@@ -224,6 +224,16 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			return m;
 		}
 
+		if (m.Expression is MemberExpression me)
+		{
+			if (me.Expression is ConstantExpression ce2)
+			{
+				var value = m.Member.GetValue(me.Member.GetValue(ce2.Value));
+				Visit(Expression.Constant(value));
+				return m;
+			}
+		}
+
 		throw new NotSupportedException($"The member '{m.Member.Name}' is not supported yet");
 	}
 

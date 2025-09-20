@@ -58,6 +58,7 @@ public class SqliteDbSchemaTablePrimaryKeyColumn
     public bool Ascending { get; set; }
     public SqliteLiteConflictAction? PrimaryKeyConflictAction { get; set; }
     public bool AutoIncrement { get; set; }
+    public bool AutoGuid { get; set; }
 }
 
 public class SqliteDbSchemaTableForeignKey

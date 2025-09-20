@@ -9,6 +9,13 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteParameterPopulator : ISqliteParameterPopulator
 {
+    private readonly ISqliteUniqueIdGenerator uniqueIdGenerator;
+    
+    public SqliteParameterPopulator(ISqliteUniqueIdGenerator  uniqueIdGenerator)
+    {
+        this.uniqueIdGenerator = uniqueIdGenerator;    
+    }
+    
     public void Populate<T>(DmlSqlSynthesisResult synthesisResult,
         ISqliteParameterCollection parameterCollection, T entity)
     {
@@ -51,7 +58,22 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
         var type = typeof(T);
         string skipColName = null;
         if (synthesisResult.SynthesisKind == SqliteDmlSqlSynthesisKind.Insert)
-            skipColName = synthesisResult.Table.PrimaryKey?.AutoIncrement ?? false ? synthesisResult.Table.PrimaryKey.FieldName : null;
+        {
+            if (synthesisResult.Table.PrimaryKey?.AutoGuid ?? false)
+            {
+                var member = type
+                    .GetMember(synthesisResult.Table.Columns[synthesisResult.Table.PrimaryKey.FieldName].ModelFieldName)
+                    .SingleOrDefault();
+                member?.SetValue(entity, uniqueIdGenerator.NewUniqueId());
+            }
+            else
+            {
+                skipColName = synthesisResult.Table.PrimaryKey?.AutoIncrement ?? false
+                    ? synthesisResult.Table.PrimaryKey.FieldName
+                    : null;
+            }
+        }
+
         var cols = synthesisResult.Table.Columns.Values.Where(x => !string.Equals(x.Name, skipColName)).OrderBy(x => x.Name).ToArray();
         foreach (var col in cols)
         {

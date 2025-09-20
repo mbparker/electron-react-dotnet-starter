@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using LibSqlite3Orm.Abstract.Orm;
 
 namespace ElectronAppApiTestHarness;
@@ -13,7 +14,9 @@ public class DemoEntity
 
 public class DemoEntityDetailItem
 {
-    public long Id { get; set; }
+    public string Id { get; set; }
     public long DemoId { get; set; }
+    [NotMapped]
+    public DemoEntity DemoEntity { get; set; }
     public string NoteText { get; set; }
 }

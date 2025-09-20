@@ -35,6 +35,11 @@ using (var container = ContainerRegistration.RegisterDependencies())
     var detail1_2 = new DemoEntityDetailItem { DemoId = entity1.Id, NoteText = "Detail note 2 for 1" };
     orm.InsertMany([detail1_1, detail1_2]);
     
+    foreach (var item in orm.Get<DemoEntityDetailItem>(true).Where(x => x.DemoId == entity1.Id).AsEnumerable())
+    {
+        Console.WriteLine($"{item.GetType().Name.ToUpper()}: {item.Id} - {item.DemoEntity.Id} - {item.DemoEntity.Description}");
+    }
+    
     entity1.Description += "UPDATED";
     entity1.Enabled = !entity1.Enabled;
     entity2.Description += "UPDATED";
@@ -58,7 +63,9 @@ using (var container = ContainerRegistration.RegisterDependencies())
 
     foreach (var entity in orm.Get<DemoEntity>(includeDetails: true).AsEnumerable())
     {
-        Console.WriteLine($"{entity.Id} - {entity.Created} - {entity.Description} - {entity.Items?.AsEnumerable().Count() ?? 0}");
+        var itemsArray = entity.Items?.AsEnumerable().ToArray() ?? [];
+        Console.WriteLine($"{entity.Id} - {entity.Created} - {entity.Description} - {itemsArray.Length}");
+        Console.WriteLine($"{itemsArray[0].DemoEntity.Description}");
     }
 
     var val1 = 0;

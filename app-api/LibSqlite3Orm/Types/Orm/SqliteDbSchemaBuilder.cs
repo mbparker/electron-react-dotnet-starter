@@ -96,6 +96,7 @@ public class SqliteDbSchemaBuilder
                     pk.FieldName = column.Name;
                     pk.Ascending = table.PrimaryKeyColumnOptions.Ascending;
                     pk.AutoIncrement = table.PrimaryKeyColumnOptions.AutoIncrement;
+                    pk.AutoGuid = table.PrimaryKeyColumnOptions.AutoGuid;
                     pk.PrimaryKeyConflictAction = table.PrimaryKeyColumnOptions.PrimaryKeyConflictAction;
                     schemaTable.PrimaryKey = pk;
                 }
@@ -499,9 +500,21 @@ public class SqlitePrimaryKeyOptionsBuilder : SqliteColumnOptionsBuilder
     
     public SqlitePrimaryKeyOptionsBuilder IsAutoIncrement(bool enabled = true)
     {
+        if (enabled && options.AutoGuid)
+            throw new InvalidOperationException(
+                $"Cannot enable {nameof(options.AutoIncrement)} because {nameof(options.AutoGuid)} is already enabled. To enable, you must disable {nameof(options.AutoGuid)} first.");
         options.AutoIncrement = enabled;
         return this;
-    }    
+    }
+    
+    public SqlitePrimaryKeyOptionsBuilder IsAutoGuid(bool enabled = true)
+    {
+        if (enabled && options.AutoIncrement)
+            throw new InvalidOperationException(
+                $"Cannot enable {nameof(options.AutoGuid)} because {nameof(options.AutoIncrement)} is already enabled. To enable, you must disable {nameof(options.AutoIncrement)} first.");
+        options.AutoGuid = enabled;
+        return this;
+    }        
 }
 
 public class SqliteForeignKeyOptionsBuilder<TTable>
@@ -530,7 +543,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
         return this;
     }
     
-    public SqliteForeignKeyOptionsBuilder<TTable> ReferencedBy<TForeignTable>(Expression<Func<TForeignTable, ISqliteQueryable<TTable>>> listField)
+    public SqliteForeignKeyOptionsBuilder<TTable> HasForeignNavigationCollectionProperty<TForeignTable>(Expression<Func<TForeignTable, ISqliteQueryable<TTable>>> listField)
     {
         if (listField.Body is MemberExpression exp)
         {
@@ -539,7 +552,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
             {
                 options.ForeignTableDetailListProperty = exp.Member;
                 options.TableOptions.SchemaOptions.Tables[foreignTableTypeName].DetailProperties
-                    .Add(exp.Member.Name, options);
+                    .Add($"{options.TableOptions.TableType.AssemblyQualifiedName}-{exp.Member.Name}", options);
             }
 
             return this;
@@ -548,7 +561,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
         throw new InvalidExpressionException();
     }
     
-    public SqliteForeignKeyOptionsBuilder<TTable> ReferencedBy<TForeignTable>(Expression<Func<TTable, TForeignTable>> detailField)
+    public SqliteForeignKeyOptionsBuilder<TTable> HasNavigationProperty<TForeignTable>(Expression<Func<TTable, TForeignTable>> detailField)
     {
         if (detailField.Body is MemberExpression exp)
         {
@@ -557,14 +570,14 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
             {
                 options.ForeignTableDetailProperty = exp.Member;
                 options.TableOptions.SchemaOptions.Tables[foreignTableTypeName].DetailProperties
-                    .Add(options.TableOptions.TableType.AssemblyQualifiedName + exp.Member.Name, options);
+                    .Add($"{options.TableOptions.TableType.AssemblyQualifiedName}-{exp.Member.Name}", options);
             }
 
             return this;
         }
 
         throw new InvalidExpressionException();
-    }      
+    }
     
     public SqliteForeignKeyOptionsBuilder<TTable> OnUpdate(SqliteForeignKeyAction action)
     {
