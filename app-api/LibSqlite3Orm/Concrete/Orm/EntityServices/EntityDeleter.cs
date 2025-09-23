@@ -29,15 +29,34 @@ public class EntityDeleter : IEntityDeleter
     public int Delete<T>(Expression<Func<T, bool>> predicate)
     {
         if (predicate is null) throw new  ArgumentNullException(nameof(predicate));
-        return DeleteInternal(predicate);  
+        using (var connection = connectionFactory())
+        {
+            connection.Open(context.Filename, true);
+            return DeleteInternal(connection, predicate);
+        }
+    }
+    
+    public int Delete<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
+    {
+        if (predicate is null) throw new  ArgumentNullException(nameof(predicate));
+        return DeleteInternal(connection, predicate);  
     }
 
     public int DeleteAll<T>()
     {
-        return DeleteInternal<T>(null);
+        using (var connection = connectionFactory())
+        {
+            connection.Open(context.Filename, true);
+            return DeleteInternal<T>(connection, null);
+        }
     }
     
-    private int DeleteInternal<T>(Expression<Func<T, bool>> predicate)
+    public int DeleteAll<T>(ISqliteConnection connection)
+    {
+        return DeleteInternal<T>(connection, null);
+    }
+    
+    private int DeleteInternal<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
     {
         var synthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Delete, context.Schema);
         var synthesisResult =
@@ -46,10 +65,8 @@ public class EntityDeleter : IEntityDeleter
         var table = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == type.AssemblyQualifiedName);
         if (table is not null)
         {
-            using (var connection = connectionFactory())
+            using (var cmd = connection.CreateCommand())
             {
-                connection.Open(context.Filename, true);
-                var cmd = connection.CreateCommand();
                 parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
                 return cmd.ExecuteNonQuery(synthesisResult.SqlText);
             }

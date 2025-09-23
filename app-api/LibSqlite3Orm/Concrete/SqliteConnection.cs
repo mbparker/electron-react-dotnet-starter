@@ -135,8 +135,8 @@ public class SqliteConnection : ISqliteConnection
     private void TransactionEnded(object sender, EventArgs e)
     {
         var transaction = (ISqliteTransaction)sender;
-        transaction.Committed += TransactionEnded;
-        transaction.RolledBack += TransactionEnded;
+        transaction.Committed -= TransactionEnded;
+        transaction.RolledBack -= TransactionEnded;
         transactionStack.Remove(transaction);
     }
 }

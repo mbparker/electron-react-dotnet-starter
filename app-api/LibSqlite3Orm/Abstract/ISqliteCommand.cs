@@ -1,6 +1,6 @@
 namespace LibSqlite3Orm.Abstract;
 
-public interface ISqliteCommand
+public interface ISqliteCommand : IDisposable
 {
     ISqliteParameterCollection Parameters { get; }
     

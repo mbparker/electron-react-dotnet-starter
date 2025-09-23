@@ -21,7 +21,7 @@ public class SqliteUpdateSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             var keyFieldNames = table.CompositePrimaryKeyFields ?? [];
             if (!keyFieldNames.Any())
                 keyFieldNames = [table.PrimaryKey.FieldName];
-            var cols = table.Columns.Values.Where(x => !keyFieldNames.Contains(x.Name)).OrderBy(x => x.Name).ToArray();
+            var cols = table.Columns.Values.Where(x => !keyFieldNames.Contains(x.Name) && !x.IsImmutable).OrderBy(x => x.Name).ToArray();
             var colNames = cols.Select(x => x.Name).ToArray();
             var nonKeyFields = colNames.Select(x => $"{x} = :{x}").ToArray();
             var keyFields = keyFieldNames.Select(x => $"{x} = :{x}").ToArray();

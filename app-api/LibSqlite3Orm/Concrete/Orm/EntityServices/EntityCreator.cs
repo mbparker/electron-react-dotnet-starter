@@ -35,49 +35,62 @@ public class EntityCreator : IEntityCreator
             return Insert(connection, synthesisResult, entity);
         }
     }
+    
+    public bool Insert<T>(ISqliteConnection connection, T entity)
+    {
+        var synthesisResult = SynthesizeSql<T>();
+        return Insert(connection, synthesisResult, entity);
+    }    
 
     public bool Insert<T>(ISqliteConnection connection, DmlSqlSynthesisResult synthesisResult, T entity)
     {
-        var cmd = connection.CreateCommand();
-        parameterPopulator.Populate(synthesisResult, cmd.Parameters, entity);
-        if (cmd.ExecuteNonQuery(synthesisResult.SqlText) == 1)
+        using (var cmd = connection.CreateCommand())
         {
-            entityWriter.SetGeneratedKeyOnEntityIfNeeded(context.Schema, connection, entity);
-            return true;
-        }
+            parameterPopulator.Populate(synthesisResult, cmd.Parameters, entity);
+            if (cmd.ExecuteNonQuery(synthesisResult.SqlText) == 1)
+            {
+                entityWriter.SetGeneratedKeyOnEntityIfNeeded(context.Schema, connection, entity);
+                return true;
+            }
 
-        return false;
+            return false;
+        }
     }
 
     public int InsertMany<T>(IEnumerable<T> entities)
     {
-        var synthesisResult = SynthesizeSql<T>();
         using (var connection = connectionFactory())
         {
             connection.Open(context.Filename, true);
-            using (var transaction = connection.BeginTransaction())
-            {
-                try
-                {
-                    var cnt = 0;
-                    foreach (var entity in entities)
-                    {
-                        if (Insert(connection, synthesisResult, entity))
-                            cnt++;
-                    }
-
-                    transaction.Commit();
-                    return cnt;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                    transaction.Rollback();
-                    throw;
-                }
-            }
+            return InsertMany(connection, entities);
         }   
     }
+    
+    public int InsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
+    {
+        var synthesisResult = SynthesizeSql<T>();
+        using (var transaction = connection.BeginTransaction())
+        {
+            try
+            {
+                var cnt = 0;
+                foreach (var entity in entities)
+                {
+                    if (Insert(connection, synthesisResult, entity))
+                        cnt++;
+                }
+
+                transaction.Commit();
+                return cnt;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                transaction.Rollback();
+                throw;
+            }
+        }   
+    }    
 
     private DmlSqlSynthesisResult SynthesizeSql<T>()
     {

@@ -32,6 +32,11 @@ public class EntityServices : IEntityServices
     {
         return creator.Insert(entity);
     }
+    
+    public bool Insert<T>(ISqliteConnection connection, T entity)
+    {
+        return creator.Insert(connection, entity);
+    }
 
     public bool Insert<T>(ISqliteConnection connection, DmlSqlSynthesisResult synthesisResult, T entity)
     {
@@ -42,15 +47,30 @@ public class EntityServices : IEntityServices
     {
         return creator.InsertMany(entities);
     }
+    
+    public int InsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
+    {
+        return creator.InsertMany(connection, entities);
+    }
 
     public ISqliteQueryable<T> Get<T>(bool includeDetails = false) where T : new()
     {
         return getter.Get<T>(includeDetails);
     }
+    
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool includeDetails = false) where T : new()
+    {
+        return getter.Get<T>(connection, includeDetails);
+    }
 
     public bool Update<T>(T entity)
     {
         return updater.Update(entity);
+    }
+    
+    public bool Update<T>(ISqliteConnection connection, T entity)
+    {
+        return updater.Update(connection, entity);
     }
 
     public bool Update<T>(ISqliteConnection connection, DmlSqlSynthesisResult synthesisResult, T entity)
@@ -62,24 +82,49 @@ public class EntityServices : IEntityServices
     {
         return updater.UpdateMany(entities);
     }
+    
+    public int UpdateMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
+    {
+        return updater.UpdateMany(connection, entities);
+    }
 
     public int Delete<T>(Expression<Func<T, bool>> predicate)
     {
         return deleter.Delete(predicate);
+    }
+    
+    public int Delete<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
+    {
+        return deleter.Delete(connection, predicate);
     }
 
     public int DeleteAll<T>()
     {
         return deleter.DeleteAll<T>();
     }
+    
+    public int DeleteAll<T>(ISqliteConnection connection)
+    {
+        return deleter.DeleteAll<T>(connection);
+    }
 
     public UpsertResult Upsert<T>(T entity)
     {
         return upserter.Upsert(entity);
+    }
+    
+    public UpsertResult Upsert<T>(ISqliteConnection connection, T entity)
+    {
+        return upserter.Upsert(connection, entity);
     }
 
     public UpsertManyResult UpsertMany<T>(IEnumerable<T> entities)
     {
         return upserter.UpsertMany(entities);
     }
+    
+    public UpsertManyResult UpsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
+    {
+        return upserter.UpsertMany(connection, entities);
+    }    
 }

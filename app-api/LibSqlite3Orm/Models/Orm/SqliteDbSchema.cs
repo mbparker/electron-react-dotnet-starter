@@ -46,6 +46,7 @@ public class SqliteDbSchemaTableColumn
     public bool IsNotNull { get; set; }
     public SqliteLiteConflictAction? IsNotNullConflictAction { get; set; }
     public bool IsUnique { get; set; }
+    public bool IsImmutable { get; set; }
     public SqliteLiteConflictAction? IsUniqueConflictAction { get; set; }
     public SqliteCollation? Collation { get; set; }
     public string DefaultValueLiteral { get; set; }

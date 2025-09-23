@@ -139,19 +139,21 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             {
                 try
                 {
-                    var cmd = connection.CreateCommand();
-                    cmd.ExecuteNonQuery("PRAGMA foreign_keys = off;");
-                    AddNewTables(cmd, changes.NewTables);
-                    DropRemovedTables(cmd, changes.RemovedTables);
-                    RenameTables(connection, cmd, changes.RenamedTables);
-                    AlterTables(connection, cmd, changes.AlteredTables, changes.PreviousSchema);
-                    cmd.ExecuteNonQuery("PRAGMA foreign_keys = on;");
+                    using (var cmd = connection.CreateCommand())
+                    {
+                        cmd.ExecuteNonQuery("PRAGMA foreign_keys = off;");
+                        AddNewTables(cmd, changes.NewTables);
+                        DropRemovedTables(cmd, changes.RemovedTables);
+                        RenameTables(connection, cmd, changes.RenamedTables);
+                        AlterTables(connection, cmd, changes.AlteredTables, changes.PreviousSchema);
+                        cmd.ExecuteNonQuery("PRAGMA foreign_keys = on;");
 
-                    var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
-                    var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
-                    schemaOrm.Insert(migration);
+                        var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
+                        var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
+                        schemaOrm.Insert(migration);
 
-                    transaction.Commit();
+                        transaction.Commit();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -326,27 +328,29 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         var rows = cmd.ExecuteQuery($"SELECT * FROM {fromTableName}").AsEnumerable();
         foreach (var row in rows)
         {
-            var insertCmd = connection.CreateCommand();
-            foreach (var col in row)
+            using (var insertCmd = connection.CreateCommand())
             {
-                if (!doNotCopyFieldNames.Contains(col.Name))
+                foreach (var col in row)
                 {
-                    var previousCol = fromTableSchema.Tables[fromTableName].Columns[col.Name];
-                    var valType = Type.GetType(previousCol.ModelFieldTypeName);
-                    var convType = !string.IsNullOrWhiteSpace(previousCol.ConverterTypeName)
-                        ? Type.GetType(previousCol.ConverterTypeName)
-                        : null;
-                    insertCmd.Parameters.Add(col.Name, col.ValueAs(valType), convType);
+                    if (!doNotCopyFieldNames.Contains(col.Name))
+                    {
+                        var previousCol = fromTableSchema.Tables[fromTableName].Columns[col.Name];
+                        var valType = Type.GetType(previousCol.ModelFieldTypeName);
+                        var convType = !string.IsNullOrWhiteSpace(previousCol.ConverterTypeName)
+                            ? Type.GetType(previousCol.ConverterTypeName)
+                            : null;
+                        insertCmd.Parameters.Add(col.Name, col.ValueAs(valType), convType);
+                    }
                 }
+                
+                sb.Clear();
+                sb.Append($"INSERT INTO {toTableName} (");
+                var fieldNames = insertCmd.Parameters.Select(x => x.Name).ToList();
+                sb.Append($"{string.Join(",", fieldNames)}) VALUES (");
+                var paramNames = insertCmd.Parameters.Select(x => $":{x.Name}").ToList();
+                sb.Append($"{string.Join(",", paramNames)});");
+                insertCmd.ExecuteNonQuery(sb.ToString());
             }
-
-            sb.Clear();
-            sb.Append($"INSERT INTO {toTableName} (");
-            var fieldNames = insertCmd.Parameters.Select(x => x.Name).ToList();
-            sb.Append($"{string.Join(",", fieldNames)}) VALUES (");
-            var paramNames = insertCmd.Parameters.Select(x => $":{x.Name}").ToList();
-            sb.Append($"{string.Join(",", paramNames)});");
-            insertCmd.ExecuteNonQuery(sb.ToString());
         }
     }
 

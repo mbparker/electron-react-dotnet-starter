@@ -52,6 +52,8 @@ public class SqliteTableColumnOptions
     public SqliteCollation? Collation { get; set; }
 
     public string DefaultValueLiteral { get; set; }
+    
+    public bool IsImmutable { get; set; }
 }
 
 public class SqliteTablePrimaryKeyColumnOptions : SqliteTableColumnOptions

@@ -38,40 +38,54 @@ public class EntityUpserter : IEntityUpserter
             return UpsertResult.Inserted;
         return UpsertResult.Failed;
     }
+    
+    public UpsertResult Upsert<T>(ISqliteConnection connection, T entity)
+    {
+        if (entityUpdater.Update(connection, entity))
+            return UpsertResult.Updated;
+        if (entityCreator.Insert(connection, entity))
+            return UpsertResult.Inserted;
+        return UpsertResult.Failed;
+    }
 
     public UpsertManyResult UpsertMany<T>(IEnumerable<T> entities)
+    { 
+        using (var connection = connectionFactory())
+        {
+            connection.Open(context.Filename, true);
+            return UpsertMany(connection, entities);
+        }
+    }
+    
+    public UpsertManyResult UpsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
     { 
         var updateCount = 0;
         var insertCount = 0;
         var failedCount = 0;
         var updateSynthesisResult = updateSqlSynthesizer.Synthesize<T>(SqliteDmlSqlSynthesisArgs.Empty);        
         var insertSynthesisResult = insertSqlSynthesizer.Synthesize<T>(SqliteDmlSqlSynthesisArgs.Empty);                
-        using (var connection = connectionFactory())
+        using (var transaction = connection.BeginTransaction())
         {
-            connection.Open(context.Filename, true);
-            using (var transaction = connection.BeginTransaction())
+            try
             {
-                try
+                foreach (var entity in entities)
                 {
-                    foreach (var entity in entities)
-                    {
-                        if (entityUpdater.Update(connection, updateSynthesisResult, entity))
-                            updateCount++;
-                        else if (entityCreator.Insert(connection, insertSynthesisResult, entity))
-                            insertCount++;
-                        else
-                            failedCount++;
-                    }
+                    if (entityUpdater.Update(connection, updateSynthesisResult, entity))
+                        updateCount++;
+                    else if (entityCreator.Insert(connection, insertSynthesisResult, entity))
+                        insertCount++;
+                    else
+                        failedCount++;
+                }
 
-                    transaction.Commit();
-                    return new UpsertManyResult(updateCount, insertCount, failedCount);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                    transaction.Rollback();
-                    throw;
-                }
+                transaction.Commit();
+                return new UpsertManyResult(updateCount, insertCount, failedCount);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                transaction.Rollback();
+                throw;
             }
         }
     }

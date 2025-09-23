@@ -7,6 +7,10 @@ public interface ISqliteSchemaObjectRelationalMapping<TContext> where TContext :
 {
     TContext Context { get; }
 
+    void BeginTransaction();
+    void CommitTransaction();
+    void RollbackTransaction();
+
     int ExecuteNonQuery(string sql, Action<ISqliteParameterCollectionAddTo> populateParamsAction = null);
     ISqliteDataReader ExecuteQuery(string sql, Action<ISqliteParameterCollectionAddTo> populateParamsAction = null);
     

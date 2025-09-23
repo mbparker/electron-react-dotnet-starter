@@ -22,8 +22,10 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
         switch (synthesisResult.SynthesisKind)
         {
             case SqliteDmlSqlSynthesisKind.Insert:
+                PopulateForInsert(synthesisResult, parameterCollection, entity);
+                break;
             case SqliteDmlSqlSynthesisKind.Update:
-                PopulateForInsertOrUpdate(synthesisResult, parameterCollection, entity);
+                PopulateForUpdate(synthesisResult, parameterCollection, entity);
                 break;
             case SqliteDmlSqlSynthesisKind.Select:
             case SqliteDmlSqlSynthesisKind.Delete:
@@ -61,27 +63,22 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
         }
     }
 
-    private void PopulateForInsertOrUpdate<T>(DmlSqlSynthesisResult synthesisResult,
+    private void PopulateForInsert<T>(DmlSqlSynthesisResult synthesisResult,
         ISqliteParameterCollection parameterCollection, T entity)
     {
         var type = typeof(T);
-        string skipColName = null;
-        if (synthesisResult.SynthesisKind == SqliteDmlSqlSynthesisKind.Insert)
+        
+        if (synthesisResult.Table.PrimaryKey?.AutoGuid ?? false)
         {
-            if (synthesisResult.Table.PrimaryKey?.AutoGuid ?? false)
-            {
-                var member = type
-                    .GetMember(synthesisResult.Table.Columns[synthesisResult.Table.PrimaryKey.FieldName].ModelFieldName)
-                    .SingleOrDefault();
-                member?.SetValue(entity, uniqueIdGenerator.NewUniqueId());
-            }
-            else
-            {
-                skipColName = synthesisResult.Table.PrimaryKey?.AutoIncrement ?? false
-                    ? synthesisResult.Table.PrimaryKey.FieldName
-                    : null;
-            }
+            var member = type
+                .GetMember(synthesisResult.Table.Columns[synthesisResult.Table.PrimaryKey.FieldName].ModelFieldName)
+                .SingleOrDefault();
+            member?.SetValue(entity, uniqueIdGenerator.NewUniqueId());
         }
+        
+        var skipColName = synthesisResult.Table.PrimaryKey?.AutoIncrement ?? false
+            ? synthesisResult.Table.PrimaryKey.FieldName
+            : null;
 
         var cols = synthesisResult.Table.Columns.Values.Where(x => !string.Equals(x.Name, skipColName)).OrderBy(x => x.Name).ToArray();
         foreach (var col in cols)
@@ -97,6 +94,48 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             else
                 throw new InvalidDataContractException(
                     $"Member {col.ModelFieldName} not found on type {type.AssemblyQualifiedName}.");
+        }
+    }
+    
+    private void PopulateForUpdate<T>(DmlSqlSynthesisResult synthesisResult,
+        ISqliteParameterCollection parameterCollection, T entity)
+    {
+        var type = typeof(T);
+        
+        var keyFieldNames = synthesisResult.Table.CompositePrimaryKeyFields ?? [];
+        if (!keyFieldNames.Any())
+            keyFieldNames = [synthesisResult.Table.PrimaryKey.FieldName];
+        
+        var cols = synthesisResult.Table.Columns.Values.Where(x => !keyFieldNames.Contains(x.Name) && !x.IsImmutable).OrderBy(x => x.Name).ToArray();
+        foreach (var col in cols)
+        {
+            var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
+            if (member is not null)
+            {
+                Type converterType = null;
+                if (!string.IsNullOrWhiteSpace(col.ConverterTypeName))
+                    converterType = Type.GetType(col.ConverterTypeName);
+                parameterCollection.Add(col.Name, member.GetValue(entity), converterType);
+            }
+            else
+                throw new InvalidDataContractException(
+                    $"Member {col.ModelFieldName} not found on type {type.AssemblyQualifiedName}.");
+        }
+        
+        var keyCols = synthesisResult.Table.Columns.Values.Where(x => keyFieldNames.Contains(x.Name)).OrderBy(x => x.Name).ToArray();
+        foreach (var keyCol in keyCols)
+        {
+            var member = type.GetMember(keyCol.ModelFieldName).SingleOrDefault();
+            if (member is not null)
+            {
+                Type converterType = null;
+                if (!string.IsNullOrWhiteSpace(keyCol.ConverterTypeName))
+                    converterType = Type.GetType(keyCol.ConverterTypeName);
+                parameterCollection.Add(keyCol.Name, member.GetValue(entity), converterType);
+            }
+            else
+                throw new InvalidDataContractException(
+                    $"Member {keyCol.ModelFieldName} not found on type {type.AssemblyQualifiedName}.");
         }
     }
 }

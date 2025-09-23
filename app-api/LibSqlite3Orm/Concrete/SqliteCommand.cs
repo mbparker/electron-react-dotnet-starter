@@ -8,20 +8,28 @@ namespace LibSqlite3Orm.Concrete;
 public class SqliteCommand : ISqliteCommand
 {
     private readonly Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory;
+    private readonly ISqlStatementNotifier sqlNotifier;
     private ISqliteConnection connection;
 
     public SqliteCommand(ISqliteConnection connection, ISqliteParameterCollection parameters,
-        Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory)
+        Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory,
+        ISqlStatementNotifier sqlNotifier)
     {
         this.connection = connection;
         this.connection.BeforeDispose += ConnectionOnBeforeDispose;
         this.dbReaderFactory = dbReaderFactory;
+        this.sqlNotifier = sqlNotifier;
         Parameters = parameters;
     }
     
     private IntPtr ConnectionHandle => connection?.GetHandle() ?? IntPtr.Zero;
     
     public ISqliteParameterCollection Parameters { get; }
+
+    public void Dispose()
+    {
+        ReleaseConnection();
+    }
 
     public int ExecuteNonQuery(IEnumerable<string> sql)
     {
@@ -47,7 +55,7 @@ public class SqliteCommand : ISqliteCommand
 
     public ISqliteDataReader ExecuteQuery(string sql)
     {
-        Console.WriteLine(sql);
+        sqlNotifier.NotifySqlStatementExecuting(sql);
         var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
         if (Parameters.Count > 0)
             Parameters.BindAll(statement);        
@@ -58,7 +66,7 @@ public class SqliteCommand : ISqliteCommand
     {
         try
         {
-            Console.WriteLine(sql);
+            sqlNotifier.NotifySqlStatementExecuting(sql);
             var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
             try
             {
@@ -89,7 +97,15 @@ public class SqliteCommand : ISqliteCommand
     
     private void ConnectionOnBeforeDispose(object sender, EventArgs e)
     {
-        connection.BeforeDispose -= ConnectionOnBeforeDispose;
-        connection = null;
+        ReleaseConnection();
+    }
+
+    private void ReleaseConnection()
+    {
+        if (connection is not null)
+        {
+            connection.BeforeDispose -= ConnectionOnBeforeDispose;
+            connection = null;
+        }  
     }
 }

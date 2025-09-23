@@ -10,8 +10,10 @@ public class SqliteTransaction : ISqliteTransaction
     {
         this.connection = connection;
         Name = uniqueIdGenerator.NewUniqueId();
-        var cmd = this.connection.CreateCommand();
-        cmd.ExecuteNonQuery($"SAVEPOINT '{Name}';");
+        using (var cmd = this.connection.CreateCommand())
+        {
+            cmd.ExecuteNonQuery($"SAVEPOINT '{Name}';");
+        }
     }
 
     ~SqliteTransaction()
@@ -34,18 +36,22 @@ public class SqliteTransaction : ISqliteTransaction
     public void Commit()
     {
         if (connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
-        var cmd = connection.CreateCommand();
-        cmd.ExecuteNonQuery($"RELEASE SAVEPOINT '{Name}';");
-        connection = null;
-        Committed?.Invoke(this, EventArgs.Empty);
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.ExecuteNonQuery($"RELEASE SAVEPOINT '{Name}';");
+            connection = null;
+            Committed?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public void Rollback()
     {
         if (connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
-        var cmd = connection.CreateCommand();
-        cmd.ExecuteNonQuery($"ROLLBACK TRANSACTION TO SAVEPOINT '{Name}';");
-        connection = null;
-        RolledBack?.Invoke(this, EventArgs.Empty);
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.ExecuteNonQuery($"ROLLBACK TRANSACTION TO SAVEPOINT '{Name}';");
+            connection = null;
+            RolledBack?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

@@ -27,6 +27,8 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteParameterPopulator>().As<ISqliteParameterPopulator>().SingleInstance();
         builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().SingleInstance();
         
+        builder.RegisterType<SqlStatementNotifier>().As<ISqlStatementNotifier>().SingleInstance();
+        
         builder.RegisterType<SqliteDataRow>().As<ISqliteDataRow>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteDataColumn>().As<ISqliteDataColumn>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteDataReader>().As<ISqliteDataReader>().InstancePerDependency().ExternallyOwned();
@@ -40,6 +42,8 @@ public class ContainerModule : Module
         builder.RegisterType<TimeSpanText>().SingleInstance();
         builder.RegisterType<BooleanLong>().SingleInstance();
         builder.RegisterType<CharText>().SingleInstance();
+        builder.RegisterGeneric(typeof(EnumString<>)).InstancePerDependency();
+        builder.RegisterGeneric(typeof(EnumLong<>)).InstancePerDependency();
 
         builder.RegisterType<EntityCreator>().As<IEntityCreator>().InstancePerDependency();
         builder.RegisterType<EntityUpdater>().As<IEntityUpdater>().InstancePerDependency();
@@ -61,7 +65,7 @@ public class ContainerModule : Module
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
         builder.RegisterGeneric(typeof(SqliteObjectRelationalMapping<>)).As(typeof(ISqliteObjectRelationalMapping<>))
-            .InstancePerDependency().ExternallyOwned();
+            .InstancePerDependency();
         builder.RegisterGeneric(typeof(SqliteSchemaObjectRelationalMapping<>)).As(typeof(ISqliteSchemaObjectRelationalMapping<>))
             .InstancePerDependency();
         builder.RegisterType<SqliteOrmSchemaContext>().SingleInstance();

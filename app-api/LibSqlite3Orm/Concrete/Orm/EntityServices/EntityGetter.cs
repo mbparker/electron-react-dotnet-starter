@@ -28,8 +28,23 @@ public class EntityGetter : IEntityGetter
         this.entityWriter = entityWriter;
         this.context = context;
     }
-    
+
     public ISqliteQueryable<T> Get<T>(bool includeDetails = false) where T : new()
+    {
+        return Get<T>(() =>
+        {
+            var connection = connectionFactory();
+            connection.Open(context.Filename, true);
+            return connection;
+        }, includeDetails, true);
+    }
+
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool includeDetails = false) where T : new()
+    {
+        return Get<T>(() => connection, includeDetails, false);
+    }
+
+    private ISqliteQueryable<T> Get<T>(Func<ISqliteConnection> connectionAllocator, bool includeDetails, bool disposeConnection) where T : new()
     {
         var entityTypeName = typeof(T).AssemblyQualifiedName;
         var table = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityTypeName);
@@ -39,13 +54,11 @@ public class EntityGetter : IEntityGetter
             {
                 var synthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Select, context.Schema);
                 var synthesisResult = synthesizer.Synthesize<T>(new SqliteDmlSqlSynthesisArgs(args));
-                
-                // The enumerator will dispose of the connection and reader when it finishes the enumeration.
-                var connection = connectionFactory();
-                connection.Open(context.Filename, true);
-                var cmd = connection.CreateCommand();
-                parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
-                return cmd.ExecuteQuery(synthesisResult.SqlText);
+                using (var cmd = connectionAllocator().CreateCommand())
+                {
+                    parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
+                    return cmd.ExecuteQuery(synthesisResult.SqlText);
+                }
             }
             
             object GetDetailsListPropertyValue(Type detailTableType, T recordEntity)
@@ -85,7 +98,7 @@ public class EntityGetter : IEntityGetter
                 return entityWriter.Deserialize<T>(table, row, GetDetailsListPropertyValue, GetDetailsPropertyValue);
             }
             
-            return new SqliteOrderedQueryable<T>(ExecuteQuery, DeserializeRow);
+            return new SqliteOrderedQueryable<T>(ExecuteQuery, DeserializeRow, disposeConnection);
         }
         
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");

@@ -25,8 +25,10 @@ public class SqliteDbFactory : ISqliteDbFactory
         using (var connection = connectionFactory())
         {
             connection.Open(dbFilename, dbFileMustExist);
-            var cmd = connection.CreateCommand();
-            cmd.ExecuteNonQuery(sql);
+            using (var cmd = connection.CreateCommand())
+            {
+                cmd.ExecuteNonQuery(sql);
+            }
         }
     }
     

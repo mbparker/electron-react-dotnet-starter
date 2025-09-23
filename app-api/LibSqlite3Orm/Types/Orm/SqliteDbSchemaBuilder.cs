@@ -87,6 +87,7 @@ public class SqliteDbSchemaBuilder
                 schemaTableCol.IsNotNullConflictAction = column.IsNotNullConflictAction;
                 schemaTableCol.IsUnique = column.IsUnique;
                 schemaTableCol.IsUniqueConflictAction = column.IsUniqueConflictAction;
+                schemaTableCol.IsImmutable = column.IsImmutable;
                 schemaTable.Columns.Add(schemaTableCol.Name, schemaTableCol);
 
                 if (!table.CompositePrimaryKeyProperties.Any() && table.PrimaryKeyColumnOptions is not null &&
@@ -309,6 +310,12 @@ public class SqliteDbSchemaBuilder
             return typeof(GuidText);
         }
 
+        if (type.IsEnum)
+        {
+            var converterClass = typeof(EnumString<>);
+            return converterClass.MakeGenericType(type);
+        }
+
         // Can't be automatically converted
         return null;
     }
@@ -360,6 +367,21 @@ public class SqliteTableOptionsBuilder<TTable>
 
         throw new InvalidExpressionException();
     }
+    
+    public SqliteColumnOptionsBuilder WithImmutableColumn<T>(Expression<Func<TTable, T>> field, string name = null)
+    {
+        if (field.Body is MemberExpression exp)
+        {
+            var options = new SqliteTableColumnOptions(tableOptions);
+            options.Member = exp.Member;
+            options.Name = string.IsNullOrWhiteSpace(name) ? options.Member.Name : name.Trim();
+            options.IsImmutable = true;
+            tableOptions.Columns.Add(options.Member.Name, options);
+            return new SqliteColumnOptionsBuilder(options);
+        }
+
+        throw new InvalidExpressionException();
+    }    
     
     public SqlitePrimaryKeyOptionsBuilder WithAllMembersAsColumns<T>(Expression<Func<TTable, T>> primaryKey)
     {
@@ -484,6 +506,12 @@ public class SqliteColumnOptionsBuilder
     public SqliteColumnOptionsBuilder WithConversion<TConverter>()
     {
         options.ConverterType = typeof(TConverter);
+        return this;
+    }
+
+    public SqliteColumnOptionsBuilder IgnoreOnUpdates(bool enabled = true)
+    {
+        options.IsImmutable = enabled;
         return this;
     }
 }
