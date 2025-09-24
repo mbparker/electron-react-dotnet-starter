@@ -6,6 +6,8 @@ namespace LibSqlite3Orm.Abstract.Orm;
 public interface ISqliteSchemaObjectRelationalMapping<TContext> where TContext : ISqliteOrmDatabaseContext
 {
     TContext Context { get; }
+    
+    ISqliteConnection CurrentTransactionConnection { get; }
 
     void BeginTransaction();
     void CommitTransaction();

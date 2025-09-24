@@ -1,5 +1,4 @@
 using System.Text;
-using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
@@ -13,20 +12,17 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
 {
     private readonly ISqliteSchemaObjectRelationalMapping<SqliteOrmSchemaContext> schemaOrm;
     private readonly ISqliteSchemaObjectRelationalMapping<TContext> modelOrm;
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory;
     private readonly ISqliteDbFactory dbFactory;
     private bool initialized;
 
     public SqliteDbSchemaMigrator(ISqliteSchemaObjectRelationalMapping<SqliteOrmSchemaContext> schemaOrm,
         ISqliteSchemaObjectRelationalMapping<TContext> modelOrm,
-        Func<ISqliteConnection> connectionFactory,
         Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory,
         ISqliteDbFactory dbFactory)
     {
         this.schemaOrm = schemaOrm;
         this.modelOrm = modelOrm;
-        this.connectionFactory = connectionFactory;
         this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory;
         this.dbFactory  = dbFactory;
     }
@@ -132,40 +128,31 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     {
         EnsureInitialized();
 
-        using (var connection = connectionFactory())
+        schemaOrm.BeginTransaction();
+        try
         {
-            connection.Open(schemaOrm.Context.Filename, false);
-            using (var transaction = connection.BeginTransaction())
-            {
-                try
-                {
-                    using (var cmd = connection.CreateCommand())
-                    {
-                        cmd.ExecuteNonQuery("PRAGMA foreign_keys = off;");
-                        AddNewTables(cmd, changes.NewTables);
-                        DropRemovedTables(cmd, changes.RemovedTables);
-                        RenameTables(connection, cmd, changes.RenamedTables);
-                        AlterTables(connection, cmd, changes.AlteredTables, changes.PreviousSchema);
-                        cmd.ExecuteNonQuery("PRAGMA foreign_keys = on;");
+            schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = off;");
+            AddNewTables(changes.NewTables);
+            DropRemovedTables(changes.RemovedTables);
+            RenameTables(changes.RenamedTables);
+            AlterTables(changes.AlteredTables, changes.PreviousSchema);
+            schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = on;");
 
-                        var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
-                        var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
-                        schemaOrm.Insert(migration);
-
-                        transaction.Commit();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    transaction.Rollback();
-                    throw;
-                }
-            }
+            var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
+            var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
+            schemaOrm.Insert(migration);
+            
+            schemaOrm.CommitTransaction();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+            schemaOrm.RollbackTransaction();
+            throw;
         }
     }
     
-    private void AddNewTables(ISqliteCommand cmd, IReadOnlyList<SqliteDbSchemaTable> changesNewTables)
+    private void AddNewTables(IReadOnlyList<SqliteDbSchemaTable> changesNewTables)
     {
         var sb = new StringBuilder();
         var synthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, modelOrm.Context.Schema);
@@ -176,10 +163,10 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
                 
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
 
-    private void DropRemovedTables(ISqliteCommand cmd, IReadOnlyList<SqliteDbSchemaTable> changesRemovedTables)
+    private void DropRemovedTables(IReadOnlyList<SqliteDbSchemaTable> changesRemovedTables)
     {
         var sb = new StringBuilder();
         var synthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, modelOrm.Context.Schema);
@@ -190,20 +177,19 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
                 
         }
         
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
 
-    private void RenameTables(ISqliteConnection connection, ISqliteCommand cmd,
-        IReadOnlyList<RenamedTable> changesRenamedTables)
+    private void RenameTables(IReadOnlyList<RenamedTable> changesRenamedTables)
     {
         var sb = new StringBuilder();
         var synthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, modelOrm.Context.Schema);
-        RenameTablesCreateNewTables(cmd, changesRenamedTables, synthesizer, sb);
-        RenameTablesCopyRecordsToNewTables(connection, cmd, changesRenamedTables, sb);
-        RenameTablesDropOldTables(cmd, changesRenamedTables, sb, synthesizer);
+        RenameTablesCreateNewTables(changesRenamedTables, synthesizer, sb);
+        RenameTablesCopyRecordsToNewTables(changesRenamedTables, sb);
+        RenameTablesDropOldTables(changesRenamedTables, sb, synthesizer);
     }
 
-    private void RenameTablesCreateNewTables(ISqliteCommand cmd, IReadOnlyList<RenamedTable> changesRenamedTables,
+    private void RenameTablesCreateNewTables(IReadOnlyList<RenamedTable> changesRenamedTables,
         ISqliteDdlSqlSynthesizer synthesizer, StringBuilder sb)
     {
         foreach (var table in changesRenamedTables)
@@ -213,19 +199,18 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
 
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
     
-    private void RenameTablesCopyRecordsToNewTables(ISqliteConnection connection, ISqliteCommand cmd,
-        IReadOnlyList<RenamedTable> changesRenamedTables, StringBuilder sb)
+    private void RenameTablesCopyRecordsToNewTables(IReadOnlyList<RenamedTable> changesRenamedTables, StringBuilder sb)
     {
         foreach (var table in changesRenamedTables)
         {
-            CopyRecordsToOtherTable(connection, cmd, table.OldName, table.NewName, modelOrm.Context.Schema, [], sb);
+            CopyRecordsToOtherTable(table.OldName, table.OldName, table.NewName, modelOrm.Context.Schema, [], sb);
         }
     }
     
-    private void RenameTablesDropOldTables(ISqliteCommand cmd, IReadOnlyList<RenamedTable> changesRenamedTables, StringBuilder sb,
+    private void RenameTablesDropOldTables(IReadOnlyList<RenamedTable> changesRenamedTables, StringBuilder sb,
         ISqliteDdlSqlSynthesizer synthesizer)
     {
         sb.Clear();
@@ -235,23 +220,22 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             sb.AppendLine(sql);
         }
         
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
 
-    private void AlterTables(ISqliteConnection connection, ISqliteCommand cmd,
-        IReadOnlyList<AlteredTable> changesAlteredTables, SqliteDbSchema previousSchema)
+    private void AlterTables(IReadOnlyList<AlteredTable> changesAlteredTables, SqliteDbSchema previousSchema)
     {
         var sb = new StringBuilder();
         var synthesizerPreviousSchema = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, previousSchema);
-        AlterTablesCreateTempTables(cmd, changesAlteredTables, synthesizerPreviousSchema, sb);
-        AlterTablesCopyRecordsToTempTables(connection, cmd, changesAlteredTables, previousSchema, sb);
-        AlterTablesDropOriginalTables(cmd, changesAlteredTables, sb, synthesizerPreviousSchema);
-        AlterTablesCreateAlteredTables(cmd, changesAlteredTables, sb);
-        AlterTablesCopyRecordsToAlteredTables(connection, cmd, changesAlteredTables, previousSchema, sb);
-        AlterTablesDropTempTables(cmd, changesAlteredTables, synthesizerPreviousSchema, sb);
+        AlterTablesCreateTempTables(changesAlteredTables, synthesizerPreviousSchema, sb);
+        AlterTablesCopyRecordsToTempTables(changesAlteredTables, previousSchema, sb);
+        AlterTablesDropOriginalTables(changesAlteredTables, sb, synthesizerPreviousSchema);
+        AlterTablesCreateAlteredTables(changesAlteredTables, sb);
+        AlterTablesCopyRecordsToAlteredTables(changesAlteredTables, previousSchema, sb);
+        AlterTablesDropTempTables(changesAlteredTables, synthesizerPreviousSchema, sb);
     }
     
-    private void AlterTablesCreateTempTables(ISqliteCommand cmd, IReadOnlyList<AlteredTable> changesAlteredTables,
+    private void AlterTablesCreateTempTables(IReadOnlyList<AlteredTable> changesAlteredTables,
         ISqliteDdlSqlSynthesizer synthesizer, StringBuilder sb)
     {
         foreach (var table in changesAlteredTables)
@@ -260,20 +244,21 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             sb.AppendLine(sql);
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
-    
-    private void AlterTablesCopyRecordsToTempTables(ISqliteConnection connection, ISqliteCommand cmd,
-        IReadOnlyList<AlteredTable> changesAlteredTables, SqliteDbSchema previousSchema, StringBuilder sb)
+
+    private void AlterTablesCopyRecordsToTempTables(IReadOnlyList<AlteredTable> changesAlteredTables,
+        SqliteDbSchema previousSchema, StringBuilder sb)
     {
         foreach (var table in changesAlteredTables)
         {
             var tempTableName = $"{table.OldTableSchema.Name}_TEMP";
-            CopyRecordsToOtherTable(connection, cmd, table.OldTableSchema.Name, tempTableName, previousSchema, [], sb);
+            CopyRecordsToOtherTable(tempTableName, table.OldTableSchema.Name, table.NewTableSchema.Name, previousSchema,
+                [], sb);
         }
     }
-    
-    private void AlterTablesDropOriginalTables(ISqliteCommand cmd, IReadOnlyList<AlteredTable> changesAlteredTables,
+
+    private void AlterTablesDropOriginalTables(IReadOnlyList<AlteredTable> changesAlteredTables,
         StringBuilder sb, ISqliteDdlSqlSynthesizer synthesizerPreviousSchema)
     {
         sb.Clear();
@@ -283,10 +268,10 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             sb.AppendLine(sql);
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
 
-    private void AlterTablesCreateAlteredTables(ISqliteCommand cmd, IReadOnlyList<AlteredTable> changesAlteredTables, StringBuilder sb)
+    private void AlterTablesCreateAlteredTables(IReadOnlyList<AlteredTable> changesAlteredTables, StringBuilder sb)
     {
         sb.Clear();
         var synthesizerNewSchema = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, modelOrm.Context.Schema);
@@ -296,20 +281,21 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             sb.AppendLine(sql);
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
-    
-    private void AlterTablesCopyRecordsToAlteredTables(ISqliteConnection connection, ISqliteCommand cmd,
-        IReadOnlyList<AlteredTable> changesAlteredTables, SqliteDbSchema previousSchema, StringBuilder sb)
+
+    private void AlterTablesCopyRecordsToAlteredTables(IReadOnlyList<AlteredTable> changesAlteredTables,
+        SqliteDbSchema previousSchema, StringBuilder sb)
     {
         foreach (var table in changesAlteredTables)
         {
             var tempTableName = $"{table.OldTableSchema.Name}_TEMP";
-            CopyRecordsToOtherTable(connection, cmd, tempTableName, table.NewTableSchema.Name, previousSchema, table.RemovedColumnNames, sb);
+            CopyRecordsToOtherTable(tempTableName, table.OldTableSchema.Name, table.NewTableSchema.Name, previousSchema,
+                table.RemovedColumnNames, sb);
         }
     }
 
-    private void AlterTablesDropTempTables(ISqliteCommand cmd, IReadOnlyList<AlteredTable> changesAlteredTables,
+    private void AlterTablesDropTempTables(IReadOnlyList<AlteredTable> changesAlteredTables,
         ISqliteDdlSqlSynthesizer synthesizerPreviousSchema, StringBuilder sb)
     {
         sb.Clear();
@@ -319,16 +305,16 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             sb.AppendLine(sql);
         }
 
-        cmd.ExecuteNonQuery(sb.ToString());
+        schemaOrm.ExecuteNonQuery(sb.ToString());
     }
     
-    private void CopyRecordsToOtherTable(ISqliteConnection connection, ISqliteCommand cmd, string fromTableName,
+    private void CopyRecordsToOtherTable(string tempTableName, string fromTableName,
         string toTableName, SqliteDbSchema fromTableSchema, IReadOnlyList<string> doNotCopyFieldNames, StringBuilder sb)
     {
-        var rows = cmd.ExecuteQuery($"SELECT * FROM {fromTableName}").AsEnumerable();
+        var rows = schemaOrm.ExecuteQuery($"SELECT * FROM {tempTableName}").AsEnumerable();
         foreach (var row in rows)
         {
-            using (var insertCmd = connection.CreateCommand())
+            using (var insertCmd = schemaOrm.CurrentTransactionConnection.CreateCommand())
             {
                 foreach (var col in row)
                 {

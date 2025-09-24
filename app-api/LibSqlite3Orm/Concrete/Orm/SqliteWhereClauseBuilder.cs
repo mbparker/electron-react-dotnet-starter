@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
+using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 
@@ -9,6 +9,7 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBuilder
 {
+	private readonly IOrmGenerativeLogicTracer generativeLogicTracer;
 	private readonly SqliteDbSchema schema;
 	private readonly Dictionary<string, ExtractedParameter> extractedParameters = new(StringComparer.OrdinalIgnoreCase);
 	private StringBuilder sqlBuilder;
@@ -17,8 +18,9 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private string currentInStatementValue;
 	private string currentMethodCall;
 
-	public SqliteWhereClauseBuilder(SqliteDbSchema schema)
+	public SqliteWhereClauseBuilder(IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
 	{
+		this.generativeLogicTracer = generativeLogicTracer;
 		this.schema = schema;
 	}
 
@@ -27,7 +29,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	public string Build(Type entityType, Expression expression)
 	{
 		table = schema.Tables.Values.Single(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
-		Console.WriteLine($"Parse where predicate for table ({table.Name}): {expression}");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parse where predicate for table ({table.Name}): {expression}");
 		extractedParameters.Clear();
 		sqlBuilder = new StringBuilder();
 		Visit(expression);
@@ -240,7 +242,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	protected override Expression VisitMethodCall(MethodCallExpression mc)
 	{
 		currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
-		Console.WriteLine($"Visiting Method Call: {currentMethodCall}");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Visiting Method Call: {currentMethodCall}");
 		return base.VisitMethodCall(mc);
 	}
 
@@ -284,14 +286,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
 			if (extractedParameters[name].Value.Equals(value))
 			{
-				Console.WriteLine($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+				generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
 				return name;
 			}
 
 			name = $"{dbFieldName}{uniqueness++}";
 		}
 
-		Console.WriteLine($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
 		return name;
 	}
 }

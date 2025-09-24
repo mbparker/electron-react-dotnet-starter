@@ -8,12 +8,12 @@ namespace LibSqlite3Orm.Concrete;
 public class SqliteCommand : ISqliteCommand
 {
     private readonly Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory;
-    private readonly ISqlStatementNotifier sqlNotifier;
+    private readonly IOrmGenerativeLogicTracer sqlNotifier;
     private ISqliteConnection connection;
 
     public SqliteCommand(ISqliteConnection connection, ISqliteParameterCollection parameters,
         Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory,
-        ISqlStatementNotifier sqlNotifier)
+        IOrmGenerativeLogicTracer sqlNotifier)
     {
         this.connection = connection;
         this.connection.BeforeDispose += ConnectionOnBeforeDispose;

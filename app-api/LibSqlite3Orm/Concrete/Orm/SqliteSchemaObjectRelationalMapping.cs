@@ -44,6 +44,8 @@ public class SqliteSchemaObjectRelationalMapping<TContext> : ISqliteSchemaObject
             return _entityServices;
         }
     }
+    
+    public ISqliteConnection CurrentTransactionConnection => _connection;
 
     public void BeginTransaction()
     {

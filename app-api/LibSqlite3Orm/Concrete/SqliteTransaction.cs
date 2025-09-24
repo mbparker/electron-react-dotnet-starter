@@ -4,13 +4,11 @@ namespace LibSqlite3Orm.Concrete;
 
 public class SqliteTransaction : ISqliteTransaction
 {
-    private ISqliteConnection connection;
-    
     public SqliteTransaction(ISqliteConnection connection, ISqliteUniqueIdGenerator uniqueIdGenerator)
     {
-        this.connection = connection;
+        Connection = connection;
         Name = uniqueIdGenerator.NewUniqueId();
-        using (var cmd = this.connection.CreateCommand())
+        using (var cmd = Connection.CreateCommand())
         {
             cmd.ExecuteNonQuery($"SAVEPOINT '{Name}';");
         }
@@ -26,31 +24,33 @@ public class SqliteTransaction : ISqliteTransaction
     
     public string Name { get; }
     
+    public ISqliteConnection Connection { get; private set; }
+    
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        if (connection is not null)
+        if (Connection is not null)
             Rollback();
     }
     
     public void Commit()
     {
-        if (connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
-        using (var cmd = connection.CreateCommand())
+        if (Connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
+        using (var cmd = Connection.CreateCommand())
         {
             cmd.ExecuteNonQuery($"RELEASE SAVEPOINT '{Name}';");
-            connection = null;
+            Connection = null;
             Committed?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public void Rollback()
     {
-        if (connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
-        using (var cmd = connection.CreateCommand())
+        if (Connection is null) throw new InvalidOperationException("Transaction has already been disposed.");
+        using (var cmd = Connection.CreateCommand())
         {
             cmd.ExecuteNonQuery($"ROLLBACK TRANSACTION TO SAVEPOINT '{Name}';");
-            connection = null;
+            Connection = null;
             RolledBack?.Invoke(this, EventArgs.Empty);
         }
     }
