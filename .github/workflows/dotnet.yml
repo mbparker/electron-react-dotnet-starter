@@ -1,10 +1,12 @@
-name: Build .NET 9 API and Electron UI
+name: Build and Release .NET 9 API and Electron UI
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -39,4 +41,33 @@ jobs:
         working-directory: app-ui
         run: npm run buildmacdev
 
-      # Optionally, upload build artifacts
+      - name: Upload Electron Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-build-${{ runner.os }}
+          path: |
+            app-ui/dist/mac/*.app
+            app-ui/dist/*.dmg
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: electron-build-Windows
+          path: artifacts/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: electron-build-macOS
+          path: artifacts/macos
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/windows/**
+            artifacts/macos/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
