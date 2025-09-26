@@ -120,18 +120,18 @@ public class IntegralFieldConverterTests
     public void Convert_NullValueToValueType_ReturnsDefaultValue()
     {
         // Act
-        var result = _converter.Convert(typeof(int?), null, typeof(int));
+        var result = _converter.Convert(typeof(int?), null, typeof(uint));
 
         // Assert
         Assert.That(result, Is.EqualTo(0));
-        Assert.That(result, Is.TypeOf<int>());
+        Assert.That(result, Is.TypeOf<uint>());
     }
 
     [Test]
     public void Convert_NullValueToReferenceType_ReturnsNull()
     {
         // Act
-        var result = _converter.Convert(typeof(string), null, typeof(string));
+        var result = _converter.Convert(typeof(int?), null, typeof(long?));
 
         // Assert
         Assert.That(result, Is.Null);
@@ -163,6 +163,14 @@ public class IntegralFieldConverterTests
         // Assert
         Assert.That(result, Is.EqualTo(42L));
         Assert.That(result, Is.TypeOf<long>());
+    }
+    
+    [Test]
+    public void Convert_WithSameUnderlyingTypes_ThrowsNotSupportedException()
+    {
+        // Act & Assert
+        Assert.Throws<NotSupportedException>(() => 
+            _converter.Convert(typeof(int?), 42, typeof(int)));
     }
 
     [Test]
