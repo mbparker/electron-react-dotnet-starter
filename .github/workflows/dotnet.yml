@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest, macos-latest, linux-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -53,13 +53,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        working-directory: app-ui
+        run: npm run buildlinux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+
       - name: Upload Electron Artifact
         uses: actions/upload-artifact@v4
         with:
           name: electron-build-${{ runner.os }}
           path: |
             app-ui/dist/mac/*.app
+            app-ui/dist/win-unpacked/**
+            app-ui/dist/linux-unpacked/**
             app-ui/dist/*.dmg
+            app-ui/dist/*.exe
+            app-ui/dist/*.appimage
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -80,6 +91,12 @@ jobs:
           path: artifacts/macos
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: electron-build-Linux
+          path: artifacts/linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
@@ -87,5 +104,6 @@ jobs:
           files: |
             artifacts/windows/**
             artifacts/macos/**
+            artifacts/linux/**
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
