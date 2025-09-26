@@ -40,6 +40,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       # --- Run NUnit Tests (before build) ---
+      - name: Check dotnet location and version
+        run: |
+          which dotnet
+          dotnet --info
+          
+      - name: Clean .NET tools cache
+        run: dotnet nuget locals all --clear
+        
       - name: Run Unit Tests
         working-directory: app-api
         run: dotnet test --logger "trx;LogFileName=test-results.trx"
