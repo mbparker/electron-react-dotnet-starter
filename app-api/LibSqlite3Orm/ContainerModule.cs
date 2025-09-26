@@ -60,7 +60,7 @@ public class ContainerModule : Module
             .InstancePerDependency();
         builder.RegisterGeneric(typeof(SqliteSchemaObjectRelationalMapping<>)).As(typeof(ISqliteSchemaObjectRelationalMapping<>))
             .InstancePerDependency();
-        builder.RegisterType<SqliteOrmSchemaContext>().As<ISqliteOrmDatabaseContext>().SingleInstance();
+        builder.RegisterType<SqliteOrmSchemaContext>().SingleInstance();
         builder.RegisterType<SqliteFileOperations>().As<ISqliteFileOperations>().SingleInstance();
         builder.RegisterType<SqliteUniqueIdGenerator>().As<ISqliteUniqueIdGenerator>().SingleInstance();
         builder.RegisterType<SqliteDbFactory>().As<ISqliteDbFactory>().SingleInstance();
