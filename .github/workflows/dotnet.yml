@@ -41,6 +41,7 @@ jobs:
 
       # --- Run NUnit Tests (before build) ---
       - name: Run Unit Tests
+        working-directory: app-api
         run: dotnet test --logger "trx;LogFileName=test-results.trx"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
