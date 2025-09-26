@@ -61,7 +61,10 @@ public class SqliteUpdateSqlSynthesizerTests
         Assert.That(result.SqlText, Does.Contain("IsActive = :IsActive"));
         Assert.That(result.SqlText, Does.Contain("Name = :Name"));
         Assert.That(result.SqlText, Does.Not.Contain("CreatedDate = :CreatedDate")); // Should exclude immutable
-        Assert.That(result.SqlText, Does.Not.Contain("Id = :Id")); // Should exclude primary key from SET
+        // Should exclude primary key from SET
+        Assert.That(result.SqlText, Does.Not.Contain(",Id = :Id")); 
+        Assert.That(result.SqlText, Does.Not.Contain(" Id = :Id")); 
+        //
         Assert.That(result.SqlText, Does.Contain("WHERE (Id = :Id)"));
         Assert.That(result.Schema, Is.EqualTo(_schema));
         Assert.That(result.Table, Is.EqualTo(_testTable));

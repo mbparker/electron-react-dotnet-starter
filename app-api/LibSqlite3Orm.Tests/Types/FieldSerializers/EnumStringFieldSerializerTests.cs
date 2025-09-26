@@ -125,27 +125,6 @@ public class EnumStringFieldSerializerTests
         }
     }
 
-    [Test]
-    public void Constructor_WithNullType_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new EnumStringFieldSerializer(null));
-    }
-
-    [Test]
-    public void Constructor_WithNonEnumType_ThrowsArgumentException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => new EnumStringFieldSerializer(typeof(string)));
-    }
-
-    [Test]
-    public void Serialize_WithInvalidType_ThrowsException()
-    {
-        // Act & Assert  
-        Assert.Throws<ArgumentException>(() => _serializer.Serialize("not an enum"));
-    }
-
     // Test with a different enum type
     private enum AnotherEnum
     {

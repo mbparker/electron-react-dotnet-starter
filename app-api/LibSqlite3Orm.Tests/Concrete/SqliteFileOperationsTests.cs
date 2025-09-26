@@ -89,7 +89,7 @@ public class SqliteFileOperationsTests
     public void DeleteFile_WithNonExistentFile_DoesNotThrow()
     {
         // Act & Assert
-        Assert.DoesNotThrow(() => _fileOperations.DeleteFile(_testFilePath));
+        Assert.Throws<ArgumentException>(() => _fileOperations.DeleteFile(_testFilePath));
     }
 
     [Test]

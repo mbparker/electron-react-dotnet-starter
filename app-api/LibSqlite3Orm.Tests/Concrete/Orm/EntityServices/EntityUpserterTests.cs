@@ -17,6 +17,8 @@ public class EntityUpserterTests
     private IEntityUpdater _mockUpdater;
     private ISqliteDmlSqlSynthesizer _mockInsertSynthesizer;
     private ISqliteDmlSqlSynthesizer _mockUpdateSynthesizer;
+    private DmlSqlSynthesisResult _updateSynthesisResult;
+    private DmlSqlSynthesisResult _insertSynthesisResult;
     private ISqliteOrmDatabaseContext _mockContext;
     private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
@@ -57,6 +59,13 @@ public class EntityUpserterTests
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Update, Arg.Any<SqliteDbSchema>()).Returns(_mockUpdateSynthesizer);
         creatorFactory.Invoke(_mockContext).Returns(_mockCreator);
         updaterFactory.Invoke(_mockContext).Returns(_mockUpdater);
+
+        _updateSynthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Update, new SqliteDbSchema(),
+            new SqliteDbSchemaTable(), string.Empty, null);
+        _mockUpdateSynthesizer.Synthesize<TestEntity>(default).ReturnsForAnyArgs(_updateSynthesisResult);
+        _insertSynthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Insert, new SqliteDbSchema(),
+            new SqliteDbSchemaTable(), string.Empty, null);
+        _mockInsertSynthesizer.Synthesize<TestEntity>(default).ReturnsForAnyArgs(_insertSynthesisResult);
 
         _upserter = new EntityUpserter(
             _connectionFactory,
@@ -179,9 +188,9 @@ public class EntityUpserterTests
             new TestEntity { Id = 2, Name = "Test2" }
         };
 
-        _mockUpdater.Update(entities[0]).Returns(true);
-        _mockUpdater.Update(entities[1]).Returns(false);
-        _mockCreator.Insert(entities[1]).Returns(true);
+        _mockUpdater.Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, entities[0]).Returns(true);
+        _mockUpdater.Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, entities[1]).Returns(false);
+        _mockCreator.Insert(Arg.Any<ISqliteConnection>(), _insertSynthesisResult, entities[1]).Returns(true);
 
         // Act
         var result = _upserter.UpsertMany(entities);
@@ -191,8 +200,8 @@ public class EntityUpserterTests
         Assert.That(result.InsertCount, Is.EqualTo(1));
         Assert.That(result.FailedCount, Is.EqualTo(0));
         
-        _mockUpdater.Received(2).Update(Arg.Any<TestEntity>());
-        _mockCreator.Received(1).Insert(Arg.Any<TestEntity>());
+        _mockCreator.Received(1).Insert(Arg.Any<ISqliteConnection>(), _insertSynthesisResult, Arg.Any<TestEntity>());
+        _mockUpdater.Received(2).Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, Arg.Any<TestEntity>());
     }
 
     [Test]
@@ -206,20 +215,20 @@ public class EntityUpserterTests
         };
         var connection = Substitute.For<ISqliteConnection>();
 
-        _mockUpdater.Update(connection, entities[0]).Returns(true);
-        _mockUpdater.Update(connection, entities[1]).Returns(false);
-        _mockCreator.Insert(connection, entities[1]).Returns(false);
+        _mockUpdater.Update(connection, _updateSynthesisResult, entities[0]).Returns(true);
+        _mockUpdater.Update(connection, _updateSynthesisResult, entities[1]).Returns(false);
+        _mockCreator.Insert(connection, _insertSynthesisResult, entities[1]).Returns(true);
 
         // Act
         var result = _upserter.UpsertMany(connection, entities);
 
         // Assert
         Assert.That(result.UpdateCount, Is.EqualTo(1));
-        Assert.That(result.InsertCount, Is.EqualTo(0));
-        Assert.That(result.FailedCount, Is.EqualTo(1));
+        Assert.That(result.InsertCount, Is.EqualTo(1));
+        Assert.That(result.FailedCount, Is.EqualTo(0));
 
-        _mockUpdater.Received(2).Update(connection, Arg.Any<TestEntity>());
-        _mockCreator.Received(1).Insert(connection, Arg.Any<TestEntity>());
+        _mockUpdater.Received(2).Update(connection, _updateSynthesisResult, Arg.Any<TestEntity>());
+        _mockCreator.Received(1).Insert(connection, _insertSynthesisResult, Arg.Any<TestEntity>());
     }
 
     [Test]

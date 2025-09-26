@@ -53,7 +53,7 @@ public class EntityCreatorTests
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Insert, Arg.Any<SqliteDbSchema>()).Returns(_mockSynthesizer);
 
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Insert, mockSchema, null, "INSERT INTO Test VALUES (1)", null);
-        _mockSynthesizer.Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
+        _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
         _creator = new EntityCreator(
             _connectionFactory,
@@ -83,7 +83,7 @@ public class EntityCreatorTests
         // Assert
         Assert.That(result, Is.True);
         _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
         _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, entity);
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
         _mockEntityWriter.Received(1).SetGeneratedKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, entity);

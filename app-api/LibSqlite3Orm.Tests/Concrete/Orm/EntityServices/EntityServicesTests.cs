@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -50,7 +51,7 @@ public class LibSqliteEntityServicesTests
             _mockContext);
     }
 
-    private class TestEntity
+    public class TestEntity
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -93,7 +94,8 @@ public class LibSqliteEntityServicesTests
         // Arrange
         var entity = new TestEntity { Id = 1, Name = "Test" };
         var connection = Substitute.For<ISqliteConnection>();
-        var synthesisResult = Substitute.For<DmlSqlSynthesisResult>();
+        var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Insert, new SqliteDbSchema(),
+            new SqliteDbSchemaTable(), string.Empty, null);
         _mockCreator.Insert(connection, synthesisResult, entity).Returns(true);
 
         // Act

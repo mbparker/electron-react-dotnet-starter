@@ -80,7 +80,7 @@ public class EntityUpdaterTests
         // Assert
         Assert.That(result, Is.True);
         _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
         _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, entity);
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
@@ -97,7 +97,7 @@ public class EntityUpdaterTests
 
         // Assert
         Assert.That(result, Is.False);
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
 

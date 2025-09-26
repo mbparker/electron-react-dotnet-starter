@@ -3,6 +3,7 @@ using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
+using LibSqlite3Orm.Concrete;
 using LibSqlite3Orm.Concrete.Orm.EntityServices;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
@@ -22,10 +23,17 @@ public class EntityDeleterTests
     private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
 
-    private class TestEntity
+    public class TestEntity
     {
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+
+    private SqliteDbSchema BuildSchema()
+    {
+        var builder = new SqliteDbSchemaBuilder(new SqliteFieldValueSerialization([], null));
+        builder.HasTable<TestEntity>().WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        return builder.Build();
     }
 
     [SetUp]
@@ -38,7 +46,7 @@ public class EntityDeleterTests
         _mockParameterPopulator = Substitute.For<ISqliteParameterPopulator>();
         _mockContext = Substitute.For<ISqliteOrmDatabaseContext>();
 
-        var mockSchema = Substitute.For<SqliteDbSchema>();
+        var mockSchema = BuildSchema();
         _mockContext.Schema.Returns(mockSchema);
         _mockContext.Filename.Returns("test.db");
 
@@ -52,7 +60,7 @@ public class EntityDeleterTests
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Delete, Arg.Any<SqliteDbSchema>()).Returns(_mockSynthesizer);
 
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Delete, mockSchema, null, "DELETE FROM Test WHERE Id = :Id", null);
-        _mockSynthesizer.Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
+        _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
         _deleter = new EntityDeleter(
             _connectionFactory,
@@ -81,8 +89,8 @@ public class EntityDeleterTests
         // Assert
         Assert.That(result, Is.EqualTo(2));
         _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
-        _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, Arg.Any<object>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockParameterPopulator.Received(1).Populate<TestEntity>(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters);
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
 
@@ -112,7 +120,7 @@ public class EntityDeleterTests
         // Assert
         Assert.That(result, Is.EqualTo(1));
         connection.DidNotReceive().Open(Arg.Any<string>(), Arg.Any<bool>());
-        _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), parameters, Arg.Any<object>());
+        _mockParameterPopulator.Received(1).Populate<TestEntity>(Arg.Any<DmlSqlSynthesisResult>(), parameters);
         command.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
 
@@ -138,7 +146,7 @@ public class EntityDeleterTests
         // Assert
         Assert.That(result, Is.EqualTo(5));
         _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
 
@@ -224,20 +232,6 @@ public class EntityDeleterTests
 
         // Assert
         Assert.That(result, Is.EqualTo(3));
-        _mockSynthesizer.Received(1).Synthesize(typeof(TestEntity), Arg.Any<SqliteDmlSqlSynthesisArgs>());
-    }
-
-    [Test]
-    public void DeleteAll_ForDifferentEntityType_UsesCorrectType()
-    {
-        // Arrange
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(2);
-
-        // Act
-        var result = _deleter.DeleteAll<string>();
-
-        // Assert
-        Assert.That(result, Is.EqualTo(2));
-        _mockSynthesizer.Received(1).Synthesize(typeof(string), Arg.Any<SqliteDmlSqlSynthesisArgs>());
+        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
     }
 }

@@ -15,12 +15,15 @@ public class SqliteDbFactory : ISqliteDbFactory
     public SqliteDbFactory(Func<ISqliteConnection> connectionFactory,
         Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory)
     {
-        this.connectionFactory = connectionFactory;
-        this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory;
+        this.connectionFactory = connectionFactory ?? throw new  ArgumentNullException(nameof(connectionFactory));
+        this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory ?? throw new  ArgumentNullException(nameof(ddlSqlSynthesizerFactory));
     }
     
     public void Create(SqliteDbSchema schema, string dbFilename, bool dbFileMustExist) 
     {
+        if (schema is null) throw new ArgumentNullException(nameof(schema));
+        if (dbFilename is null) throw new ArgumentNullException(nameof(dbFilename));
+        if (dbFilename.Trim() == string.Empty) throw new ArgumentException(nameof(dbFilename));
         var sql = SynthesizeCreateTablesAndIndexes(schema);
         using (var connection = connectionFactory())
         {

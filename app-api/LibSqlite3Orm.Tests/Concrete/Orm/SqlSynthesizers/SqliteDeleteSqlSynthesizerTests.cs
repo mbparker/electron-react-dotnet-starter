@@ -87,7 +87,7 @@ public class SqliteDeleteSqlSynthesizerTestsFixed
         Assert.That(result, Is.Not.Null);
         Assert.That(result.SynthesisKind, Is.EqualTo(SqliteDmlSqlSynthesisKind.Delete));
         Assert.That(result.SqlText, Is.EqualTo("DELETE FROM TestTable;"));
-        Assert.That(result.ExtractedParameters, Is.Null);
+        Assert.That(result.ExtractedParameters, Is.Empty);
         _whereClauseBuilderFactory.DidNotReceive().Invoke(Arg.Any<SqliteDbSchema>());
     }
 
