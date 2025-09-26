@@ -1,0 +1,42 @@
+name: Build .NET 9 API and Electron UI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: app-ui
+        run: npm ci
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        working-directory: app-ui
+        run: npm run buildwin
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        working-directory: app-ui
+        run: npm run buildmacdev
+
+      # Optionally, upload build artifacts
