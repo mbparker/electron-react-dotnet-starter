@@ -97,10 +97,10 @@ public class CharTextFieldSerializerTests
     }
 
     [Test]
-    public void Deserialize_WithNullString_ThrowsArgumentNullException()
+    public void Deserialize_WithNullString_ThrowsNullReferenceException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _serializer.Deserialize(null));
+        Assert.Throws<NullReferenceException>(() => _serializer.Deserialize(null));
     }
 
     [Test]

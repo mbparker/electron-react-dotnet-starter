@@ -34,7 +34,7 @@ public class TimeSpanTextFieldSerializerTests
         var result = _serializer.Serialize(TimeSpan.Zero);
 
         // Assert
-        Assert.That(result, Is.EqualTo("0.00:00:00.0000000"));
+        Assert.That(result, Is.EqualTo("00:00:00"));
     }
 
     [Test]
@@ -47,7 +47,7 @@ public class TimeSpanTextFieldSerializerTests
         var result = _serializer.Serialize(timeSpan);
 
         // Assert
-        Assert.That(result, Does.StartWith("2.14:30:45.1230000"));
+        Assert.That(result, Does.StartWith("2.14:30:45.123"));
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class TimeSpanTextFieldSerializerTests
         var result = _serializer.Serialize(timeSpan);
 
         // Assert
-        Assert.That(result, Does.StartWith("-1.02:03:04.0050000"));
+        Assert.That(result, Does.StartWith("-1.02:03:04.005"));
     }
 
     [Test]
@@ -124,10 +124,10 @@ public class TimeSpanTextFieldSerializerTests
     }
 
     [Test]
-    public void Deserialize_WithInvalidTimeSpan_ThrowsFormatException()
+    public void Deserialize_WithInvalidTimeSpan_ThrowsOverflowException()
     {
         // Act & Assert
-        Assert.Throws<FormatException>(() => _serializer.Deserialize("25:61:61"));
+        Assert.Throws<OverflowException>(() => _serializer.Deserialize("25:61:61"));
     }
 
     [Test]

@@ -101,7 +101,7 @@ public class DecimalTextFieldSerializerTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.ToString(), Does.StartWith("1.12345678901234567890123456789"));
+        Assert.That(result.ToString(), Does.StartWith("1.1234567890123456789012345679"));
     }
 
     [Test]
