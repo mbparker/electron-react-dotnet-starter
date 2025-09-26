@@ -35,7 +35,12 @@
   ],
   "linux": {
     "target": [
-      "appImage"
+      {
+        "target": "appImage",
+        "arch": [
+          "arm64"
+        ]
+      }
     ],
     "icon": "../resources/icons/",
     "category": "Utility",
@@ -54,7 +59,7 @@
       {
         "target": "dmg",
         "arch": [
-          "x64"
+          "arm64"
         ]
       }
     ],

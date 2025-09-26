@@ -39,15 +39,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      # --- Run NUnit Tests (before build) ---
       - name: Check dotnet location and version
         run: |
           which dotnet
           dotnet --info
-          
+
       - name: Clean .NET tools cache
         run: dotnet nuget locals all --clear
-        
+
+      # --- Run NUnit Tests (before build) ---
+      # --- macOS agents are run on Apple Silicon CPUS! ---
       - name: Run Unit Tests (macOS)
         if: runner.os == 'macOS'
         working-directory: app-api
@@ -60,7 +61,7 @@ jobs:
         working-directory: app-api
         run: dotnet test --logger "trx;LogFileName=test-results.trx"
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -69,19 +70,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Build (macOS)
+      - name: Build (macOS x64)
         if: runner.os == 'macOS'
         working-directory: app-ui
-        run: npm run buildmacdev
+        run: npm run buildmac-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Build (Linux)
-        if: runner.os == 'Linux'
+      - name: Build (macOS arm64)
+        if: runner.os == 'macOS'
         working-directory: app-ui
-        run: npm run buildlinux
+        run: npm run buildmac-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Build (Linux x64)
+        if: runner.os == 'Linux'
+        working-directory: app-ui
+        run: npm run buildlinux-x64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip x64 Mac App (macOS)
+        if: runner.os == 'macOS'
+        run: |          
+          cd app-ui/dist/mac && zip -r ElectronStarterApp-x64.zip ElectronStarterApp.app
+        shell: bash
+
+      - name: Zip arm64 Mac App (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd app-ui/dist/mac-arm64 && zip -r ElectronStarterApp-arm64.zip ElectronStarterApp.app
+        shell: bash
 
       - name: Zip win-unpacked directory (Windows)
         if: runner.os == 'Windows'
@@ -92,17 +112,17 @@ jobs:
       - name: Zip linux-unpacked directory (Linux)
         if: runner.os == 'Linux'
         run: |
-          cd app-ui/dist && zip -r linux-unpacked.zip linux-unpacked
+          cd app-ui/dist && zip -r linux-unpacked-x64.zip linux-unpacked
         shell: bash
 
-      - name: Upload Electron Artifact
+      - name: Upload Electron Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: electron-build-${{ runner.os }}
           path: |
-            app-ui/dist/mac/*.app
-            app-ui/dist/win-unpacked.zip
-            app-ui/dist/linux-unpacked.zip
+            app-ui/dist/mac/*.zip
+            app-ui/dist/mac-arm64/*.zip
+            app-ui/dist/*.zip
             app-ui/dist/*.dmg
             app-ui/dist/*.exe
             app-ui/dist/*.appimage

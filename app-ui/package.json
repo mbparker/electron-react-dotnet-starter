@@ -7,11 +7,13 @@
   "main": "app.js",
   "scripts": {
     "buildui": "webpack --mode production",
-    "buildelectron": "electron-builder build -c builder-config.json",
+    "buildelectron": "electron-builder build",
     "buildapi": "dotnet publish ../app-api/ElectronAppApiHost --self-contained --output ./dist/api",
-    "buildmacdev": "npm run buildui && npm run buildapi -- --runtime osx-x64 && npm run buildelectron -- -c.mac.identity=null",
-    "buildwin": "npm run buildui && npm run buildapi -- --runtime win-x64 && npm run buildelectron",
-    "buildlinux": "npm run buildui && npm run buildapi -- --runtime linux-x64 && npm run buildelectron"
+    "buildmac-x64": "npm run buildui && npm run buildapi -- --runtime osx-x64 && npm run buildelectron -- -c builder-config.json -c.mac.identity=null",
+    "buildmac-arm64": "npm run buildui && npm run buildapi -- --runtime osx-arm64 && npm run buildelectron -- -c builder-config-arm64.json -c.mac.identity=null",
+    "buildwin": "npm run buildui && npm run buildapi -- --runtime win-x64 && npm run buildelectron -- -c builder-config.json",
+    "buildlinux-x64": "npm run buildui && npm run buildapi -- --runtime linux-x64 && npm run buildelectron -- -c builder-config.json",
+    "buildlinux-arm64": "npm run buildui && npm run buildapi -- --runtime linux-arm64 && npm run buildelectron -- -c builder-config-arm64.json"
   },
   "dependencies": {
     "react": "^18.3.1",
