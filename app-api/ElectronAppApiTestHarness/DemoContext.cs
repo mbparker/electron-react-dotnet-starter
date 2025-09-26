@@ -1,4 +1,4 @@
-using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Types.Orm;
 
 namespace ElectronAppApiTestHarness;
@@ -8,6 +8,7 @@ public class DemoContext : SqliteOrmDatabaseContext
     public DemoContext(Func<SqliteDbSchemaBuilder> schemaBuilderFactory)
         : base(schemaBuilderFactory)
     {
+        Filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test.sqlite");
     }
     
     protected override void BuildSchema(SqliteDbSchemaBuilder builder)

@@ -1,4 +1,4 @@
-using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
 

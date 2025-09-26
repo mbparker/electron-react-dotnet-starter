@@ -1,8 +1,8 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class BooleanLong : ISqliteValueConverter
+public class BooleanLongFieldSerializer : ISqliteFieldSerializer
 {
     public Type RuntimeType => typeof(bool);
     public Type SerializedType => typeof(long);

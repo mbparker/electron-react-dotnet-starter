@@ -46,10 +46,7 @@ public class SqliteObjectRelationalMapping<TContext> : SqliteSchemaObjectRelatio
     {
         if (fileOperations.FileExists(Context.Filename))
         {
-            var color = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("DELETING DATABASE!!");
-            Console.ForegroundColor = color;
+            ConsoleLogger.WriteLine(ConsoleColor.Red, "DELETING DATABASE!!");
             fileOperations.DeleteFile(Context.Filename);
         }
     }

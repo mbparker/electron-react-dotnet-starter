@@ -3,8 +3,8 @@ namespace LibSqlite3Orm.Abstract;
 public interface ISqliteParameterCollectionAddTo
 {
     ISqliteParameter Add(string name, object value);
-    ISqliteParameter Add(string name, object value, Type converterType);
-    ISqliteParameter Add(string name, object value, ISqliteValueConverter converter);
+    ISqliteParameter Add(string name, object value, Type modelType);
+    ISqliteParameter Add(string name, object value, ISqliteFieldSerializer serializer);
 }
 
 public interface ISqliteParameterCollection : IEnumerable<ISqliteParameter>, ISqliteParameterCollectionAddTo

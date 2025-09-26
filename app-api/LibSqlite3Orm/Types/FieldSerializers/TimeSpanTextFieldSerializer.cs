@@ -1,9 +1,9 @@
 using System.Globalization;
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class TimeSpanText : ISqliteValueConverter
+public class TimeSpanTextFieldSerializer : ISqliteFieldSerializer
 {
     private const string Format = "d.hh:mm:ss.fffffff";
     

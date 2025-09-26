@@ -1,6 +1,6 @@
-using LibSqlite3Orm.Models.Events;
+using LibSqlite3Orm.Models.Orm.Events;
 
-namespace LibSqlite3Orm.Abstract;
+namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface IOrmGenerativeLogicTracer
 {

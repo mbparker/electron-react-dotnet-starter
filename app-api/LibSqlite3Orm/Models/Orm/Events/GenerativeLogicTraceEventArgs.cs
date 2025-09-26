@@ -1,4 +1,4 @@
-namespace LibSqlite3Orm.Models.Events;
+namespace LibSqlite3Orm.Models.Orm.Events;
 
 public class GenerativeLogicTraceEventArgs : EventArgs
 {

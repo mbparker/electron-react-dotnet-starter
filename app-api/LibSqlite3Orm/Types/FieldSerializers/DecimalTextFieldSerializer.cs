@@ -1,8 +1,8 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class DecimalText : ISqliteValueConverter
+public class DecimalTextFieldSerializer : ISqliteFieldSerializer
 {
     public Type RuntimeType => typeof(decimal);
     public Type SerializedType => typeof(string);

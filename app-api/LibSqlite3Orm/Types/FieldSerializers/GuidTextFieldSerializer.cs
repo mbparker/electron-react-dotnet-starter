@@ -1,8 +1,8 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class GuidText : ISqliteValueConverter
+public class GuidTextFieldSerializer : ISqliteFieldSerializer
 {
     public Type RuntimeType => typeof(Guid);
     public Type SerializedType => typeof(string);

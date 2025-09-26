@@ -27,21 +27,21 @@ public class SqliteParameterCollection : ISqliteParameterCollection
         return result;
     }
 
-    public ISqliteParameter Add(string name, object value, Type converterType)
+    public ISqliteParameter Add(string name, object value, Type modelType)
     {
         var result = parameterFactory(name, parameters.Count + 1);
-        if (converterType is not null)
-            result.UseConverter(converterType);
+        if (modelType is not null)
+            result.UseSerializer(modelType);
         result.Set(value);
         parameters.Add(result);
         return result;
     }
 
-    public ISqliteParameter Add(string name, object value, ISqliteValueConverter converter)
+    public ISqliteParameter Add(string name, object value, ISqliteFieldSerializer serializer)
     {
         var result = parameterFactory(name, parameters.Count + 1);
-        if (converter is not null)
-            result.UseConverter(converter);
+        if (serializer is not null)
+            result.UseSerializer(serializer);
         result.Set(value);
         parameters.Add(result);
         return result;

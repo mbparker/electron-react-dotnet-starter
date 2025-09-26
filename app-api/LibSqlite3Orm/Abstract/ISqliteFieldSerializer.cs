@@ -1,6 +1,6 @@
 namespace LibSqlite3Orm.Abstract;
 
-public interface ISqliteValueConverter
+public interface ISqliteFieldSerializer
 {
     Type RuntimeType { get; }
     Type SerializedType { get; }

@@ -7,18 +7,18 @@ using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.PInvoke.Types.Enums;
-using LibSqlite3Orm.Types.ValueConverters;
+using LibSqlite3Orm.Types.FieldSerializers;
 
 namespace LibSqlite3Orm.Types.Orm;
 
 public class SqliteDbSchemaBuilder
 {
-    private readonly Func<Type, ISqliteValueConverter> converterFactory;
+    private readonly ISqliteFieldValueSerialization serialization;
     private SqliteDbSchemaOptions schemaOptions;
     
-    public SqliteDbSchemaBuilder(Func<Type, ISqliteValueConverter> converterFactory)
+    public SqliteDbSchemaBuilder(ISqliteFieldValueSerialization serialization)
     {
-        this.converterFactory = converterFactory;
+        this.serialization = serialization;
         schemaOptions = new SqliteDbSchemaOptions();
     }
 
@@ -57,29 +57,14 @@ public class SqliteDbSchemaBuilder
                 var serializedType = column.Member.GetValueType();
                 schemaTableCol.ModelFieldTypeName = serializedType.AssemblyQualifiedName;
                 schemaTableCol.SerializedFieldTypeName = schemaTableCol.ModelFieldTypeName;
-                schemaTableCol.ConverterTypeName = column.ConverterType?.AssemblyQualifiedName;
-                if (column.ConverterType is not null)
-                {
-                    var converter = converterFactory(column.ConverterType);
-                    serializedType = converter.SerializedType;
-                    schemaTableCol.SerializedFieldTypeName = serializedType.AssemblyQualifiedName;
-                }
-                else
-                {
-                    var converterType = SelectAppropriateConverter(serializedType);
-                    if (converterType is not null)
-                    {
-                        var converter = converterFactory(converterType);
-                        serializedType = converter.SerializedType;
-                        schemaTableCol.ConverterTypeName = converterType.AssemblyQualifiedName;
-                        schemaTableCol.SerializedFieldTypeName = serializedType.AssemblyQualifiedName;
-                    }
-                }
+
+                serializedType = serialization[serializedType]?.SerializedType ?? serializedType;
+                schemaTableCol.SerializedFieldTypeName = serializedType.AssemblyQualifiedName;
 
                 var colAffinity = MapDbFieldAffinity(serializedType);
                 if (colAffinity is null)
                     throw new InvalidOperationException(
-                        $"Type {serializedType} is not directly storable. Consider using an {nameof(ISqliteValueConverter)} implementation for field {schemaTableCol.Name} on table {schemaTable.Name}.");
+                        $"Type {serializedType} is not directly storable. Consider using an {nameof(ISqliteFieldSerializer)} implementation for field {schemaTableCol.Name} on table {schemaTable.Name}.");
                 schemaTableCol.DbFieldTypeAffinity = colAffinity.Value;
                 schemaTableCol.Collation = column.Collation;
                 schemaTableCol.DefaultValueLiteral = column.DefaultValueLiteral;
@@ -254,69 +239,6 @@ public class SqliteDbSchemaBuilder
             return SqliteColType.Blob;
         }
 
-        return null;
-    }
-
-    private Type SelectAppropriateConverter(Type type)
-    {
-        if (MapDbFieldAffinity(type) is not null) 
-            return null; // Doesn't require conversion
-        
-        var nullableType = Nullable.GetUnderlyingType(type);
-        type = nullableType ?? type;
-        
-        if (type == typeof(bool))
-        {
-            return typeof(BooleanLong);
-        }
-        
-        if (type == typeof(char))
-        {
-            return typeof(CharText);
-        }        
-        
-        if (type == typeof(decimal))
-        {
-            return typeof(DecimalText);
-        }
-
-        if (type == typeof(DateTime))
-        {
-            return typeof(DateTimeText);
-        }
-
-        if (type == typeof(DateTimeOffset))
-        {
-            return typeof(DateTimeOffsetText);
-        }
-
-        if (type == typeof(TimeSpan))
-        {
-            return typeof(TimeSpanText);
-        }
-
-        if (type == typeof(DateOnly))
-        {
-            return typeof(DateOnlyText);
-        }
-
-        if (type == typeof(TimeOnly))
-        {
-            return typeof(TimeOnlyText);
-        }
-
-        if (type == typeof(Guid))
-        {
-            return typeof(GuidText);
-        }
-
-        if (type.IsEnum)
-        {
-            var converterClass = typeof(EnumString<>);
-            return converterClass.MakeGenericType(type);
-        }
-
-        // Can't be automatically converted
         return null;
     }
 }
@@ -505,7 +427,7 @@ public class SqliteColumnOptionsBuilder
 
     public SqliteColumnOptionsBuilder WithConversion<TConverter>()
     {
-        options.ConverterType = typeof(TConverter);
+        options.SerializerType = typeof(TConverter);
         return this;
     }
 

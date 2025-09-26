@@ -41,7 +41,7 @@ public class SqliteTableColumnOptions
     
     public string Name { get; set; }
     
-    public Type ConverterType { get; set; }
+    public Type SerializerType { get; set; }
     
     public bool IsNotNull { get; set; }
     public SqliteLiteConflictAction? IsNotNullConflictAction { get; set; }

@@ -50,7 +50,7 @@ public class SqliteDbSchemaTableColumn
     public SqliteLiteConflictAction? IsUniqueConflictAction { get; set; }
     public SqliteCollation? Collation { get; set; }
     public string DefaultValueLiteral { get; set; }
-    public string ConverterTypeName { get; set; }
+    //public string SerializerTypeName { get; set; }
 }
 
 public class SqliteDbSchemaTablePrimaryKeyColumn

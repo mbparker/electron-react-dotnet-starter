@@ -2,7 +2,7 @@ using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
 
-namespace LibSqlite3Orm.Abstract;
+namespace LibSqlite3Orm.Abstract.Orm;
 
 public abstract class SqliteOrmDatabaseContext : ISqliteOrmDatabaseContext
 {

@@ -9,7 +9,6 @@ using LibSqlite3Orm.Models.Orm;
 using (var container = ContainerRegistration.RegisterDependencies())
 {
     var orm = container.Resolve<ISqliteObjectRelationalMapping<DemoContext>>();
-    orm.Context.Filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test.sqlite");
     
     orm.DeleteDatabase();
     

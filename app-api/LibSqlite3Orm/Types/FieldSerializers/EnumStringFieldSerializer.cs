@@ -1,12 +1,18 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class EnumString<TEnum> : ISqliteValueConverter where TEnum : Enum 
+public class EnumStringFieldSerializer : ISqliteEnumFieldSerializer 
 {
-    public Type RuntimeType => typeof(TEnum);
+    public Type RuntimeType => EnumType;
     public Type SerializedType => typeof(string);
-    
+    public Type EnumType { get; }
+
+    public EnumStringFieldSerializer(Type enumType)
+    {
+        EnumType = enumType;
+    }
+
     public object Serialize(object value)
     {
         return value.ToString();

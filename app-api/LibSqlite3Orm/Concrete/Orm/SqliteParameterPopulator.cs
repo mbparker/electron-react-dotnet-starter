@@ -10,12 +10,15 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteParameterPopulator : ISqliteParameterPopulator
 {
     private readonly ISqliteUniqueIdGenerator uniqueIdGenerator;
-    
-    public SqliteParameterPopulator(ISqliteUniqueIdGenerator  uniqueIdGenerator)
+    private readonly ISqliteFieldValueSerialization serialization;
+
+    public SqliteParameterPopulator(ISqliteUniqueIdGenerator uniqueIdGenerator,
+        ISqliteFieldValueSerialization serialization)
     {
-        this.uniqueIdGenerator = uniqueIdGenerator;    
+        this.uniqueIdGenerator = uniqueIdGenerator;
+        this.serialization = serialization;
     }
-    
+
     public void Populate<T>(DmlSqlSynthesisResult synthesisResult,
         ISqliteParameterCollection parameterCollection, T entity)
     {
@@ -55,10 +58,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             foreach (var parm in synthesisResult.ExtractedParameters.Values)
             {
                 var col = synthesisResult.Table.Columns[parm.DbFieldName];
-                Type converterType = null;
-                if (!string.IsNullOrWhiteSpace(col.ConverterTypeName))
-                    converterType = Type.GetType(col.ConverterTypeName);
-                parameterCollection.Add(parm.Name, parm.Value, converterType);
+                parameterCollection.Add(parm.Name, parm.Value, serialization[Type.GetType(col.ModelFieldTypeName)]);
             }
         }
     }
@@ -86,10 +86,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                Type converterType = null;
-                if (!string.IsNullOrWhiteSpace(col.ConverterTypeName))
-                    converterType = Type.GetType(col.ConverterTypeName);
-                parameterCollection.Add(col.Name, member.GetValue(entity), converterType);
+                parameterCollection.Add(col.Name, member.GetValue(entity), serialization[Type.GetType(col.ModelFieldTypeName)]);
             }
             else
                 throw new InvalidDataContractException(
@@ -112,10 +109,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                Type converterType = null;
-                if (!string.IsNullOrWhiteSpace(col.ConverterTypeName))
-                    converterType = Type.GetType(col.ConverterTypeName);
-                parameterCollection.Add(col.Name, member.GetValue(entity), converterType);
+                parameterCollection.Add(col.Name, member.GetValue(entity), serialization[Type.GetType(col.ModelFieldTypeName)]);
             }
             else
                 throw new InvalidDataContractException(
@@ -128,10 +122,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(keyCol.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                Type converterType = null;
-                if (!string.IsNullOrWhiteSpace(keyCol.ConverterTypeName))
-                    converterType = Type.GetType(keyCol.ConverterTypeName);
-                parameterCollection.Add(keyCol.Name, member.GetValue(entity), converterType);
+                parameterCollection.Add(keyCol.Name, member.GetValue(entity), serialization[Type.GetType(keyCol.ModelFieldTypeName)]);
             }
             else
                 throw new InvalidDataContractException(

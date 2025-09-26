@@ -3,37 +3,36 @@ using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.PInvoke;
 using LibSqlite3Orm.PInvoke.Types.Enums;
-using LibSqlite3Orm.Types.ValueConverters;
 
 namespace LibSqlite3Orm.Concrete;
 
 public class SqliteParameter : ISqliteParameter
 {
     private static readonly IntPtr NoDeallocator = new(-1);
-    private readonly ISqliteValueConverterCache converterCache;
+    private readonly ISqliteFieldValueSerialization serialization;
     private object serialzedValue;
     private SqliteColType serializedTypeAffinity = SqliteColType.Null;
-    private ISqliteValueConverter converterToUse;
-    private ISqliteValueConverter fallbackConverter;
+    private ISqliteFieldSerializer serializerToUse;
+    private ISqliteFieldSerializer fallbackSerializer;
     
-    public SqliteParameter(string name, int index, ISqliteValueConverterCache converterCache)
+    public SqliteParameter(string name, int index, ISqliteFieldValueSerialization serialization)
     {
         Name = name;
         Index = index;
-        this.converterCache = converterCache;
+        this.serialization = serialization;
     }
     
     public string Name { get; }
     public int Index { get; }
 
-    public void UseConverter(ISqliteValueConverter converter)
+    public void UseSerializer(ISqliteFieldSerializer serializer)
     {
-        converterToUse = converter;
+        serializerToUse = serializer;
     }
-
-    public void UseConverter(Type converterType)
+    
+    public void UseSerializer(Type modelType)
     {
-        converterToUse = converterCache[converterType];
+        serializerToUse = serialization[modelType];
     }
 
     public void Set(object value)
@@ -81,7 +80,7 @@ public class SqliteParameter : ISqliteParameter
 
     private void SerializeValue(object value)
     {
-        fallbackConverter = null;
+        fallbackSerializer = null;
         
         if (value is null)
         {
@@ -90,8 +89,8 @@ public class SqliteParameter : ISqliteParameter
             return;
         }
 
-        if (converterToUse is not null)
-            serialzedValue = converterToUse.Serialize(value);
+        if (serializerToUse is not null)
+            serialzedValue = serializerToUse.Serialize(value);
         else
             serialzedValue = value;
         
@@ -171,80 +170,88 @@ public class SqliteParameter : ISqliteParameter
             return;
         }
         
-        // These cannot be stored as-is. The caller neglected to specify a converter, or chose an invalid converter.
+        // These cannot be stored as-is. The caller neglected to specify a serializer, or chose an invalid serializer.
 
         if (type == typeof(bool))
         {
             serializedTypeAffinity = SqliteColType.Integer;
-            fallbackConverter = converterCache[typeof(BooleanLong)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
         
         if (type == typeof(char))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(CharText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }        
         
         if (type == typeof(decimal))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(DecimalText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(DateTime))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(DateTimeText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(DateTimeOffset))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(DateTimeOffsetText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(TimeSpan))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(TimeSpanText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(DateOnly))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(DateOnlyText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(TimeOnly))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(TimeOnlyText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
 
         if (type == typeof(Guid))
         {
             serializedTypeAffinity = SqliteColType.Text;
-            fallbackConverter = converterCache[typeof(GuidText)];
-            serialzedValue = fallbackConverter.Serialize(serialzedValue);
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
+            return;
+        }
+
+        if (type.IsEnum)
+        {
+            serializedTypeAffinity = SqliteColType.Text;
+            fallbackSerializer = serialization[type];
+            serialzedValue = fallbackSerializer.Serialize(serialzedValue);
             return;
         }
         
-        throw new InvalidOperationException($"Type {type} is not supported. Consider using an {nameof(ISqliteValueConverter)} implementation.");
+        throw new InvalidOperationException($"Type {type} is not supported. Consider using an {nameof(ISqliteFieldSerializer)} implementation.");
     }
 }

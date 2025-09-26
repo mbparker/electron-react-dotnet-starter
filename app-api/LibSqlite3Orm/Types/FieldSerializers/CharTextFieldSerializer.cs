@@ -1,8 +1,8 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class CharText : ISqliteValueConverter
+public class CharTextFieldSerializer : ISqliteFieldSerializer
 {
     public Type RuntimeType => typeof(char);
     public Type SerializedType => typeof(string);

@@ -1,4 +1,5 @@
 using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.PInvoke;
 using LibSqlite3Orm.PInvoke.Types.Enums;
 using LibSqlite3Orm.PInvoke.Types.Exceptions;

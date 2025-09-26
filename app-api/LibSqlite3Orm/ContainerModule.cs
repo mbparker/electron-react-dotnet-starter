@@ -10,7 +10,8 @@ using LibSqlite3Orm.Concrete.Orm.EntityServices;
 using LibSqlite3Orm.Concrete.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
-using LibSqlite3Orm.Types.ValueConverters;
+using LibSqlite3Orm.Types.Orm.FieldConverters;
+using LibSqlite3Orm.Types.FieldSerializers;
 
 namespace LibSqlite3Orm;
 
@@ -22,7 +23,7 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteTransaction>().As<ISqliteTransaction>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteCommand>().As<ISqliteCommand>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameter>().As<ISqliteParameter>().InstancePerDependency().ExternallyOwned();
-        builder.RegisterType<SqliteValueConverterCache>().As<ISqliteValueConverterCache>().InstancePerDependency().ExternallyOwned();
+        builder.RegisterType<SqliteFieldValueSerialization>().As<ISqliteFieldValueSerialization>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameterCollection>().As<ISqliteParameterCollection>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameterPopulator>().As<ISqliteParameterPopulator>().SingleInstance();
         builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().SingleInstance();
@@ -33,17 +34,19 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteDataColumn>().As<ISqliteDataColumn>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteDataReader>().As<ISqliteDataReader>().InstancePerDependency().ExternallyOwned();
 
-        builder.RegisterType<DateOnlyText>().SingleInstance();
-        builder.RegisterType<DateTimeOffsetText>().SingleInstance();
-        builder.RegisterType<DateTimeText>().SingleInstance();
-        builder.RegisterType<DecimalText>().SingleInstance();
-        builder.RegisterType<GuidText>().SingleInstance();
-        builder.RegisterType<TimeOnlyText>().SingleInstance();
-        builder.RegisterType<TimeSpanText>().SingleInstance();
-        builder.RegisterType<BooleanLong>().SingleInstance();
-        builder.RegisterType<CharText>().SingleInstance();
-        builder.RegisterGeneric(typeof(EnumString<>)).InstancePerDependency();
-        builder.RegisterGeneric(typeof(EnumLong<>)).InstancePerDependency();
+        builder.RegisterType<DateOnlyTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<DateTimeOffsetTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<DateTimeTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<DecimalTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<GuidTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<TimeOnlyTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<TimeSpanTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<BooleanLongFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<CharTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<EnumStringFieldSerializer>().As<ISqliteEnumFieldSerializer>().InstancePerDependency();
+
+        builder.RegisterType<SqliteFieldConversion>().As<ISqliteFieldConversion>().SingleInstance();
+        builder.RegisterType<IntegralFieldConverter>().As<ISqliteFailoverFieldConverter>().SingleInstance();
 
         builder.RegisterType<EntityCreator>().As<IEntityCreator>().InstancePerDependency();
         builder.RegisterType<EntityUpdater>().As<IEntityUpdater>().InstancePerDependency();
@@ -51,17 +54,6 @@ public class ContainerModule : Module
         builder.RegisterType<EntityGetter>().As<IEntityGetter>().InstancePerDependency();
         builder.RegisterType<EntityDeleter>().As<IEntityDeleter>().InstancePerDependency();
         builder.RegisterType<EntityServices>().As<IEntityServices>().InstancePerDependency();
-        
-        builder.Register<Func<Type, ISqliteValueConverter>>(c =>
-        {
-            var ctx = c.Resolve<IComponentContext>();
-            return (type) =>
-            {
-                if (ctx.Resolve(type) is not ISqliteValueConverter result)
-                    throw new InvalidCastException($"Type {type} does not implement {nameof(ISqliteValueConverter)}.");
-                return result;
-            };
-        });
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
         builder.RegisterGeneric(typeof(SqliteObjectRelationalMapping<>)).As(typeof(ISqliteObjectRelationalMapping<>))

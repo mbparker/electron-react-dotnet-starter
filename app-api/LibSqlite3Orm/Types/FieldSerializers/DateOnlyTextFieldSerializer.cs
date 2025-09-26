@@ -1,9 +1,8 @@
-using System.Globalization;
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class DateOnlyText : ISqliteValueConverter
+public class DateOnlyTextFieldSerializer : ISqliteFieldSerializer
 {
     private const string Format = "yyyy-MM-dd";
     

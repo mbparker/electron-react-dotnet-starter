@@ -1,8 +1,8 @@
 using LibSqlite3Orm.Abstract;
 
-namespace LibSqlite3Orm.Types.ValueConverters;
+namespace LibSqlite3Orm.Types.FieldSerializers;
 
-public class TimeOnlyText : ISqliteValueConverter
+public class TimeOnlyTextFieldSerializer : ISqliteFieldSerializer
 {
     private const string Format = "HH:mm:ss.fffffff";
     

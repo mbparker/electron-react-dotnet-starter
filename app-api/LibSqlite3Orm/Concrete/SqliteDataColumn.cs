@@ -2,22 +2,21 @@ using System.ComponentModel;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.PInvoke;
 using LibSqlite3Orm.PInvoke.Types.Enums;
-using LibSqlite3Orm.Types.ValueConverters;
 
 namespace LibSqlite3Orm.Concrete;
 
 public class SqliteDataColumn : ISqliteDataColumn
 {
     private readonly IntPtr statement;
-    private readonly ISqliteValueConverterCache converterCache;
-    private ISqliteValueConverter converterToUse;
+    private readonly ISqliteFieldValueSerialization serialization;
+    private ISqliteFieldSerializer serializerToUse;
     private object serializedValue;
     
-    public SqliteDataColumn(int index, IntPtr statement, ISqliteValueConverterCache converterCache)
+    public SqliteDataColumn(int index, IntPtr statement, ISqliteFieldValueSerialization serialization)
     {
         Index = index;
         this.statement = statement;
-        this.converterCache = converterCache;
+        this.serialization = serialization;
         Name = SqliteExternals.ColumnName(this.statement, Index);
         TypeAffinity = SqliteExternals.ColumnType(this.statement, Index);
         ReadSerializedValue();
@@ -27,14 +26,14 @@ public class SqliteDataColumn : ISqliteDataColumn
     public int Index { get; }
     public SqliteColType TypeAffinity { get; }
     
-    public void UseConverter(ISqliteValueConverter converter)
+    public void UseSerializer(ISqliteFieldSerializer serializer)
     {
-        converterToUse = converter;
+        serializerToUse = serializer;
     }
 
-    public void UseConverter(Type converterType)
+    public void UseSerializer(Type modelType)
     {
-        converterToUse = converterCache[converterType];
+        serializerToUse = serialization[modelType];
     }
 
     public object Value()
@@ -50,11 +49,11 @@ public class SqliteDataColumn : ISqliteDataColumn
     public object ValueAs(Type type)
     {
         if (serializedValue is null) return null;
-        var targetType = converterToUse is not null ? converterToUse.SerializedType : type;
+        var targetType = serializerToUse is not null ? serializerToUse.SerializedType : type;
         var nullableType = Nullable.GetUnderlyingType(targetType);
         targetType = nullableType ?? targetType;        
         var value = DeserializeValue(targetType);
-        return converterToUse?.Deserialize(value) ?? value;
+        return serializerToUse?.Deserialize(value) ?? value;
     }    
 
     private void ReadSerializedValue()
@@ -104,13 +103,13 @@ public class SqliteDataColumn : ISqliteDataColumn
         }
         
         if (result is null)
-            throw new InvalidOperationException($"Type {serializedValue.GetType()} could not be converted to {targetType}. Consider using an {nameof(ISqliteValueConverter)} implementation.");
+            throw new InvalidOperationException($"Type {serializedValue.GetType()} could not be converted to {targetType}. Consider using an {nameof(ISqliteFieldSerializer)} implementation.");
         return result;
     }
     
     private object DeserializeInteger(Type targetType)
     {
-        if (targetType == typeof(bool)) return converterCache[typeof(BooleanLong)].Deserialize(serializedValue);
+        if (targetType == typeof(bool)) return serialization[typeof(bool)].Deserialize(serializedValue);
         
         if (targetType == typeof(sbyte)) return Convert.ToSByte(serializedValue);
         if (targetType == typeof(short)) return Convert.ToInt16(serializedValue);
@@ -134,14 +133,15 @@ public class SqliteDataColumn : ISqliteDataColumn
 
     private object DeserializeText(Type targetType)
     {
-        if (targetType == typeof(char)) return converterCache[typeof(CharText)].Deserialize(serializedValue);
-        if (targetType == typeof(decimal)) return converterCache[typeof(DecimalText)].Deserialize(serializedValue);
-        if (targetType == typeof(DateTime)) return converterCache[typeof(DateTimeText)].Deserialize(serializedValue);
-        if (targetType == typeof(DateTimeOffset)) return converterCache[typeof(DateTimeOffsetText)].Deserialize(serializedValue);
-        if (targetType == typeof(TimeSpan)) return converterCache[typeof(TimeSpanText)].Deserialize(serializedValue);
-        if (targetType == typeof(DateOnly)) return converterCache[typeof(DateOnlyText)].Deserialize(serializedValue);
-        if (targetType == typeof(TimeOnly)) return converterCache[typeof(TimeOnlyText)].Deserialize(serializedValue);
-        if (targetType == typeof(Guid)) return converterCache[typeof(GuidText)].Deserialize(serializedValue);
+        if (targetType.IsEnum) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(char)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(decimal)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(DateTime)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(DateTimeOffset)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(TimeSpan)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(DateOnly)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(TimeOnly)) return serialization[targetType].Deserialize(serializedValue);
+        if (targetType == typeof(Guid)) return serialization[targetType].Deserialize(serializedValue);
         
         if (targetType == typeof(string)) return (string)serializedValue;
         

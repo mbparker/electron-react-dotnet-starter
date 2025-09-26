@@ -8,8 +8,8 @@ public interface ISqliteDataColumn
     int Index { get; }
     SqliteColType TypeAffinity { get; }
     
-    void UseConverter(ISqliteValueConverter converter);
-    void UseConverter(Type converterType);
+    void UseSerializer(ISqliteFieldSerializer serializer);
+    void UseSerializer(Type modelType);
 
     object Value();
     T ValueAs<T>();
