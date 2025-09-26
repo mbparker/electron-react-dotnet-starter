@@ -58,7 +58,19 @@ jobs:
         working-directory: app-ui
         run: npm run buildlinux
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip win-unpacked directory (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/win-unpacked.zip
+        shell: pwsh
+
+      - name: Zip linux-unpacked directory (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd app-ui/dist && zip -r linux-unpacked.zip linux-unpacked
+        shell: bash
 
       - name: Upload Electron Artifact
         uses: actions/upload-artifact@v4
@@ -66,8 +78,8 @@ jobs:
           name: electron-build-${{ runner.os }}
           path: |
             app-ui/dist/mac/*.app
-            app-ui/dist/win-unpacked/**
-            app-ui/dist/linux-unpacked/**
+            app-ui/dist/win-unpacked.zip
+            app-ui/dist/linux-unpacked.zip
             app-ui/dist/*.dmg
             app-ui/dist/*.exe
             app-ui/dist/*.appimage
@@ -96,7 +108,7 @@ jobs:
           name: electron-build-Linux
           path: artifacts/linux
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
