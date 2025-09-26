@@ -116,6 +116,12 @@ jobs:
           Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/ElectronStarterApp-win-x64.zip
         shell: pwsh
 
+      - name: Rename the x64 AppImage (Linux x64)
+        if: runner.os == 'Linux'
+        run: |
+          cd app-ui/dist && mv ElectronStarterApp-linux-x86_64.AppImage ElectronStarterApp-linux-x64.AppImage
+        shell: bash
+
       - name: Zip linux-unpacked directory (Linux x64)
         if: runner.os == 'Linux'
         run: |
@@ -194,7 +200,7 @@ jobs:
         with:
           name: ElectronStarterApp-linux-x64.AppImage
           path: |
-            app-ui/dist/ElectronStarterApp-linux-x86_64.AppImage
+            app-ui/dist/ElectronStarterApp-linux-x64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
