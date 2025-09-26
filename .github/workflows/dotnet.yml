@@ -194,7 +194,7 @@ jobs:
         with:
           name: ElectronStarterApp-linux-x64.AppImage
           path: |
-            app-ui/dist/ElectronStarterApp-linux-x64.AppImage
+            app-ui/dist/ElectronStarterApp-linux-x86_64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
