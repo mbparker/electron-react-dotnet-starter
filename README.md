@@ -1,4 +1,7 @@
 # electron-react-dotnet-starter
+
+[![Build and Release .NET 9 API and Electron UI](https://github.com/mbparker/electron-react-dotnet-starter/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/mbparker/electron-react-dotnet-starter/actions)
+
 Boilerplate project for cross platform Electron apps using React with MUI for the UI, and .NET 9 powering the logic.
 
 UI is Typescript, and uses tsyringe for dependency injection. Webpack is used for building rather than Vite because it preserves the injected type metadata required by tsyringe. No framework (such as Next.Js) is used.
