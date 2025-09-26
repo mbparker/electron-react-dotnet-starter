@@ -138,7 +138,7 @@ jobs:
             app-ui/dist/*.zip
             app-ui/dist/*.dmg
             app-ui/dist/*.exe
-            app-ui/dist/*.appimage
+            app-ui/dist/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
