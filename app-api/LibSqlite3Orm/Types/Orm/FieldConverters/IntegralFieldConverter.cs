@@ -18,9 +18,16 @@ public class IntegralFieldConverter : ISqliteFailoverFieldConverter
             throw new NotSupportedException($"{nameof(IntegralFieldConverter)} cannot convert {typeFrom.Name} ({realTypeFrom.Name}) to {typeTo.Name} ({realTypeTo.Name}): {reason}");
         if (value is null)
             return typeTo.IsValueType ? Activator.CreateInstance(typeTo) : null;
-        return TypeOfIConvertible.InvokeMember(nameof(IConvertible.ToType),
-            BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null,
-            value, [realTypeTo, formatProvider]);
+        try
+        {
+            return TypeOfIConvertible.InvokeMember(nameof(IConvertible.ToType),
+                BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null,
+                value, [realTypeTo, formatProvider]);
+        }
+        catch (TargetInvocationException e)
+        {
+            throw e.InnerException ?? e;
+        }
     }
     
     private bool CanConvert(Type typeFrom, Type typeTo, out Type realTypeFrom, out Type realTypeTo, out string reason)

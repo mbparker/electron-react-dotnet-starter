@@ -28,7 +28,7 @@ public class EntityDeleter : IEntityDeleter
     
     public int Delete<T>(Expression<Func<T, bool>> predicate)
     {
-        if (predicate is null) throw new  ArgumentNullException(nameof(predicate));
+        if (predicate is null) throw new ArgumentNullException(nameof(predicate));
         using (var connection = connectionFactory())
         {
             connection.Open(context.Filename, true);
@@ -38,7 +38,7 @@ public class EntityDeleter : IEntityDeleter
     
     public int Delete<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
     {
-        if (predicate is null) throw new  ArgumentNullException(nameof(predicate));
+        if (predicate is null) throw new ArgumentNullException(nameof(predicate));
         return DeleteInternal(connection, predicate);  
     }
 
