@@ -16,30 +16,42 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Set up .NET 9
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Install dependencies
         working-directory: app-ui
         run: npm ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         working-directory: app-ui
         run: npm run buildwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build (macOS)
         if: runner.os == 'macOS'
         working-directory: app-ui
         run: npm run buildmacdev
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload Electron Artifact
         uses: actions/upload-artifact@v4
@@ -48,6 +60,8 @@ jobs:
           path: |
             app-ui/dist/mac/*.app
             app-ui/dist/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
   release:
     needs: build
@@ -58,10 +72,14 @@ jobs:
         with:
           name: electron-build-Windows
           path: artifacts/windows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           name: electron-build-macOS
           path: artifacts/macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
@@ -70,4 +88,4 @@ jobs:
             artifacts/windows/**
             artifacts/macos/**
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
