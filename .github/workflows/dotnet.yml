@@ -91,6 +91,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Build (Linux arm64)
+        if: runner.os == 'Linux'
+        working-directory: app-ui
+        run: npm run buildlinux-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
       - name: Zip x64 Mac App (macOS)
         if: runner.os == 'macOS'
         run: |          
@@ -109,10 +116,16 @@ jobs:
           Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/win-unpacked.zip
         shell: pwsh
 
-      - name: Zip linux-unpacked directory (Linux)
+      - name: Zip linux-unpacked directory (Linux x64)
         if: runner.os == 'Linux'
         run: |
           cd app-ui/dist && zip -r linux-unpacked-x64.zip linux-unpacked
+        shell: bash
+
+      - name: Zip linux-arm64-unpacked directory (Linux arm64)
+        if: runner.os == 'Linux'
+        run: |
+          cd app-ui/dist && zip -r linux-unpacked-arm64.zip linux-arm64-unpacked
         shell: bash
 
       - name: Upload Electron Build Artifacts
