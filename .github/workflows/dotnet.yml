@@ -119,13 +119,13 @@ jobs:
       - name: Zip linux-unpacked directory (Linux x64)
         if: runner.os == 'Linux'
         run: |
-          cd app-ui/dist && zip -r linux-unpacked-x64.zip ElectronStarterApp-linux-x64.zip
+          cd app-ui/dist && zip -r ElectronStarterApp-linux-x64.zip linux-unpacked
         shell: bash
 
       - name: Zip linux-arm64-unpacked directory (Linux arm64)
         if: runner.os == 'Linux'
         run: |
-          cd app-ui/dist && zip -r linux-unpacked-arm64.zip ElectronStarterApp-linux-arm64.zip
+          cd app-ui/dist && zip -r ElectronStarterApp-linux-arm64.zip linux-arm64-unpacked
         shell: bash
 
       - name: Upload Installer Artifact (macOS x64)
@@ -235,19 +235,61 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: electron-build-Windows
+          name: ElectronStarterApp-win-x64.exe
           path: artifacts/windows
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
-          name: electron-build-macOS
+          name: ElectronStarterApp-win-x64.zip
+          path: artifacts/windows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-x64.dmg
           path: artifacts/macos
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
-          name: electron-build-Linux
+          name: ElectronStarterApp-mac-x64.zip
+          path: artifacts/macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-arm64.dmg
+          path: artifacts/macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-arm64.zip
+          path: artifacts/macos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-x64.AppImage
+          path: artifacts/linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-x64.zip
+          path: artifacts/linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-arm64.AppImage
+          path: artifacts/linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-arm64.zip
           path: artifacts/linux
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
