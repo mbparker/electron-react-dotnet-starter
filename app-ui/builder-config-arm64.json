@@ -6,6 +6,7 @@
   "buildVersion": "1.0.0",
   "compression": "maximum",
   "asar": true,
+  "artifactName": "${productName}-${os}-${arch}.${ext}",
   "extraResources": [
     "preload.js",
     {

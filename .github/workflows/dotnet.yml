@@ -101,44 +101,130 @@ jobs:
       - name: Zip x64 Mac App (macOS)
         if: runner.os == 'macOS'
         run: |          
-          cd app-ui/dist/mac && zip -r ElectronStarterApp-x64.zip ElectronStarterApp.app
+          cd app-ui/dist/mac && zip -r ElectronStarterApp-mac-x64.zip ElectronStarterApp.app
         shell: bash
 
       - name: Zip arm64 Mac App (macOS)
         if: runner.os == 'macOS'
         run: |
-          cd app-ui/dist/mac-arm64 && zip -r ElectronStarterApp-arm64.zip ElectronStarterApp.app
+          cd app-ui/dist/mac-arm64 && zip -r ElectronStarterApp-mac-arm64.zip ElectronStarterApp.app
         shell: bash
 
       - name: Zip win-unpacked directory (Windows)
         if: runner.os == 'Windows'
         run: |
-          Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/win-unpacked.zip
+          Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/ElectronStarterApp-win-x64.zip
         shell: pwsh
 
       - name: Zip linux-unpacked directory (Linux x64)
         if: runner.os == 'Linux'
         run: |
-          cd app-ui/dist && zip -r linux-unpacked-x64.zip linux-unpacked
+          cd app-ui/dist && zip -r linux-unpacked-x64.zip ElectronStarterApp-linux-x64.zip
         shell: bash
 
       - name: Zip linux-arm64-unpacked directory (Linux arm64)
         if: runner.os == 'Linux'
         run: |
-          cd app-ui/dist && zip -r linux-unpacked-arm64.zip linux-arm64-unpacked
+          cd app-ui/dist && zip -r linux-unpacked-arm64.zip ElectronStarterApp-linux-arm64.zip
         shell: bash
 
-      - name: Upload Electron Build Artifacts
+      - name: Upload Installer Artifact (macOS x64)
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: electron-build-${{ runner.os }}
+          name: ElectronStarterApp-mac-x64.dmg
           path: |
-            app-ui/dist/mac/*.zip
-            app-ui/dist/mac-arm64/*.zip
-            app-ui/dist/*.zip
-            app-ui/dist/*.dmg
-            app-ui/dist/*.exe
-            app-ui/dist/*.AppImage
+            app-ui/dist/ElectronStarterApp-mac-x64.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (macOS x64)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-x64.zip
+          path: |
+            app-ui/dist/mac/ElectronStarterApp-mac-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Installer Artifact (macOS arm64)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-arm64.dmg
+          path: |
+            app-ui/dist/ElectronStarterApp-mac-arm64.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (macOS arm64)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-mac-arm64.zip
+          path: |
+            app-ui/dist/mac-arm64/ElectronStarterApp-mac-arm64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Installer Artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-win-x64.exe
+          path: |
+            app-ui/dist/ElectronStarterApp-win-x64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-win-x64.zip
+          path: |
+            app-ui/dist/ElectronStarterApp-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload AppImage Artifact (Linux x64)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-x64.AppImage
+          path: |
+            app-ui/dist/ElectronStarterApp-linux-x64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (Linux x64)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-x64.zip
+          path: |
+            app-ui/dist/ElectronStarterApp-linux-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload AppImage Artifact (Linux arm64)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-arm64.AppImage
+          path: |
+            app-ui/dist/ElectronStarterApp-linux-arm64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (Linux arm64)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-linux-arm64.zip
+          path: |
+            app-ui/dist/ElectronStarterApp-linux-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
