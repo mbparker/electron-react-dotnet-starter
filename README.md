@@ -2,7 +2,7 @@
 
 [![Build and Release .NET 9 API and Electron UI](https://github.com/mbparker/electron-react-dotnet-starter/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/mbparker/electron-react-dotnet-starter/actions)
 
-Boilerplate project for cross platform Electron apps using React with MUI for the UI, and .NET 9 powering the logic.
+Boilerplate project for cross platform Electron apps using React with MUI for the UI, and .NET 9 powering the backend.
 
 UI is Typescript, and uses tsyringe for dependency injection. Webpack is used for building rather than Vite because it preserves the injected type metadata required by tsyringe. No framework (such as Next.Js) is used.
 
@@ -13,9 +13,8 @@ SignalR is used for communication between the front and backend. RESTful APIs co
 
 # USAGE
 
-1. Fork this repository.
-2. Clone to your system.
-3. Build the SLN file under the `app-api` directory.
-4. Run the `ElectronAppRebrander.csproj` compiled output binary. You will be prompted to provide the root directory you cloned to, and what you want the new app name to be. Thats it.
+1. Clone to your system.
+2. Build the VS solution file under the `app-api` directory.
+3. Run the `ElectronAppRebrander.csproj` compiled output binary. You will be prompted to provide the root directory you cloned to, and what you want the new app name to be. Thats it.
 
 You can then begin building your own app using this repo as a launch pad.
