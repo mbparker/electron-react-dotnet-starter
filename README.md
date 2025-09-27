@@ -13,8 +13,8 @@ SignalR is used for communication between the front and backend. RESTful APIs co
 
 # USAGE
 
-1. Clone to your system.
-2. Build the VS solution file under the `app-api` directory.
+1. Clone to your system (or just download the ZIP from Github).
+2. Build `ElectronAppApi.sln` under the `app-api` directory.
 3. Run the `ElectronAppRebrander.csproj` compiled output binary. You will be prompted to provide the root directory you cloned to, and what you want the new app name to be. Thats it.
 
 The "rebranding" process will update the solution, project files, project directories and filenames, root namespace, Electron configuration files, package.json and other files to reflect your new name.
