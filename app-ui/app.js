@@ -92,8 +92,14 @@ const menuTemplate = [
           mainWindow?.webContents.send('reload-clicked');
         }
       },
-      { type: 'separator' },
-      { role: 'quit' }
+        { type: 'separator' },
+        {
+            // This fixes the display bug where the "quit" role item shows the package name, not the product name.
+            label: 'Quit',
+            click: () => {
+                app.quit();
+            }
+        }
     ]
   },
   {

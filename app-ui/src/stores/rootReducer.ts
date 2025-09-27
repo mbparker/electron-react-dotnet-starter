@@ -1,22 +1,12 @@
-import {CombinedState} from "redux";
-import {AnyAction, combineReducers} from "@reduxjs/toolkit";
+import {combineReducers} from "@reduxjs/toolkit";
 import pageLoaderReducer, {PageLoaderState} from "./pageLoaderSlice";
 
-export type RootState = CombinedState<{
+export type RootState = {
     pageLoaderReducer: PageLoaderState
-}>
-
-const staticReducers = {
-    pageLoaderReducer
 }
 
-const rootReducer =
-    () =>
-        (state: RootState, action: AnyAction) => {
-            const combinedReducer = combineReducers({
-                ...staticReducers,
-            })
-            return combinedReducer(state, action)
-        }
+const rootReducer = combineReducers({
+    pageLoaderReducer
+});
 
 export default rootReducer

@@ -22,6 +22,8 @@ export class AppInit {
 
         window.addEventListener('beforeunload', (e: BeforeUnloadEvent) => {
             if (!this.exitConfirmed) {
+                e.preventDefault();
+                // noinspection JSDeprecatedSymbols
                 e.returnValue = false;
                 if (!this.electronApi.reloading)
                     this.handleConfirmShutdown().then();

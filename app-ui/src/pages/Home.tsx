@@ -13,10 +13,11 @@ const Home = () => {
         dataSet: 'Commodity',
         rowLength: 100,
         maxColumns: 6,
+        editable: true
     });
 
     return (
-        <Box sx={{ width: '100hv', margin: '1rem' }}>
+        <Box sx={{ width: '100%', height: '100%' }}>
             <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                 <Button size="small" onClick={removeRow}>
                     Remove a row
@@ -25,7 +26,7 @@ const Home = () => {
                     Add a row
                 </Button>
             </Stack>
-            <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '50vh', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '50%', marginTop: '1rem' }}>
                 <DataGrid {...data} rows={data.rows.slice(0, nbRows)} loading={loading} />
             </div>
         </Box>
