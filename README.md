@@ -9,3 +9,13 @@ UI is Typescript, and uses tsyringe for dependency injection. Webpack is used fo
 .NET backend is C# and uses Autofac for dependency injection. SQLite3 support is built in using a lightweight "ORM" mechanism.
 
 SignalR is used for communication between the front and backend. RESTful APIs could be easily added if that is preferred.
+
+
+# USAGE
+
+1. Fork this repository.
+2. Clone to your system.
+3. Build the SLN file under the app-api directory.
+4. Run the `ElectronAppRebrander.csproj` compiled output, and provide the root directory you cloned to, and what you want the new app name to be.
+
+You can now begin building your own app using this repo as a launch pad.
