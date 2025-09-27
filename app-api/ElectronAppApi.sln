@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibSqlite3Orm", "LibSqlite3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibSqlite3Orm.Tests", "LibSqlite3Orm.Tests\LibSqlite3Orm.Tests.csproj", "{3B80463D-C4C8-4748-A002-6B41134498C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectronAppRebrander", "ElectronAppRebrander\ElectronAppRebrander.csproj", "{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -36,6 +38,10 @@ Global
 		{3B80463D-C4C8-4748-A002-6B41134498C7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3B80463D-C4C8-4748-A002-6B41134498C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3B80463D-C4C8-4748-A002-6B41134498C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
