@@ -15,7 +15,7 @@ SignalR is used for communication between the front and backend. RESTful APIs co
 
 1. Fork this repository.
 2. Clone to your system.
-3. Build the SLN file under the app-api directory.
-4. Run the `ElectronAppRebrander.csproj` compiled output, and provide the root directory you cloned to, and what you want the new app name to be.
+3. Build the SLN file under the `app-api` directory.
+4. Run the `ElectronAppRebrander.csproj` compiled output binary. You will be prompted to provide the root directory you cloned to, and what you want the new app name to be. Thats it.
 
-You can now begin building your own app using this repo as a launch pad.
+You can then begin building your own app using this repo as a launch pad.
