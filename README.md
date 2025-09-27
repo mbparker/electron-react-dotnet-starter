@@ -6,7 +6,7 @@ Boilerplate project for cross platform Electron apps using React with MUI for th
 
 UI is Typescript, and uses tsyringe for dependency injection. Webpack is used for building rather than Vite because it preserves the injected type metadata required by tsyringe. No framework (such as Next.Js) is used.
 
-.NET backend is C# and uses Autofac for dependency injection. SQLite3 support is built in using a lightweight "ORM" mechanism.
+.NET backend is C# and uses Autofac for dependency injection. SQLite3 support is built in using a custom written lightweight ORM.
 
 SignalR is used for communication between the front and backend. RESTful APIs could be easily added if that is preferred.
 
@@ -16,5 +16,7 @@ SignalR is used for communication between the front and backend. RESTful APIs co
 1. Clone to your system.
 2. Build the VS solution file under the `app-api` directory.
 3. Run the `ElectronAppRebrander.csproj` compiled output binary. You will be prompted to provide the root directory you cloned to, and what you want the new app name to be. Thats it.
+
+The "rebranding" process will update the solution, project files, project directories and filenames, root namespace, Electron configuration files, package.json and other files to reflect your new name.
 
 You can then begin building your own app using this repo as a launch pad.
