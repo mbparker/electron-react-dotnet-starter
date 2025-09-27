@@ -25,12 +25,11 @@ Console.WriteLine("Checking clone directory...");
 var apiPath = Path.Combine(cloneDir, "app-api");
 var uiPath = Path.Combine(cloneDir, "app-ui");
 var workflowFilename = Path.Combine(cloneDir, ".github", "workflows", "dotnet.yml");
+var readmeFilename = Path.Combine(cloneDir, "README.md");
 var apiSolutionFilename = Path.Combine(apiPath, "ElectronAppApi.sln");
 var libProjectFilename = Path.Combine(apiPath, "LibElectronAppApi", "LibElectronAppApi.csproj");
 var testHarnessProjectFilename = Path.Combine(apiPath, "ElectronAppApiTestHarness", "ElectronAppApiTestHarness.csproj");
 var hostProjectFilename = Path.Combine(apiPath, "ElectronAppApiHost", "ElectronAppApiHost.csproj");
-
-
 var packageJsonFilename = Path.Combine(uiPath, "package.json");
 var electronConfigFilename = Path.Combine(uiPath, "builder-config.json");
 var electronConfigArm64Filename = Path.Combine(uiPath, "builder-config-arm64.json");
@@ -48,7 +47,7 @@ string[] keyFiles =
 [
     apiSolutionFilename, libProjectFilename, testHarnessProjectFilename, hostProjectFilename, packageJsonFilename,
     electronConfigFilename, electronConfigArm64Filename, indexHtmlFilename, appJsFilename, appInitTsFilename,
-    workflowFilename
+    workflowFilename, readmeFilename
 ];
 
 if (!keyFiles.All(File.Exists))
@@ -83,8 +82,14 @@ if (Console.ReadKey().KeyChar.ToString().ToUpper() != "Y")
 
 if (!ProcessApi()) return;
 if (!ProcessUi()) return;
+ProcessReadMe();
 
 Console.WriteLine("Rebranding completed.");
+
+void ProcessReadMe()
+{
+    File.WriteAllText(readmeFilename, $"# {newAppId}\n\nDescription TBD.\n\nThis code was generated from https://github.com/mbparker/electron-react-dotnet-starter.git");    
+}
 
 bool ProcessUi()
 {
@@ -172,9 +177,9 @@ bool ProcessSolutionFile()
             solutionText.Replace("A601712B-0E49-4E7E-9475-B8045AB42E11", Guid.NewGuid().ToString("D").ToUpper());
 
         Console.WriteLine($"\tReplace 'ElectronApp' with '{newRootNamespace}'");
-        solutionText = solutionText.Replace("ElectronAppRebrander", "AppRebrander");
+        solutionText = solutionText.Replace("ElectronAppRebrander", "AppRebrander"); // Don't let ElectronAppRebrander get renamed
         solutionText = solutionText.Replace("ElectronApp", newRootNamespace);
-        solutionText = solutionText.Replace("AppRebrander", "ElectronAppRebrander");
+        solutionText = solutionText.Replace("AppRebrander", "ElectronAppRebrander"); // Put back to original
 
         Console.WriteLine("\tSave changes");
         File.WriteAllText(apiSolutionFilename, solutionText);
