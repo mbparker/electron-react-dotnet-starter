@@ -20,3 +20,7 @@ SignalR is used for communication between the front and backend. RESTful APIs co
 The "rebranding" process will update the solution, project files, project directories and filenames, root namespace, Electron configuration files, package.json and other files to reflect your new name.
 
 You can then begin building your own app using this repo as a launch pad.
+
+# KNOWN ISSUES
+
+* The ORM is slow. It was designed to be simple and easy to use for local app storage use cases. If you need a high performance ORM, you will need to swap it out for something like Dapper, or a full blown ORM such as Entity Framework Core. That said, performance is being worked on.
