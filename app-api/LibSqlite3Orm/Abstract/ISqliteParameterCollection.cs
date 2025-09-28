@@ -7,6 +7,13 @@ public interface ISqliteParameterCollectionAddTo
     ISqliteParameter Add(string name, object value, ISqliteFieldSerializer serializer);
 }
 
+public interface ISqliteParameterCollectionDebug : IEnumerable<ISqliteParameterDebug>
+{
+    int Count { get; }
+    ISqliteParameterDebug this[int index] { get; }
+    ISqliteParameterDebug this[string name] { get; }    
+}
+
 public interface ISqliteParameterCollection : IEnumerable<ISqliteParameter>, ISqliteParameterCollectionAddTo
 {
     int Count { get; }

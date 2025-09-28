@@ -3,7 +3,7 @@ using LibSqlite3Orm.Abstract;
 
 namespace LibSqlite3Orm.Concrete;
 
-public class SqliteParameterCollection : ISqliteParameterCollection
+public class SqliteParameterCollection : ISqliteParameterCollection, ISqliteParameterCollectionDebug
 {
     private readonly List<ISqliteParameter> parameters = new();
     private readonly Func<string, int, ISqliteParameter> parameterFactory;
@@ -18,6 +18,10 @@ public class SqliteParameterCollection : ISqliteParameterCollection
     public ISqliteParameter this[int index] => parameters[index];
 
     public ISqliteParameter this[string name] => parameters.FirstOrDefault(x => x.Name == name);
+    
+    ISqliteParameterDebug ISqliteParameterCollectionDebug.this[int index] => parameters[index] as ISqliteParameterDebug;
+
+    ISqliteParameterDebug ISqliteParameterCollectionDebug.this[string name] => parameters.FirstOrDefault(x => x.Name == name) as ISqliteParameterDebug;    
     
     public ISqliteParameter Add(string name, object value)
     {
@@ -52,14 +56,19 @@ public class SqliteParameterCollection : ISqliteParameterCollection
         foreach (var param in parameters)
             param.Bind(statement);
     }
+    
+    IEnumerator<ISqliteParameterDebug> IEnumerable<ISqliteParameterDebug>.GetEnumerator()
+    {
+        return parameters.Select(x => x as ISqliteParameterDebug).GetEnumerator();
+    }
 
-    public IEnumerator<ISqliteParameter> GetEnumerator()
+    IEnumerator<ISqliteParameter> IEnumerable<ISqliteParameter>.GetEnumerator()
     {
         return parameters.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return GetEnumerator();
+        return parameters.GetEnumerator();
     }
 }

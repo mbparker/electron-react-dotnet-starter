@@ -6,7 +6,7 @@ using LibSqlite3Orm.PInvoke.Types.Enums;
 
 namespace LibSqlite3Orm.Concrete;
 
-public class SqliteParameter : ISqliteParameter
+public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
 {
     private static readonly IntPtr NoDeallocator = new(-1);
     private readonly ISqliteFieldValueSerialization serialization;
@@ -40,7 +40,7 @@ public class SqliteParameter : ISqliteParameter
         SerializeValue(value);
     }
 
-    public string GetDebugValue()
+    string ISqliteParameterDebug.GetDebugValue()
     {
         if (serialzedValue is null) return "NULL";
         if (serialzedValue.GetType() == typeof(byte[]))

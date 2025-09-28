@@ -5,7 +5,7 @@ namespace LibSqlite3Orm.Models.Orm.Events;
 
 public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
 {
-    public SqlStatementExecutingEventArgs(string sqlStatement, ISqliteParameterCollection parameters)
+    public SqlStatementExecutingEventArgs(string sqlStatement, ISqliteParameterCollectionDebug parameters)
         : base(RenderSqlLogString(sqlStatement, parameters))
     {
         SqlStatement = sqlStatement;
@@ -13,9 +13,9 @@ public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
     }
     
     public string SqlStatement { get; }
-    public ISqliteParameterCollection Parameters { get; }
+    public ISqliteParameterCollectionDebug Parameters { get; }
 
-    private static Lazy<string> RenderSqlLogString(string sqlStatement, ISqliteParameterCollection parameters)
+    private static Lazy<string> RenderSqlLogString(string sqlStatement, ISqliteParameterCollectionDebug parameters)
     {
         return new Lazy<string>(() =>
         {

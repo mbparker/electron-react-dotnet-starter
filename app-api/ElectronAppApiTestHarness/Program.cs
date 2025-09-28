@@ -1,4 +1,4 @@
-﻿//#define LOG_SQL
+﻿#define LOG_SQL
 //#define LOG_WHERE_CLAUSE_VISITS
 
 using System.Diagnostics;

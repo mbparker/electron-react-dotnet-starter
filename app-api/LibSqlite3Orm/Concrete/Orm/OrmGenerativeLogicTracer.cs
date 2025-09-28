@@ -9,7 +9,7 @@ public class OrmGenerativeLogicTracer : IOrmGenerativeLogicTracer
     public event EventHandler<SqlStatementExecutingEventArgs> SqlStatementExecuting;
     public event EventHandler<GenerativeLogicTraceEventArgs> WhereClauseBuilderVisit;
     
-    public void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollection parameters)
+    public void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollectionDebug parameters)
     {
         SqlStatementExecuting?.Invoke(this, new SqlStatementExecutingEventArgs(sqlStatement, parameters));
     }

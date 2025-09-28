@@ -1,5 +1,12 @@
 namespace LibSqlite3Orm.Abstract;
 
+public interface ISqliteParameterDebug
+{
+    string Name { get; }
+    int Index { get; }    
+    string GetDebugValue();
+}
+
 public interface ISqliteParameter
 {
     string Name { get; }
@@ -9,7 +16,6 @@ public interface ISqliteParameter
     void UseSerializer(Type modelType);
     
     void Set(object value);
-    string GetDebugValue();
 
     void Bind(IntPtr statement);
 }

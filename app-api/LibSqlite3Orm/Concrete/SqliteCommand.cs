@@ -58,7 +58,7 @@ public class SqliteCommand : ISqliteCommand
 
     public ISqliteDataReader ExecuteQuery(string sql)
     {
-        sqlNotifier.NotifySqlStatementExecuting(sql, Parameters);
+        sqlNotifier.NotifySqlStatementExecuting(sql, Parameters as ISqliteParameterCollectionDebug);
         var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
         if (Parameters.Count > 0)
             Parameters.BindAll(statement);        
@@ -69,7 +69,7 @@ public class SqliteCommand : ISqliteCommand
     {
         try
         {
-            sqlNotifier.NotifySqlStatementExecuting(sql, Parameters);
+            sqlNotifier.NotifySqlStatementExecuting(sql, Parameters as ISqliteParameterCollectionDebug);
             var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
             try
             {

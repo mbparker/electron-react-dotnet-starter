@@ -7,6 +7,6 @@ public interface IOrmGenerativeLogicTracer
     event EventHandler<SqlStatementExecutingEventArgs> SqlStatementExecuting;
     event EventHandler<GenerativeLogicTraceEventArgs> WhereClauseBuilderVisit;
     
-    void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollection parameters);
+    void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollectionDebug parameters);
     void NotifyWhereClauseBuilderVisit(Lazy<string> message);
 }

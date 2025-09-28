@@ -173,7 +173,7 @@ public class SqliteParameterCollectionTests
         _collection.Add("param2", "value2");
 
         // Act
-        var parameters = _collection.ToList();
+        var parameters = _collection.ToList<ISqliteParameter>();
 
         // Assert
         Assert.That(parameters.Count, Is.EqualTo(2));
