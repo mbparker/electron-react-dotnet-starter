@@ -22,18 +22,18 @@ public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
             var sb = new StringBuilder();
             if (!string.IsNullOrWhiteSpace(sqlStatement))
             {
-                sb.AppendLine($"Executing SQL:  {sqlStatement}");
-                sb.AppendLine("\tParameters:");
+                sb.Append($"Executing SQL:  {sqlStatement}\n");
+                sb.Append("\tParameters:\n");
                 if (parameters?.Count > 0)
                 {
                     foreach (var p in parameters)
                     {
-                        sb.AppendLine($"\t\t{p.Name} = {p.GetDebugValue()}");
+                        sb.Append($"\t\t{p.Name} = {p.GetDebugValue()}\n");
                     }
                 }
                 else
                 {
-                    sb.AppendLine("\t\tNone");
+                    sb.Append("\t\tNone\n");
                 }
             }
 
