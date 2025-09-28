@@ -32,7 +32,7 @@ public class DemoEntity : BaseEntity
     public DateTimeOffset? DateTimeOffsetValue { get; set; }
     public byte[] BlobValue { get; set; }
     [NotMapped]
-    public ISqliteQueryable<CustomTagLink> Tags { get; set; }
+    public Lazy<ISqliteQueryable<CustomTagLink>> Tags { get; set; }
 
     public override string ToString()
     {
@@ -56,9 +56,9 @@ public class DemoEntity : BaseEntity
         else
             sb.AppendLine($"BlobValue: null");
         sb.AppendLine("Custom Tag Links:");
-        if (Tags is not null)
+        if (Tags.Value is not null)
         {
-            var links = Tags.AsEnumerable().ToArray();
+            var links = Tags.Value.AsEnumerable().ToArray();
             if (links.Length != 0)
             {
                 foreach (var link in links)
@@ -97,10 +97,10 @@ public class CustomTagLink : BaseEntity
 {
     public long TagId { get; set; }
     [NotMapped]
-    public CustomTag Tag { get; set; }
+    public Lazy<CustomTag> Tag { get; set; }
     public long EntityId { get; set; }
     [NotMapped]
-    public DemoEntity Entity { get; set; }
+    public Lazy<DemoEntity> Entity { get; set; }
     
     public override string ToString()
     {
@@ -108,15 +108,15 @@ public class CustomTagLink : BaseEntity
         sb.AppendLine($"\tId: {Id}");
         sb.AppendLine($"\tTagId: {TagId}");
         sb.AppendLine($"\tEntityId: {EntityId}");
-        if (Tag is not null)
+        if (Tag.Value is not null)
             sb.Append($"\tTag:\n{Tag}");
         else
             sb.AppendLine("\tTag entity is null");
         sb.AppendLine("\tEntity:");
-        if (Entity is not null)
+        if (Entity.Value is not null)
         {
-            sb.AppendLine($"\t\tEntity.Id: {Entity.Id}");
-            sb.AppendLine($"\t\tEntity.StringValue: {Entity.StringValue}");
+            sb.AppendLine($"\t\tEntity.Id: {Entity.Value.Id}");
+            sb.AppendLine($"\t\tEntity.StringValue: {Entity.Value.StringValue}");
         }
         else
             sb.AppendLine("\t\tEntity is null");
