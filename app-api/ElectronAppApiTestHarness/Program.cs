@@ -33,7 +33,7 @@ using (var container = ContainerRegistration.RegisterDependencies())
     
     var orm = container.Resolve<ISqliteObjectRelationalMapping<DemoContext>>();
 
-    orm.DeleteDatabase();
+    //orm.DeleteDatabase();
     
     var dbCreated = orm.CreateDatabaseIfNotExists();
 
@@ -145,8 +145,6 @@ using (var container = ContainerRegistration.RegisterDependencies())
         
         ConsoleLogger.WriteLine(ConsoleColor.Green, $"Seeded {totalRecordCount} record(s) in {creationTime.TotalSeconds} second(s)");
     }
-
-    return;
     
     var dumpFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test-sqlite-record-dump.txt");
     ConsoleLogger.WriteLine(ConsoleColor.Green, $"Creating dump file at: {dumpFilename}");
