@@ -218,7 +218,7 @@ using (var container = ContainerRegistration.RegisterDependencies())
                     }
                 });
                 writer.WriteLine("--------------------------------------------------------------------------------");
-                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalMinutes} minute(s)");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
 
                 writer.WriteLine("--------------------------------------------------------------------------------");
                 writer.WriteLine("DUMPING ALL CUSTOM TAG LINK ENTITIES - *WITH* NAVIGATION PROPS");
@@ -234,10 +234,10 @@ using (var container = ContainerRegistration.RegisterDependencies())
                     }                    
                 });
                 writer.WriteLine("--------------------------------------------------------------------------------");
-                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalMinutes} minute(s)");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
             }
         }
     });
 
-    ConsoleLogger.WriteLine(ConsoleColor.Green, $"Created dump file, executing {sqlStatementCountTotal} total SQL queries in {elapsedOverall.TotalMinutes} minute(s)");
+    ConsoleLogger.WriteLine(ConsoleColor.Green, $"Created dump file, executing {sqlStatementCountTotal} total SQL queries in {elapsedOverall.TotalSeconds} second(s)");
 }

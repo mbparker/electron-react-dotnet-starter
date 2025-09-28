@@ -17,6 +17,7 @@ public class EntityGetter : IEntityGetter
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteEntityWriter entityWriter;
     private readonly ISqliteOrmDatabaseContext context;
+    private readonly Dictionary<Type, ConstructorInfo> lazyConstructors = new();
 
     public EntityGetter(Func<ISqliteConnection> connectionFactory,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
@@ -73,9 +74,8 @@ public class EntityGetter : IEntityGetter
                     if (getDetailsListMethodGeneric is not null)
                         return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
                 }
-
-                var lazyType = typeof(Lazy<>).MakeGenericType(typeof(ISqliteQueryable<>).MakeGenericType(detailTableType));
-                return lazyType.GetConstructors().FirstOrDefault(x => x.GetParameters().Length == 1)?.Invoke([null]);
+                
+                return CreateLazyQueryableNull(detailTableType);
             }
             
             object GetDetailsPropertyValue(Type detailTableType, T recordEntity)
@@ -91,8 +91,7 @@ public class EntityGetter : IEntityGetter
                         return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
                 }
 
-                var lazyType = typeof(Lazy<>).MakeGenericType(detailTableType);
-                return lazyType.GetConstructors().FirstOrDefault(x => x.GetParameters().Length == 1)?.Invoke([null]);
+                return CreateLazyNull(detailTableType);
             }            
 
             T DeserializeRow(ISqliteDataRow row)
@@ -104,6 +103,27 @@ public class EntityGetter : IEntityGetter
         }
         
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
+    }
+
+    private object CreateLazyQueryableNull(Type type)
+    {
+        return CreateLazyNull(typeof(ISqliteQueryable<>).MakeGenericType(type));
+    }
+
+    private object CreateLazyNull(Type type)
+    {
+        if (!lazyConstructors.TryGetValue(type, out var ctor))
+        {
+            var lazyType = typeof(Lazy<>).MakeGenericType(type);
+            ctor = lazyType.GetConstructors().FirstOrDefault(x =>
+            {
+                var p = x.GetParameters();
+                return p.Length == 1 && p[0].ParameterType == type;
+            });
+            lazyConstructors.Add(type, ctor);
+        }
+        
+        return ctor?.Invoke([null]);
     }
 
     private Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record) where TDetails : new()
