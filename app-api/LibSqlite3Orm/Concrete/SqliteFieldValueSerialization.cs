@@ -11,7 +11,7 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
     public SqliteFieldValueSerialization(IEnumerable<ISqliteFieldSerializer> serializers,
         Func<Type, ISqliteEnumFieldSerializer> enumSerializerFactory)
     {
-        this.serializers = serializers.ToDictionary(k => k.RuntimeType, v => v);
+        this.serializers = serializers.ToDictionary(k => GetRealType(k.RuntimeType), v => v);
         this.enumSerializerFactory = enumSerializerFactory;
     }
 
@@ -19,7 +19,7 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
     {
         lock (syncLock)
         {
-            return serializers.ContainsKey(modelType);
+            return serializers.ContainsKey(GetRealType(modelType));
         }
     }
 
@@ -27,9 +27,10 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
     {
         lock (syncLock)
         {
-            if (IsSerializerRegisteredForModelType(serializer.RuntimeType))
+            var modelType = GetRealType(serializer.RuntimeType);
+            if (IsSerializerRegisteredForModelType(modelType))
                 throw new InvalidOperationException($"Serializer for type {serializer.RuntimeType.Name} is already registered");
-            serializers.Add(serializer.RuntimeType, serializer);
+            serializers.Add(modelType, serializer);
         }
     }
     
@@ -37,6 +38,7 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
     {
         lock (syncLock)
         {
+            modelType = GetRealType(modelType);
             if (newSerializer.RuntimeType != modelType)
                 throw new ArgumentException($"Serializer runtime type {newSerializer.RuntimeType.Name} does not match model type {modelType.Name}");
             if (!IsSerializerRegisteredForModelType(modelType))
@@ -54,6 +56,7 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
         {
             lock (syncLock)
             {
+                modelType = GetRealType(modelType);
                 serializers.TryGetValue(modelType, out var serializer);
                 if (serializer is null && modelType.IsEnum)
                 {
@@ -64,5 +67,10 @@ public class SqliteFieldValueSerialization : ISqliteFieldValueSerialization
                 return serializer;
             }
         }
+    }
+
+    private Type GetRealType(Type type)
+    {
+        return Nullable.GetUnderlyingType(type) ?? type;
     }
 }

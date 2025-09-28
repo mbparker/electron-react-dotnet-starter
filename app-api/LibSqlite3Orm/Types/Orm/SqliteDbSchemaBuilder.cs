@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.IO.Hashing;
 using System.Linq.Expressions;
@@ -7,7 +8,6 @@ using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.PInvoke.Types.Enums;
-using LibSqlite3Orm.Types.FieldSerializers;
 
 namespace LibSqlite3Orm.Types.Orm;
 
@@ -36,7 +36,12 @@ public class SqliteDbSchemaBuilder
         var options = new SqliteIndexOptions(schemaOptions);
         options.TableType = typeof(TTable);
         options.IndexName = indexName?.Trim();
-        schemaOptions.Indexes.Add(options.TableType.AssemblyQualifiedName, options);
+        if (!schemaOptions.Indexes.TryGetValue(options.TableType.AssemblyQualifiedName, out var tableIndexes))
+        {
+            tableIndexes = new List<SqliteIndexOptions>();
+            schemaOptions.Indexes.Add(options.TableType.AssemblyQualifiedName, tableIndexes);
+        }
+        tableIndexes.Add(options);
         return new SqliteIndexOptionsBuilder<TTable>(options);
     }
     
@@ -136,25 +141,29 @@ public class SqliteDbSchemaBuilder
             }
         }
 
-        foreach (var index in schemaOptions.Indexes.Values)
+        foreach (var tableIndexes in schemaOptions.Indexes.Values)
         {
-            var schemaIndex = new SqliteDbSchemaIndex();
-            schemaIndex.TableName = index.SchemaOptions.Tables[index.TableType.AssemblyQualifiedName].Name;
-            schemaIndex.IsUnique = index.IsUnique;
-            foreach (var column in index.Columns)
+            foreach (var index in tableIndexes)
             {
-                var schemaIndexCol = new SqliteDbSchemaIndexColumn();
-                schemaIndexCol.Name = column.IndexOptions.SchemaOptions.Tables[column.IndexOptions.TableType.AssemblyQualifiedName]
-                    .Columns[column.Member.Name].Name;
-                schemaIndexCol.SortDescending = column.SortDescending;
-                schemaIndexCol.Collation = column.Collation;
-                schemaIndex.Columns.Add(schemaIndexCol);
-            }
+                var schemaIndex = new SqliteDbSchemaIndex();
+                schemaIndex.TableName = index.SchemaOptions.Tables[index.TableType.AssemblyQualifiedName].Name;
+                schemaIndex.IsUnique = index.IsUnique;
+                foreach (var column in index.Columns)
+                {
+                    var schemaIndexCol = new SqliteDbSchemaIndexColumn();
+                    schemaIndexCol.Name = column.IndexOptions.SchemaOptions
+                        .Tables[column.IndexOptions.TableType.AssemblyQualifiedName]
+                        .Columns[column.Member.Name].Name;
+                    schemaIndexCol.SortDescending = column.SortDescending;
+                    schemaIndexCol.Collation = column.Collation;
+                    schemaIndex.Columns.Add(schemaIndexCol);
+                }
 
-            schemaIndex.IndexName = string.IsNullOrWhiteSpace(index.IndexName)
-                ? $"index_{schemaIndex.TableName}_{HashIndexSchema(schemaIndex)}"
-                : index.IndexName.Trim();
-            result.Indexes.Add(schemaIndex.IndexName, schemaIndex);
+                schemaIndex.IndexName = string.IsNullOrWhiteSpace(index.IndexName)
+                    ? $"index_{schemaIndex.TableName}_{HashIndexSchema(schemaIndex)}"
+                    : index.IndexName.Trim();
+                result.Indexes.Add(schemaIndex.IndexName, schemaIndex);
+            }
         }
         
         return result;
@@ -303,12 +312,21 @@ public class SqliteTableOptionsBuilder<TTable>
         }
 
         throw new InvalidExpressionException();
-    }    
-    
-    public SqlitePrimaryKeyOptionsBuilder WithAllMembersAsColumns<T>(Expression<Func<TTable, T>> primaryKey)
+    }
+
+    public SqlitePrimaryKeyOptionsBuilder WithAllMembersAsColumns<T>(Expression<Func<TTable, T>> primaryKey,
+        bool includeInheritedMembers = true)
     {
-        var members = tableOptions.TableType.GetMembers(BindingFlags.Instance | BindingFlags.Public)
-            .Where(x => x.MemberType is MemberTypes.Property or MemberTypes.Field).ToArray();
+        var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+        if (includeInheritedMembers) 
+            bindingFlags |= BindingFlags.FlattenHierarchy;
+        else 
+            bindingFlags |= BindingFlags.DeclaredOnly;
+        var members = tableOptions.TableType
+            .GetMembers(bindingFlags)
+            .Where(x => x.MemberType.HasFlag(MemberTypes.Field) || x.MemberType.HasFlag(MemberTypes.Property) &&
+                !x.GetCustomAttributes<NotMappedAttribute>().Any()).ToArray();
+
         foreach (var member in members)
         {
             if (!tableOptions.Columns.ContainsKey(member.Name))
@@ -319,7 +337,7 @@ public class SqliteTableOptionsBuilder<TTable>
                 tableOptions.Columns.Add(options.Member.Name, options);
             }
         }
-        
+
         return WithPrimaryKey(primaryKey);
     }
 

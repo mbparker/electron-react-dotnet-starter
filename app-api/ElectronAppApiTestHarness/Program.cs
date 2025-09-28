@@ -1,134 +1,243 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿//#define LOG_SQL
+//#define LOG_WHERE_CLAUSE_VISITS
 
+using System.Diagnostics;
 using Autofac;
 using ElectronAppApiTestHarness;
+using LibElectronAppApi.Abstract;
+using LibSqlite3Orm;
 using LibSqlite3Orm.Abstract.Orm;
-using LibSqlite3Orm.Concrete.Orm;
-using LibSqlite3Orm.Models.Orm;
 
 using (var container = ContainerRegistration.RegisterDependencies())
 {
+    int sqlStatementCountTotal = 0;
+    int sqlStatementCount = 0;
+    
+    var ormTracer = container.Resolve<IOrmGenerativeLogicTracer>();
+    
+    ormTracer.SqlStatementExecuting += (sender, args) =>
+    {
+        sqlStatementCountTotal++;
+        sqlStatementCount++;
+#if(LOG_SQL)
+        ConsoleLogger.WriteLine(ConsoleColor.DarkGreen, args.Message);
+#endif
+    };
+    
+    ormTracer.WhereClauseBuilderVisit += (sender, args) =>
+    {
+#if(LOG_WHERE_CLAUSE_VISITS)
+        ConsoleLogger.WriteLine(ConsoleColor.DarkMagenta, args.Message);
+#endif
+    };
+    
     var orm = container.Resolve<ISqliteObjectRelationalMapping<DemoContext>>();
-    
-    orm.DeleteDatabase();
-    
-    orm.CreateDatabase();
 
-    if (orm.Migrate())
-        Console.WriteLine("Migration performed");
-    else
-    {
-        if (orm.DetectedSchemaChanges.ManualMigrationRequired)
-            Console.WriteLine("Manual migration required");
-        else
-            Console.WriteLine("Migration not required");
-    }
+    //orm.DeleteDatabase();
     
-    //return;
+    var dbCreated = orm.CreateDatabaseIfNotExists();
 
-    var entity1 = new DemoEntity { Enabled = true, Created = DateTimeOffset.Now, Description = "This is some descriptive text for item 1."};
-    var entity2 = new DemoEntity { Enabled = false, Created = DateTimeOffset.Now, Description = "This is some descriptive text for item 2."};
-    orm.InsertMany([entity1]);
-
-    var detail1_1 = new DemoEntityDetailItem { DemoId = entity1.Id, NoteText = "Detail note 1 for 1" };
-    var detail1_2 = new DemoEntityDetailItem { DemoId = entity1.Id, NoteText = "Detail note 2 for 1" };
-    orm.InsertMany([detail1_1, detail1_2]);
-    
-    foreach (var item in orm.Get<DemoEntityDetailItem>(true).Where(x => x.DemoId == entity1.Id).AsEnumerable())
+    if (!dbCreated)
     {
-        Console.WriteLine($"{item.GetType().Name.ToUpper()}: {item.Id} - {item.DemoEntity.Id} - {item.DemoEntity.Description}");
-    }
-    
-    using (var reader = orm.ExecuteQuery("SELECT Id, NoteText FROM DemoEntityDetailItem WHERE DemoId = :DemoId", parms => parms.Add("DemoId", 1)))
-    {
-        foreach (var row in reader)
+        try
         {
-            Console.WriteLine($"{row["Id"].ValueAs<string>()} - {row["NoteText"].ValueAs<string>()}");
+            if (orm.Migrate())
+                ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration performed");
+            else
+                ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration not required");
         }
-    }  
-    
-    entity1.Description += "UPDATED";
-    entity1.Enabled = !entity1.Enabled;
-    entity2.Description += "UPDATED";
-    entity2.Enabled = !entity2.Enabled;
-    
-    var ret = orm.UpsertMany([entity1, entity2]);
-    Console.WriteLine($"Updated: {ret.UpdateCount}");
-    Console.WriteLine($"Inserted: {ret.InsertCount}");
-    Console.WriteLine($"Failed: {ret.FailedCount}");
-    
-    Console.WriteLine(entity1.Id);
-    Console.WriteLine(entity2.Id);
-    
-    var detail2_1 = new DemoEntityDetailItem { DemoId = entity2.Id, NoteText = "Detail note 1 for 2" };
-    var detail2_2 = new DemoEntityDetailItem { DemoId = entity2.Id, NoteText = "Detail note 2 for 2" };
-    orm.InsertMany([detail2_1, detail2_2]);
-    
-    entity2.Description += "UPDATED again";
-    entity2.Enabled = !entity2.Enabled;
-    Console.WriteLine(orm.Upsert(entity2));
-
-    foreach (var entity in orm.Get<DemoEntity>(includeDetails: true).AsEnumerable())
-    {
-        var itemsArray = entity.Items?.AsEnumerable().ToArray() ?? [];
-        Console.WriteLine($"{entity.Id} - {entity.Created} - {entity.Description} - {itemsArray.Length}");
-        Console.WriteLine($"{itemsArray[0].DemoEntity.Description}");
+        catch (Exception e)
+        {
+            ConsoleLogger.WriteLine(ConsoleColor.Red, e.ToString());
+            return;
+        }
     }
+    
+    TimeSpan ExecuteTimed(Action action)
+    {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        action?.Invoke();
+        stopwatch.Stop();
+        return stopwatch.Elapsed;
+    }    
 
-    var val1 = 0;
-    var val2 = 2;
-    var singleEntity = orm.Get<DemoEntity>(includeDetails: true).Where(x => x.Id > val1 && x.Id == val2).AsEnumerable().SingleOrDefault();
-    if (singleEntity is not null)
-        Console.WriteLine($"{singleEntity.Id} - {singleEntity.Description} - {singleEntity.Items?.AsEnumerable().Count() ?? 0}");
-    else
-        Console.WriteLine("Existing record is NULL!");
+    if (dbCreated)
+    {
+        int totalRecordCount = 0;
+        var creationTime = ExecuteTimed(() =>
+        {
+            orm.BeginTransaction();
+            try
+            {
+                var random = new Random(Environment.TickCount);
 
-    singleEntity = orm.Get<DemoEntity>().Where(x => x.Id < 0).AsEnumerable().SingleOrDefault();
-    if (singleEntity is null)
-        Console.WriteLine("Non-existent is null, as expected");
-    else
-        Console.WriteLine("Non-existent is NOT null!");
+                // Seed the demo data
+                var entities = new List<DemoEntity>();
+                for (var i = 1; i <= 100; i++)
+                {
+                    var isEven = i % 2 == 0;
+                    var isSixth = i % 6 == 0;
+                    var isEighth = i % 8 == 0;
+                    var entity = new DemoEntity
+                    {
+                        EnumValue = isEven ? Entitykind.Kind1 : Entitykind.Kind2,
+                        StringValue = $"This is string value {i}", BoolValue = isSixth, LongValue = long.MinValue,
+                        ULongValue = isEighth ? null : ulong.MaxValue, GuidValue = Guid.NewGuid(),
+                        DateTimeOffsetValue = DateTimeOffset.Now,
+                        DateOnlyValue = DateOnly.FromDateTime(DateTime.Today), DateTimeValue = DateTime.Now,
+                        DecimalValue = Decimal.MaxValue, DoubleValue = double.MinValue,
+                        TimeOnlyValue = TimeOnly.FromDateTime(DateTime.Now),
+                        TimeSpanValue = isEighth ? null : TimeSpan.FromTicks(Environment.TickCount),
+                        BlobValue = GenerateRandomBlob()
+                    };
 
-    // Contrived way of saying Id == 0
-    var deleteCount = orm.Delete<DemoEntity>(x => x.Id < 1 && x.Id >= 0);
-    Console.WriteLine(deleteCount); // 0
+                    byte[] GenerateRandomBlob()
+                    {
+                        var len = random.Next(0, 4096);
+                        if (len == 0) return null;
+                        var buff = new byte[len];
+                        random.NextBytes(buff);
+                        return buff;
+                    }
 
-    // Make sure the same parameter gets re-used since they hold the same value.
-    deleteCount = orm.Delete<DemoEntity>(x => x.Id < 1 || x.Id < 1);
-    Console.WriteLine(deleteCount); // 0
+                    entities.Add(entity);
+                }
 
-    deleteCount = orm.Delete<DemoEntity>(x => x.Id == 1);
-    Console.WriteLine(deleteCount); // 1
+                totalRecordCount += orm.InsertMany(entities);
 
-    var schemaOrm = container.Resolve<ISqliteObjectRelationalMapping<SqliteOrmSchemaContext>>();
-    schemaOrm.Context.Filename = orm.Context.Filename;
-    var migrations = schemaOrm.Get<SchemaMigration>()
-        .OrderByDescending(x => x.Timestamp)
-        .Take(1);
+                var tags = new List<CustomTag>();
+                for (var i = 1; i <= 25; i++)
+                {
+                    var tag = new CustomTag { TagValue = $"This is tag text {i}" };
+                    tags.Add(tag);
+                }
 
-    // SQL should not be generated or executed until start enumeration!
-    var filtered = migrations.AsEnumerable().SingleOrDefault();
+                totalRecordCount += orm.InsertMany(tags);
 
-    if (filtered is null)
-        Console.WriteLine("Filtered record is null");
-    else
-        Console.WriteLine($"{filtered.Id} - {filtered.Timestamp}");
+                var links = new List<CustomTagLink>();
+                foreach (var entity in entities)
+                {
+                    var tagIds = new HashSet<long>();
+                    var count = random.Next(0, 15);
+                    for (var i = 0; i < count; i++)
+                    {
+                        var index = random.Next(0, tags.Count - 1);
+                        if (tagIds.Add(index))
+                        {
+                            var link = new CustomTagLink { EntityId = entity.Id, TagId = tags[index].Id };
+                            links.Add(link);
+                        }
+                    }
+                }
 
-    // Should hit DB again
-    filtered = migrations.AsEnumerable().FirstOrDefault();
+                totalRecordCount += orm.InsertMany(links);
 
-    if (filtered is null)
-        Console.WriteLine("Filtered record is null");
-    else
-        Console.WriteLine($"{filtered.Id} - {filtered.Timestamp}");
+                orm.CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.WriteLine(ConsoleColor.Red, ex.ToString());
+                orm.RollbackTransaction();
+                throw;
+            }
+        });
+        
+        ConsoleLogger.WriteLine(ConsoleColor.Green, $"Seeded {totalRecordCount} record in {creationTime.TotalSeconds} second(s)");
+    }
+    
+    var dumpFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test-sqlite-record-dump.txt");
+    ConsoleLogger.WriteLine(ConsoleColor.Green, $"Creating dump file at: {dumpFilename}");
 
-    var cntStr = " again";
-    var contRec = orm.Get<DemoEntity>(includeDetails: true)
-        .Where(x => x.Description.EndsWith(cntStr) || x.Description.Contains("oh hai"))
-        .OrderBy(x => x.Id).AsEnumerable()
-        .FirstOrDefault();
-    if (contRec is null)
-        Console.WriteLine("Did not find record with the search criteria.");
-    else
-        Console.WriteLine($"{contRec.Id} - {contRec.Description} - {contRec.Items?.AsEnumerable().Count() ?? 0}");
+    var fileOps = container.Resolve<IFileOperations>();
+    var elapsedOverall = ExecuteTimed(() =>
+    {
+        using (var stream = fileOps.CreateFileStream(dumpFilename, FileMode.Create))
+        {
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine("DUMPING ALL CUSTOM TAG ENTITIES");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                sqlStatementCount = 0;
+                CustomTag[] tagRecords = [];
+                var elapsedStep = ExecuteTimed(() =>
+                {
+                    tagRecords = orm.Get<CustomTag>().AsEnumerable().ToArray();
+                    foreach (var record in tagRecords)
+                    {
+                        writer.WriteLine(record.ToString());
+                    }
+                });
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {tagRecords.Length} {nameof(CustomTag)} record(s), executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine("DUMPING ALL (MAIN) ENTITIES - WITHOUT NAVIGATION PROPS");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                sqlStatementCount = 0;
+                DemoEntity[] entityRecords = [];
+                elapsedStep = ExecuteTimed(() =>
+                {
+                    entityRecords = orm.Get<DemoEntity>(includeDetails: false).AsEnumerable().ToArray();
+                    foreach (var record in entityRecords)
+                    {
+                        writer.WriteLine(record.ToString());
+                    }
+                });
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine("DUMPING ALL CUSTOM TAG LINK ENTITIES - WITHOUT NAVIGATION PROPS");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                sqlStatementCount = 0;
+                CustomTagLink[] linkRecords = [];
+                elapsedStep = ExecuteTimed(() =>
+                {
+                    linkRecords = orm.Get<CustomTagLink>(includeDetails: false).AsEnumerable().ToArray();
+                    foreach (var record in linkRecords)
+                    {
+                        writer.WriteLine(record.ToString());
+                    }
+                });
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");   
+
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine("DUMPING ALL (MAIN) ENTITIES - *WITH* NAVIGATION PROPS");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                sqlStatementCount = 0;
+                entityRecords = [];
+                elapsedStep = ExecuteTimed(() =>
+                {
+                    entityRecords = orm.Get<DemoEntity>(includeDetails: true).AsEnumerable().ToArray();
+                    foreach (var record in entityRecords)
+                    {
+                        writer.WriteLine(record.ToString());
+                    }
+                });
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalMinutes} minute(s)");
+
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine("DUMPING ALL CUSTOM TAG LINK ENTITIES - *WITH* NAVIGATION PROPS");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                sqlStatementCount = 0;
+                linkRecords = [];
+                elapsedStep = ExecuteTimed(() =>
+                {
+                    linkRecords = orm.Get<CustomTagLink>(includeDetails: true).AsEnumerable().ToArray();
+                    foreach (var record in linkRecords)
+                    {
+                        writer.WriteLine(record.ToString());
+                    }                    
+                });
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                ConsoleLogger.WriteLine(ConsoleColor.Green, $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalMinutes} minute(s)");
+            }
+        }
+    });
+
+    ConsoleLogger.WriteLine(ConsoleColor.Green, $"Created dump file, executing {sqlStatementCountTotal} total SQL queries in {elapsedOverall.TotalMinutes} minute(s)");
 }

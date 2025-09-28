@@ -7,7 +7,7 @@ public interface ISqliteObjectRelationalMapping<TContext> : ISqliteSchemaObjectR
 {
     SqliteDbSchemaChanges DetectedSchemaChanges { get; }
 
-    void CreateDatabase();
+    bool CreateDatabaseIfNotExists();
     bool Migrate();
     void DeleteDatabase();
 }

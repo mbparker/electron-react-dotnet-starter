@@ -27,10 +27,16 @@ public class SqliteObjectRelationalMapping<TContext> : SqliteSchemaObjectRelatio
 
     public SqliteDbSchemaChanges DetectedSchemaChanges { get; private set; } = new();
 
-    public void CreateDatabase()
+    public bool CreateDatabaseIfNotExists()
     {
-        dbFactory.Create(Context.Schema , Context.Filename, false);
-        migrator.CreateInitialMigration();
+        if (!fileOperations.FileExists(Context.Filename))
+        {
+            dbFactory.Create(Context.Schema, Context.Filename, false);
+            migrator.CreateInitialMigration();
+            return true;
+        }
+        
+        return false;
     }
 
     public bool Migrate()

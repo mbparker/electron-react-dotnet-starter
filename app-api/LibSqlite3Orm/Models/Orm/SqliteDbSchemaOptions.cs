@@ -6,7 +6,7 @@ namespace LibSqlite3Orm.Models.Orm;
 public class SqliteDbSchemaOptions
 {
     public Dictionary<string, SqliteTableOptions> Tables { get; } = new(StringComparer.OrdinalIgnoreCase);
-    public Dictionary<string, SqliteIndexOptions> Indexes { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, List<SqliteIndexOptions>> Indexes { get; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class SqliteTableOptions

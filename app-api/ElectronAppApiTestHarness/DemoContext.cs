@@ -14,25 +14,26 @@ public class DemoContext : SqliteOrmDatabaseContext
     protected override void BuildSchema(SqliteDbSchemaBuilder builder)
     {
         var demoEntity = builder.HasTable<DemoEntity>();
-        demoEntity.WithPrimaryKey(x => x.Id).IsAutoIncrement().IsNotNull();
-        demoEntity.WithColumn(x => x.Created).IsNotNull();
-        demoEntity.WithColumn(x => x.Description).IsNotNull().UsingCollation();
-        demoEntity.WithColumn(x => x.Enabled).IsNotNull();
-
-        var demoEntityDetail = builder.HasTable<DemoEntityDetailItem>();
-        demoEntityDetail.WithPrimaryKey(x => x.Id).IsAutoGuid().IsNotNull();
-        demoEntityDetail.WithColumn(x => x.DemoId).IsNotNull();
-        demoEntityDetail.WithColumn(x => x.NoteText).IsNotNull().UsingCollation();
-        demoEntityDetail
-            .WithForeignKey(x => x.DemoId)
-            .References<DemoEntity>(x => x.Id)
-            .OnDelete(SqliteForeignKeyAction.Cascade)
-            // Meaning DemoEntityDetailItem.DemoEntity (a prop on this table) is a foriegn table record
-            .HasNavigationProperty(x => x.DemoEntity)
-            // Meaning DemoEntity.Items (foriegn table prop) is a collection of DemoEntityDetailItem (this table)
-            .HasForeignNavigationCollectionProperty<DemoEntity>(x => x.Items);
+        demoEntity.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
         
-        var demoEntityIndex = builder.HasIndex<DemoEntity>();
-        demoEntityIndex.WithColumn(x => x.Description).UsingCollation().SortedAscending();
+        var customTag = builder.HasTable<CustomTag>();
+        customTag.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        
+        var customTagLink = builder.HasTable<CustomTagLink>();
+        customTagLink.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        customTagLink
+            .WithForeignKey(x => x.TagId)
+            .References<CustomTag>(x => x.Id)
+            .HasNavigationProperty(x => x.Tag)
+            .OnDelete(SqliteForeignKeyAction.Cascade);
+        customTagLink
+            .WithForeignKey(x => x.EntityId)
+            .References<DemoEntity>(x => x.Id)
+            .HasNavigationProperty(x => x.Entity)
+            .HasForeignNavigationCollectionProperty<DemoEntity>(x => x.Tags)
+            .OnDelete(SqliteForeignKeyAction.Cascade);
+        
+        builder.HasIndex<CustomTagLink>().WithColumn(x => x.EntityId).UsingCollation().SortedAscending();
+        builder.HasIndex<CustomTagLink>().WithColumn(x => x.TagId).UsingCollation().SortedAscending();
     }
 }
