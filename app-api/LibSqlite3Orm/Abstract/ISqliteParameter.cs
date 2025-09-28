@@ -9,6 +9,7 @@ public interface ISqliteParameter
     void UseSerializer(Type modelType);
     
     void Set(object value);
+    string GetDebugValue();
 
     void Bind(IntPtr statement);
 }

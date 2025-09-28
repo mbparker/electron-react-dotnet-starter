@@ -13,5 +13,4 @@ public interface ISqliteParameterCollection : IEnumerable<ISqliteParameter>, ISq
     ISqliteParameter this[int index] { get; }
     ISqliteParameter this[string name] { get; }
     void BindAll(IntPtr statement);
-    void Clear();
 }

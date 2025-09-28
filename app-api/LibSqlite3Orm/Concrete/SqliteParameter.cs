@@ -40,6 +40,14 @@ public class SqliteParameter : ISqliteParameter
         SerializeValue(value);
     }
 
+    public string GetDebugValue()
+    {
+        if (serialzedValue is null) return "NULL";
+        if (serialzedValue.GetType() == typeof(byte[]))
+            return Convert.ToHexString((byte[])serialzedValue);
+        return serialzedValue.ToString();
+    }
+
     public void Bind(IntPtr statement)
     {
         switch (serializedTypeAffinity)

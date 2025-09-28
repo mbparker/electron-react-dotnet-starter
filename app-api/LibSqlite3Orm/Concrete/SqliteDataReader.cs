@@ -62,7 +62,6 @@ public class SqliteDataReader : ISqliteDataReader
         
         if (disposing)
         {
-            command.Parameters.Clear();
             command = null;
             connection = null;
             OnDispose?.Invoke(this, EventArgs.Empty);

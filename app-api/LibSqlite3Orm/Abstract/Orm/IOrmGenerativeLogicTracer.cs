@@ -4,9 +4,9 @@ namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface IOrmGenerativeLogicTracer
 {
-    event EventHandler<GenerativeLogicTraceEventArgs> SqlStatementExecuting;
+    event EventHandler<SqlStatementExecutingEventArgs> SqlStatementExecuting;
     event EventHandler<GenerativeLogicTraceEventArgs> WhereClauseBuilderVisit;
     
-    void NotifySqlStatementExecuting(string sqlStatement);
-    void NotifyWhereClauseBuilderVisit(string message);
+    void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollection parameters);
+    void NotifyWhereClauseBuilderVisit(Lazy<string> message);
 }

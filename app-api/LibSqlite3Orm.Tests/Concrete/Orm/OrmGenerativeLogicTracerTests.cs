@@ -28,33 +28,33 @@ public class OrmGenerativeLogicTracerTests
         var sqlStatement = "SELECT * FROM Users";
 
         // Act
-        _tracer.NotifySqlStatementExecuting(sqlStatement);
+        _tracer.NotifySqlStatementExecuting(sqlStatement, null);
 
         // Assert
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(1));
-        Assert.That(_sqlStatementEvents[0].Message, Is.EqualTo(sqlStatement));
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("Executing SQL:  SELECT * FROM Users\n\tParameters:\n\t\tNone\n"));
     }
 
     [Test]
     public void NotifySqlStatementExecuting_WithNullStatement_RaisesEventWithNull()
     {
         // Act
-        _tracer.NotifySqlStatementExecuting(null);
+        _tracer.NotifySqlStatementExecuting(null, null);
 
         // Assert
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(1));
-        Assert.That(_sqlStatementEvents[0].Message, Is.Null);
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo(""));
     }
 
     [Test]
     public void NotifySqlStatementExecuting_WithEmptyStatement_RaisesEventWithEmptyString()
     {
         // Act
-        _tracer.NotifySqlStatementExecuting("");
+        _tracer.NotifySqlStatementExecuting("", null);
 
         // Assert
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(1));
-        Assert.That(_sqlStatementEvents[0].Message, Is.EqualTo(""));
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo(""));
     }
 
     [Test]
@@ -64,11 +64,11 @@ public class OrmGenerativeLogicTracerTests
         var message = "Processing WHERE condition";
 
         // Act
-        _tracer.NotifyWhereClauseBuilderVisit(message);
+        _tracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(message));
 
         // Assert
         Assert.That(_whereClauseEvents.Count, Is.EqualTo(1));
-        Assert.That(_whereClauseEvents[0].Message, Is.EqualTo(message));
+        Assert.That(_whereClauseEvents[0].Message.Value, Is.EqualTo(message));
     }
 
     [Test]
@@ -86,30 +86,30 @@ public class OrmGenerativeLogicTracerTests
     public void NotifyWhereClauseBuilderVisit_WithEmptyMessage_RaisesEventWithEmptyString()
     {
         // Act
-        _tracer.NotifyWhereClauseBuilderVisit("");
+        _tracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(""));
 
         // Assert
         Assert.That(_whereClauseEvents.Count, Is.EqualTo(1));
-        Assert.That(_whereClauseEvents[0].Message, Is.EqualTo(""));
+        Assert.That(_whereClauseEvents[0].Message.Value, Is.EqualTo(""));
     }
 
     [Test]
     public void MultipleNotifications_RaiseMultipleEvents()
     {
         // Act
-        _tracer.NotifySqlStatementExecuting("SQL 1");
-        _tracer.NotifySqlStatementExecuting("SQL 2");
-        _tracer.NotifyWhereClauseBuilderVisit("WHERE 1");
-        _tracer.NotifyWhereClauseBuilderVisit("WHERE 2");
+        _tracer.NotifySqlStatementExecuting("SQL 1", null);
+        _tracer.NotifySqlStatementExecuting("SQL 2", null);
+        _tracer.NotifyWhereClauseBuilderVisit(new Lazy<string>("WHERE 1"));
+        _tracer.NotifyWhereClauseBuilderVisit(new Lazy<string>("WHERE 2"));
 
         // Assert
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(2));
         Assert.That(_whereClauseEvents.Count, Is.EqualTo(2));
         
-        Assert.That(_sqlStatementEvents[0].Message, Is.EqualTo("SQL 1"));
-        Assert.That(_sqlStatementEvents[1].Message, Is.EqualTo("SQL 2"));
-        Assert.That(_whereClauseEvents[0].Message, Is.EqualTo("WHERE 1"));
-        Assert.That(_whereClauseEvents[1].Message, Is.EqualTo("WHERE 2"));
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("Executing SQL:  SQL 1\n\tParameters:\n\t\tNone\n"));
+        Assert.That(_sqlStatementEvents[1].Message.Value, Is.EqualTo("Executing SQL:  SQL 2\n\tParameters:\n\t\tNone\n"));
+        Assert.That(_whereClauseEvents[0].Message.Value, Is.EqualTo("WHERE 1"));
+        Assert.That(_whereClauseEvents[1].Message.Value, Is.EqualTo("WHERE 2"));
     }
 
     [Test]
@@ -119,8 +119,8 @@ public class OrmGenerativeLogicTracerTests
         var tracerWithoutSubscribers = new OrmGenerativeLogicTracer();
 
         // Act & Assert
-        Assert.DoesNotThrow(() => tracerWithoutSubscribers.NotifySqlStatementExecuting("SQL"));
-        Assert.DoesNotThrow(() => tracerWithoutSubscribers.NotifyWhereClauseBuilderVisit("WHERE"));
+        Assert.DoesNotThrow(() => tracerWithoutSubscribers.NotifySqlStatementExecuting("SQL", null));
+        Assert.DoesNotThrow(() => tracerWithoutSubscribers.NotifyWhereClauseBuilderVisit(new Lazy<string>("WHERE")));
     }
 
     [Test]
@@ -131,7 +131,7 @@ public class OrmGenerativeLogicTracerTests
         _tracer.SqlStatementExecuting += (sender, args) => capturedSender = sender;
 
         // Act
-        _tracer.NotifySqlStatementExecuting("Test SQL");
+        _tracer.NotifySqlStatementExecuting("Test SQL", null);
 
         // Assert
         Assert.That(capturedSender, Is.SameAs(_tracer));
@@ -144,16 +144,16 @@ public class OrmGenerativeLogicTracerTests
         var events1 = new List<string>();
         var events2 = new List<string>();
 
-        _tracer.SqlStatementExecuting += (sender, args) => events1.Add(args.Message);
-        _tracer.SqlStatementExecuting += (sender, args) => events2.Add(args.Message);
+        _tracer.SqlStatementExecuting += (sender, args) => events1.Add(args.Message.Value);
+        _tracer.SqlStatementExecuting += (sender, args) => events2.Add(args.Message.Value);
 
         // Act
-        _tracer.NotifySqlStatementExecuting("Test SQL");
+        _tracer.NotifySqlStatementExecuting("Test SQL", null);
 
         // Assert
         Assert.That(events1.Count, Is.EqualTo(1));
         Assert.That(events2.Count, Is.EqualTo(1));
-        Assert.That(events1[0], Is.EqualTo("Test SQL"));
-        Assert.That(events2[0], Is.EqualTo("Test SQL"));
+        Assert.That(events1[0], Is.EqualTo("Executing SQL:  Test SQL\n\tParameters:\n\t\tNone\n"));
+        Assert.That(events2[0], Is.EqualTo("Executing SQL:  Test SQL\n\tParameters:\n\t\tNone\n"));
     }
 }

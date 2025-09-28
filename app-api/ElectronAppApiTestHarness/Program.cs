@@ -20,20 +20,20 @@ using (var container = ContainerRegistration.RegisterDependencies())
         sqlStatementCountTotal++;
         sqlStatementCount++;
 #if(LOG_SQL)
-        ConsoleLogger.WriteLine(ConsoleColor.DarkGreen, args.Message);
+        ConsoleLogger.WriteLine(ConsoleColor.DarkGreen, args.Message.Value);
 #endif
     };
     
     ormTracer.WhereClauseBuilderVisit += (sender, args) =>
     {
 #if(LOG_WHERE_CLAUSE_VISITS)
-        ConsoleLogger.WriteLine(ConsoleColor.DarkMagenta, args.Message);
+        ConsoleLogger.WriteLine(ConsoleColor.DarkMagenta, args.Message.Value);
 #endif
     };
     
     var orm = container.Resolve<ISqliteObjectRelationalMapping<DemoContext>>();
 
-    //orm.DeleteDatabase();
+    orm.DeleteDatabase();
     
     var dbCreated = orm.CreateDatabaseIfNotExists();
 
@@ -143,8 +143,10 @@ using (var container = ContainerRegistration.RegisterDependencies())
             }
         });
         
-        ConsoleLogger.WriteLine(ConsoleColor.Green, $"Seeded {totalRecordCount} record in {creationTime.TotalSeconds} second(s)");
+        ConsoleLogger.WriteLine(ConsoleColor.Green, $"Seeded {totalRecordCount} record(s) in {creationTime.TotalSeconds} second(s)");
     }
+
+    return;
     
     var dumpFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test-sqlite-record-dump.txt");
     ConsoleLogger.WriteLine(ConsoleColor.Green, $"Creating dump file at: {dumpFilename}");

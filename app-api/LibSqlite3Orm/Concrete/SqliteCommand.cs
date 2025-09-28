@@ -10,9 +10,10 @@ public class SqliteCommand : ISqliteCommand
 {
     private readonly Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory;
     private readonly IOrmGenerativeLogicTracer sqlNotifier;
+    private readonly Func<ISqliteParameterCollection> parametersFactory;
     private ISqliteConnection connection;
 
-    public SqliteCommand(ISqliteConnection connection, ISqliteParameterCollection parameters,
+    public SqliteCommand(ISqliteConnection connection, Func<ISqliteParameterCollection> parametersFactory,
         Func<ISqliteConnection, ISqliteCommand, IntPtr, ISqliteDataReader> dbReaderFactory,
         IOrmGenerativeLogicTracer sqlNotifier)
     {
@@ -20,12 +21,13 @@ public class SqliteCommand : ISqliteCommand
         this.connection.BeforeDispose += ConnectionOnBeforeDispose;
         this.dbReaderFactory = dbReaderFactory;
         this.sqlNotifier = sqlNotifier;
-        Parameters = parameters;
+        this.parametersFactory = parametersFactory;
+        Parameters = this.parametersFactory();
     }
     
     private IntPtr ConnectionHandle => connection?.GetHandle() ?? IntPtr.Zero;
     
-    public ISqliteParameterCollection Parameters { get; }
+    public ISqliteParameterCollection Parameters { get; private set; }
 
     public void Dispose()
     {
@@ -56,7 +58,7 @@ public class SqliteCommand : ISqliteCommand
 
     public ISqliteDataReader ExecuteQuery(string sql)
     {
-        sqlNotifier.NotifySqlStatementExecuting(sql);
+        sqlNotifier.NotifySqlStatementExecuting(sql, Parameters);
         var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
         if (Parameters.Count > 0)
             Parameters.BindAll(statement);        
@@ -67,7 +69,7 @@ public class SqliteCommand : ISqliteCommand
     {
         try
         {
-            sqlNotifier.NotifySqlStatementExecuting(sql);
+            sqlNotifier.NotifySqlStatementExecuting(sql, Parameters);
             var statement = SqliteExternals.Prepare2(ConnectionHandle, sql);
             try
             {
@@ -92,7 +94,7 @@ public class SqliteCommand : ISqliteCommand
         }
         finally
         {
-            Parameters.Clear();
+            Parameters = parametersFactory();
         }
     }
     

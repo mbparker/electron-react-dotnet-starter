@@ -29,7 +29,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	public string Build(Type entityType, Expression expression)
 	{
 		table = schema.Tables.Values.Single(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parse where predicate for table ({table.Name}): {expression}");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parse where predicate for table ({table.Name}): {expression}"));
 		extractedParameters.Clear();
 		sqlBuilder = new StringBuilder();
 		Visit(expression);
@@ -241,8 +241,11 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	protected override Expression VisitMethodCall(MethodCallExpression mc)
 	{
-		currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Visiting Method Call: {currentMethodCall}");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() =>
+		{
+			currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
+			return $"Visiting Method Call: {currentMethodCall}";
+		}));
 		return base.VisitMethodCall(mc);
 	}
 
@@ -286,14 +289,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
 			if (extractedParameters[name].Value.Equals(value))
 			{
-				generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+				generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 				return name;
 			}
 
 			name = $"{dbFieldName}{uniqueness++}";
 		}
 
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})");
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 		return name;
 	}
 }

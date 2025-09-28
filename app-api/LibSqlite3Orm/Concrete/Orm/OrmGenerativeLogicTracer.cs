@@ -1,3 +1,4 @@
+using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm.Events;
 
@@ -5,15 +6,15 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class OrmGenerativeLogicTracer : IOrmGenerativeLogicTracer
 {
-    public event EventHandler<GenerativeLogicTraceEventArgs> SqlStatementExecuting;
+    public event EventHandler<SqlStatementExecutingEventArgs> SqlStatementExecuting;
     public event EventHandler<GenerativeLogicTraceEventArgs> WhereClauseBuilderVisit;
     
-    public void NotifySqlStatementExecuting(string sqlStatement)
+    public void NotifySqlStatementExecuting(string sqlStatement, ISqliteParameterCollection parameters)
     {
-        SqlStatementExecuting?.Invoke(this, new GenerativeLogicTraceEventArgs(sqlStatement));
+        SqlStatementExecuting?.Invoke(this, new SqlStatementExecutingEventArgs(sqlStatement, parameters));
     }
 
-    public void NotifyWhereClauseBuilderVisit(string message)
+    public void NotifyWhereClauseBuilderVisit(Lazy<string> message)
     {
         WhereClauseBuilderVisit?.Invoke(this, new GenerativeLogicTraceEventArgs(message));
     }

@@ -151,21 +151,6 @@ public class SqliteParameterCollectionTests
     }
 
     [Test]
-    public void Clear_RemovesAllParameters()
-    {
-        // Arrange
-        _collection.Add("param1", "value1");
-        _collection.Add("param2", "value2");
-        Assert.That(_collection.Count, Is.EqualTo(2));
-
-        // Act
-        _collection.Clear();
-
-        // Assert
-        Assert.That(_collection.Count, Is.EqualTo(0));
-    }
-
-    [Test]
     public void BindAll_CallsBindOnAllParameters()
     {
         // Arrange

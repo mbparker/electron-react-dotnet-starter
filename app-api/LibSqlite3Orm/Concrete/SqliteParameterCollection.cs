@@ -53,11 +53,6 @@ public class SqliteParameterCollection : ISqliteParameterCollection
             param.Bind(statement);
     }
 
-    public void Clear()
-    {
-        parameters.Clear();
-    }
-
     public IEnumerator<ISqliteParameter> GetEnumerator()
     {
         return parameters.GetEnumerator();
