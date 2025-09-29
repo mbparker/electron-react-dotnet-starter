@@ -3,6 +3,7 @@ using System.Data;
 using System.IO.Hashing;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -276,7 +277,7 @@ public class SqliteTableOptionsBuilder<TTable>
             else
                 tableOptions.Columns.Add(options.Member.Name, options);
             tableOptions.PrimaryKeyColumnOptions = options;
-            return new SqlitePrimaryKeyOptionsBuilder(options);
+            return new SqlitePrimaryKeyOptionsBuilder(options, serialization);
         }
 
         throw new InvalidExpressionException();
@@ -290,22 +291,7 @@ public class SqliteTableOptionsBuilder<TTable>
             options.Member = exp.Member;
             options.Name = string.IsNullOrWhiteSpace(name) ? options.Member.Name : name.Trim();
             tableOptions.Columns.Add(options.Member.Name, options);
-            return new SqliteColumnOptionsBuilder(options);
-        }
-
-        throw new InvalidExpressionException();
-    }
-    
-    public SqliteColumnOptionsBuilder WithImmutableColumn<T>(Expression<Func<TTable, T>> field, string name = null)
-    {
-        if (field.Body is MemberExpression exp)
-        {
-            var options = new SqliteTableColumnOptions(tableOptions);
-            options.Member = exp.Member;
-            options.Name = string.IsNullOrWhiteSpace(name) ? options.Member.Name : name.Trim();
-            options.IsImmutable = true;
-            tableOptions.Columns.Add(options.Member.Name, options);
-            return new SqliteColumnOptionsBuilder(options);
+            return new SqliteColumnOptionsBuilder(options, serialization);
         }
 
         throw new InvalidExpressionException();
@@ -363,33 +349,18 @@ public class SqliteTableOptionsBuilder<TTable>
         throw new InvalidExpressionException();
     }
     
-    public SqliteColumnOptionsBuilder AndSetColumnName<T>(Expression<Func<TTable, T>> field, string newName = null)
+    public SqliteColumnOptionsBuilder WithColumnChanges<T>(Expression<Func<TTable, T>> field)
     {
         if (field.Body is MemberExpression exp)
         {
             if (tableOptions.Columns.TryGetValue(exp.Member.Name, out var options))
             {
-                options.Name = string.IsNullOrWhiteSpace(newName) ? options.Name : newName.Trim();
-                return new SqliteColumnOptionsBuilder(options);
+                return new SqliteColumnOptionsBuilder(options, serialization);
             }
         }
         
         throw new InvalidExpressionException();
     }
-    
-    public SqliteColumnOptionsBuilder AndSetColumnImmutability<T>(Expression<Func<TTable, T>> field, bool isImmutable)
-    {
-        if (field.Body is MemberExpression exp)
-        {
-            if (tableOptions.Columns.TryGetValue(exp.Member.Name, out var options))
-            {
-                options.IsImmutable = isImmutable;
-                return new SqliteColumnOptionsBuilder(options);
-            }
-        }
-        
-        throw new InvalidExpressionException();
-    }    
 
     public SqliteTableOptionsBuilder<TTable> WithCompositePrimaryKey(params Expression<Func<TTable, object>>[] keyFields)
     {
@@ -428,19 +399,37 @@ public class SqliteTableOptionsBuilder<TTable>
 
 public class SqliteColumnOptionsBuilder
 {
+    private readonly ISqliteFieldValueSerialization serialization;
     private SqliteTableColumnOptions options;
     
-    public SqliteColumnOptionsBuilder(SqliteTableColumnOptions options)
+    public SqliteColumnOptionsBuilder(SqliteTableColumnOptions options, ISqliteFieldValueSerialization serialization)
     {
+        this.serialization = serialization;
         this.options = options;
     }
     
-    public SqliteColumnOptionsBuilder IsNotNull(SqliteLiteConflictAction conflictAction = SqliteLiteConflictAction.Fail)
+    public SqliteColumnOptionsBuilder IsNotNull(bool isNotNull = true, SqliteLiteConflictAction conflictAction = SqliteLiteConflictAction.Fail)
     {
-        options.IsNotNull = true;
+        options.IsNotNull = isNotNull;
         options.IsNotNullConflictAction = conflictAction;
         return this;
     }
+    
+    public SqliteColumnOptionsBuilder WithDefaultValue(object defaultValue)
+    {
+        if (defaultValue is not null)
+        {
+            var type = options.Member.GetValueType();
+            if (type != defaultValue.GetType())
+                throw new InvalidDataContractException($"Invalid default value specified on column {options.TableOptions.Name}.{options.Name}");
+            defaultValue = serialization[type]?.Serialize(defaultValue) ?? defaultValue;
+            options.DefaultValueLiteral = defaultValue.ToString();
+        }
+        else
+            options.DefaultValueLiteral = "NULL";
+
+        return this;
+    }    
 
     public SqliteColumnOptionsBuilder IsUnique(SqliteLiteConflictAction conflictAction = SqliteLiteConflictAction.Fail)
     {
@@ -455,25 +444,25 @@ public class SqliteColumnOptionsBuilder
         return this;
     }
 
-    public SqliteColumnOptionsBuilder WithDefaultValue(string literalValue = "NULL")
+    public SqliteColumnOptionsBuilder IsImmutable(bool isImmutable = true)
     {
-        options.DefaultValueLiteral = literalValue;
+        options.IsImmutable = isImmutable;
         return this;
     }
-
-    public SqliteColumnOptionsBuilder IgnoreOnUpdates(bool enabled = true)
+    
+    public SqliteColumnOptionsBuilder WithNewName(string newName = null)
     {
-        options.IsImmutable = enabled;
+        options.Name = string.IsNullOrWhiteSpace(newName) ? options.Name : newName.Trim();
         return this;
-    }
+    }   
 }
 
 public class SqlitePrimaryKeyOptionsBuilder : SqliteColumnOptionsBuilder
 {
     private SqliteTablePrimaryKeyColumnOptions options;
     
-    public SqlitePrimaryKeyOptionsBuilder(SqliteTablePrimaryKeyColumnOptions options)
-        : base(options)
+    public SqlitePrimaryKeyOptionsBuilder(SqliteTablePrimaryKeyColumnOptions options, ISqliteFieldValueSerialization serialization)
+        : base(options, serialization)
     {
         this.options = options;
     }
