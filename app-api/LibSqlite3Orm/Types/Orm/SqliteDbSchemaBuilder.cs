@@ -28,7 +28,7 @@ public class SqliteDbSchemaBuilder
         options.TableType = typeof(TTable);
         options.Name = string.IsNullOrWhiteSpace(tableName) ? options.TableType.Name : tableName.Trim();
         schemaOptions.Tables.Add(options.TableType.AssemblyQualifiedName, options);
-        return new SqliteTableOptionsBuilder<TTable>(options);
+        return new SqliteTableOptionsBuilder<TTable>(options, serialization);
     }
 
     public SqliteIndexOptionsBuilder<TTable> HasIndex<TTable>(string indexName = null) where TTable : class, new()
@@ -208,11 +208,6 @@ public class SqliteDbSchemaBuilder
             return SqliteColType.Integer;
         }
 
-        if (type == typeof(ulong))
-        {
-            return SqliteColType.Integer;
-        }
-
         if (type == typeof(sbyte))
         {
             return SqliteColType.Integer;
@@ -254,10 +249,12 @@ public class SqliteDbSchemaBuilder
 
 public class SqliteTableOptionsBuilder<TTable>
 {
+    private readonly ISqliteFieldValueSerialization serialization;
     private SqliteTableOptions tableOptions;
     
-    public SqliteTableOptionsBuilder(SqliteTableOptions tableOptions)
+    public SqliteTableOptionsBuilder(SqliteTableOptions tableOptions, ISqliteFieldValueSerialization serialization)
     {
+        this.serialization = serialization;
         this.tableOptions = tableOptions;
     }
 
@@ -334,6 +331,20 @@ public class SqliteTableOptionsBuilder<TTable>
                 var options = new SqliteTableColumnOptions(tableOptions);
                 options.Member = member;
                 options.Name = options.Member.Name;
+                
+                // Surely there is a better way of determining if a field or property can be set to null or not???
+                var possiblyNullableType = member.GetValueType();
+                var realType =  Nullable.GetUnderlyingType(possiblyNullableType) ?? possiblyNullableType;
+                if (realType == possiblyNullableType && realType.IsValueType)
+                {
+                    options.IsNotNull = true;
+                    var defaultValue = Activator.CreateInstance(realType) ?? throw new InvalidOperationException(
+                        $"Cannot get default value for non-nullable column {options.Name} of type {realType.Name}");
+                    defaultValue = serialization[realType]?.Serialize(defaultValue) ?? defaultValue;
+                    options.DefaultValueLiteral = defaultValue.ToString();
+                }
+                //
+                
                 tableOptions.Columns.Add(options.Member.Name, options);
             }
         }
