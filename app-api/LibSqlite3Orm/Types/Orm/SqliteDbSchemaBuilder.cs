@@ -363,7 +363,7 @@ public class SqliteTableOptionsBuilder<TTable>
         throw new InvalidExpressionException();
     }
     
-    public SqliteColumnOptionsBuilder WithColumnChanges<T>(Expression<Func<TTable, T>> field, string newName = null)
+    public SqliteColumnOptionsBuilder AndSetColumnName<T>(Expression<Func<TTable, T>> field, string newName = null)
     {
         if (field.Body is MemberExpression exp)
         {
@@ -372,17 +372,24 @@ public class SqliteTableOptionsBuilder<TTable>
                 options.Name = string.IsNullOrWhiteSpace(newName) ? options.Name : newName.Trim();
                 return new SqliteColumnOptionsBuilder(options);
             }
-            
-            // Just add the column - don't throw an error.
-            options = new SqliteTableColumnOptions(tableOptions);
-            options.Member = exp.Member;
-            options.Name = string.IsNullOrWhiteSpace(newName) ? options.Member.Name : newName.Trim();
-            tableOptions.Columns.Add(options.Member.Name, options);
-            return new SqliteColumnOptionsBuilder(options);
         }
         
         throw new InvalidExpressionException();
     }
+    
+    public SqliteColumnOptionsBuilder AndSetColumnImmutability<T>(Expression<Func<TTable, T>> field, bool isImmutable)
+    {
+        if (field.Body is MemberExpression exp)
+        {
+            if (tableOptions.Columns.TryGetValue(exp.Member.Name, out var options))
+            {
+                options.IsImmutable = isImmutable;
+                return new SqliteColumnOptionsBuilder(options);
+            }
+        }
+        
+        throw new InvalidExpressionException();
+    }    
 
     public SqliteTableOptionsBuilder<TTable> WithCompositePrimaryKey(params Expression<Func<TTable, object>>[] keyFields)
     {
