@@ -53,14 +53,14 @@ public class EntityServices : IEntityServices
         return creator.InsertMany(connection, entities);
     }
 
-    public ISqliteQueryable<T> Get<T>(bool includeDetails = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
     {
-        return getter.Get<T>(includeDetails);
+        return getter.Get<T>(loadNavigationProps);
     }
     
-    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool includeDetails = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool loadNavigationProps = false) where T : new()
     {
-        return getter.Get<T>(connection, includeDetails);
+        return getter.Get<T>(connection, loadNavigationProps);
     }
 
     public bool Update<T>(T entity)

@@ -30,22 +30,22 @@ public class EntityGetter : IEntityGetter
         this.context = context;
     }
 
-    public ISqliteQueryable<T> Get<T>(bool includeDetails = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
     {
         return Get<T>(() =>
         {
             var connection = connectionFactory();
             connection.Open(context.Filename, true);
             return connection;
-        }, includeDetails, true);
+        }, loadNavigationProps, true);
     }
 
-    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool includeDetails = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool loadNavigationProps = false) where T : new()
     {
-        return Get<T>(() => connection, includeDetails, false);
+        return Get<T>(() => connection, loadNavigationProps, false);
     }
 
-    private ISqliteQueryable<T> Get<T>(Func<ISqliteConnection> connectionAllocator, bool includeDetails, bool disposeConnection) where T : new()
+    private ISqliteQueryable<T> Get<T>(Func<ISqliteConnection> connectionAllocator, bool loadNavigationProps, bool disposeConnection) where T : new()
     {
         var entityTypeName = typeof(T).AssemblyQualifiedName;
         var table = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityTypeName);
@@ -64,7 +64,7 @@ public class EntityGetter : IEntityGetter
             
             object GetDetailsListPropertyValue(Type detailTableType, T recordEntity)
             {
-                if (includeDetails)
+                if (loadNavigationProps)
                 {
                     MethodInfo getDetailsListMethodGeneric = null;
                     var getDetailsMethod = GetType().GetMethod(nameof(GetDetailsList),
@@ -80,7 +80,7 @@ public class EntityGetter : IEntityGetter
             
             object GetDetailsPropertyValue(Type detailTableType, T recordEntity)
             {
-                if (includeDetails)
+                if (loadNavigationProps)
                 {
                     MethodInfo getDetailsListMethodGeneric = null;
                     var getDetailsMethod = GetType().GetMethod(nameof(GetDetails),
@@ -132,7 +132,7 @@ public class EntityGetter : IEntityGetter
         {
             // Initialize the queryable, then build an expression in code to filter the results to the current record.
             // Do not fetch detail records in order to help prevent infinite recursion in apps using this library.
-            var queryable = Get<TDetails>(includeDetails: false);
+            var queryable = Get<TDetails>(loadNavigationProps: false);
             var tableType = typeof(TTable);
             var detailTableType = typeof(TDetails);
             var entityTypeName = detailTableType.AssemblyQualifiedName;
@@ -202,7 +202,7 @@ public class EntityGetter : IEntityGetter
         return new Lazy<ISqliteQueryable<TDetails>>(() =>
         {
             // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
-            var queryable = Get<TDetails>(includeDetails: true);
+            var queryable = Get<TDetails>(loadNavigationProps: true);
             var tableType = typeof(TTable);
             var detailTableType = typeof(TDetails);
             var entityTypeName = detailTableType.AssemblyQualifiedName;

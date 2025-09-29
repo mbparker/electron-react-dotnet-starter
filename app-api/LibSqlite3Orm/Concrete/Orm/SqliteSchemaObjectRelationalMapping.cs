@@ -203,11 +203,11 @@ public class SqliteSchemaObjectRelationalMapping<TContext> : ISqliteSchemaObject
         return EntityServices.UpsertMany(entities);
     }
 
-    public ISqliteQueryable<T> Get<T>(bool includeDetails = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
     {
         if (_connection is not null)
-            return EntityServices.Get<T>(_connection, includeDetails);
-        return EntityServices.Get<T>(includeDetails);
+            return EntityServices.Get<T>(_connection, loadNavigationProps);
+        return EntityServices.Get<T>(loadNavigationProps);
     }
     
     public int Delete<T>(Expression<Func<T, bool>> predicate)

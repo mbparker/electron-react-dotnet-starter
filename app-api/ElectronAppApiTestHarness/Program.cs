@@ -189,7 +189,7 @@ try
                     DemoEntity[] entityRecords = [];
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        entityRecords = orm.Get<DemoEntity>(includeDetails: false).AsEnumerable().ToArray();
+                        entityRecords = orm.Get<DemoEntity>(loadNavigationProps: false).AsEnumerable().ToArray();
                         foreach (var record in entityRecords)
                         {
                             writer.WriteLine(record.ToString());
@@ -209,7 +209,7 @@ try
                     CustomTagLink[] linkRecords = [];
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        linkRecords = orm.Get<CustomTagLink>(includeDetails: false).AsEnumerable().ToArray();
+                        linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: false).AsEnumerable().ToArray();
                         foreach (var record in linkRecords)
                         {
                             writer.WriteLine(record.ToString());
@@ -229,7 +229,7 @@ try
                     entityRecords = [];
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        entityRecords = orm.Get<DemoEntity>(includeDetails: true).AsEnumerable().ToArray();
+                        entityRecords = orm.Get<DemoEntity>(loadNavigationProps: true).AsEnumerable().ToArray();
                         foreach (var record in entityRecords)
                         {
                             writer.WriteLine(record.ToString());
@@ -249,7 +249,7 @@ try
                     linkRecords = [];
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        linkRecords = orm.Get<CustomTagLink>(includeDetails: true).AsEnumerable().ToArray();
+                        linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: true).AsEnumerable().ToArray();
                         foreach (var record in linkRecords)
                         {
                             writer.WriteLine(record.ToString());

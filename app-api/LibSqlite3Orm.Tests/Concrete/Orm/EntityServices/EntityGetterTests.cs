@@ -185,7 +185,7 @@ public class EntityGetterTests
         _mockSchema.Tables.Add("TestTable", table);
 
         // Act
-        var result = _entityGetter.Get<TestEntity>(includeDetails: true);
+        var result = _entityGetter.Get<TestEntity>(loadNavigationProps: true);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -204,7 +204,7 @@ public class EntityGetterTests
         _mockSchema.Tables.Add("TestTable", table);
 
         // Act
-        var result = _entityGetter.Get<TestEntity>(includeDetails: false);
+        var result = _entityGetter.Get<TestEntity>(loadNavigationProps: false);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -345,7 +345,7 @@ public class EntityGetterTests
 
         // Act
         var result1 = _entityGetter.Get<TestEntity>();
-        var result2 = _entityGetter.Get<TestEntity>(includeDetails: false);
+        var result2 = _entityGetter.Get<TestEntity>(loadNavigationProps: false);
 
         // Assert - Both should work the same way
         Assert.That(result1, Is.Not.Null);
@@ -367,7 +367,7 @@ public class EntityGetterTests
 
         // Act
         var result1 = _entityGetter.Get<TestEntity>(_mockConnection);
-        var result2 = _entityGetter.Get<TestEntity>(_mockConnection, includeDetails: false);
+        var result2 = _entityGetter.Get<TestEntity>(_mockConnection, loadNavigationProps: false);
 
         // Assert - Both should work the same way
         Assert.That(result1, Is.Not.Null);
