@@ -9,7 +9,6 @@ public class SqliteDataColumn : ISqliteDataColumn
 {
     private readonly IntPtr statement;
     private readonly ISqliteFieldValueSerialization serialization;
-    private ISqliteFieldSerializer serializerToUse;
     private object serializedValue;
     
     public SqliteDataColumn(int index, IntPtr statement, ISqliteFieldValueSerialization serialization)
@@ -25,16 +24,6 @@ public class SqliteDataColumn : ISqliteDataColumn
     public string Name { get; }
     public int Index { get; }
     public SqliteColType TypeAffinity { get; }
-    
-    public void UseSerializer(ISqliteFieldSerializer serializer)
-    {
-        serializerToUse = serializer;
-    }
-
-    public void UseSerializer(Type modelType)
-    {
-        serializerToUse = serialization[modelType];
-    }
 
     public object Value()
     {
@@ -49,11 +38,10 @@ public class SqliteDataColumn : ISqliteDataColumn
     public object ValueAs(Type type)
     {
         if (serializedValue is null) return null;
-        var targetType = serializerToUse is not null ? serializerToUse.SerializedType : type;
-        var nullableType = Nullable.GetUnderlyingType(targetType);
-        targetType = nullableType ?? targetType;        
-        var value = DeserializeValue(targetType);
-        return serializerToUse?.Deserialize(value) ?? value;
+        var nullableType = Nullable.GetUnderlyingType(type);
+        type = nullableType ?? type;        
+        var value = DeserializeValue(type);
+        return value;
     }    
 
     private void ReadSerializedValue()

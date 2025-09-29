@@ -8,13 +8,6 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteEntityWriter : ISqliteEntityWriter
 {
-    private readonly ISqliteFieldValueSerialization serialization;
-    
-    public SqliteEntityWriter(ISqliteFieldValueSerialization serialization)
-    {
-        this.serialization = serialization;    
-    }
-    
     public void SetGeneratedKeyOnEntityIfNeeded<T>(SqliteDbSchema schema, ISqliteConnection connection, T entity)
     {
         var type = typeof(T);
@@ -45,7 +38,6 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             if (member is not null)
             {
                 var rowField = row[col.Name];
-                rowField.UseSerializer(serialization[Type.GetType(col.ModelFieldTypeName)]);
                 member.SetValue(entity, rowField.ValueAs(Type.GetType(col.ModelFieldTypeName)));
             }
         }
