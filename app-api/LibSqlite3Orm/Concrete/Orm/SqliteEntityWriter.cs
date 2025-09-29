@@ -1,7 +1,7 @@
-using System.Reflection;
 using System.Runtime.Serialization;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.Models.Orm;
 
 namespace LibSqlite3Orm.Concrete.Orm;
@@ -34,13 +34,14 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             throw new InvalidDataContractException($"Type {type.AssemblyQualifiedName} is not mapped in the schema.");
     }
 
-    public T Deserialize<T>(SqliteDbSchemaTable table, ISqliteDataRow row, Func<Type, T, object> getDetailsListFunc, Func<Type, T, object> getDetailsFunc) where T : new()
+    public TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row,
+        IDetailEntityGetter detailEntityGetter, bool loadNavigationProps) where TEntity : new()
     {
-        var entity = new T();
-        var type = entity.GetType();
+        var entity = new TEntity();
+        var entityType = entity.GetType();
         foreach (var col in table.Columns.Values)
         {
-            var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
+            var member = entityType.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
                 var rowField = row[col.Name];
@@ -49,32 +50,45 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             }
         }
 
-        if (getDetailsListFunc is not null)
+        var detailGetterType = typeof(IDetailEntityGetter);
+        var getDetailsListGeneric = detailGetterType.GetMethod(nameof(IDetailEntityGetter.GetDetailsList));
+        if (getDetailsListGeneric is not null)
         {
             foreach (var detailsProp in table.DetailListProperties)
             {
-                var member = type.GetMember(detailsProp.DetailsListPropertyName).SingleOrDefault();
+                var member = entityType.GetMember(detailsProp.DetailsListPropertyName).SingleOrDefault();
                 if (member is not null)
                 {
-                    var tableType = Type.GetType(detailsProp.DetailTableTypeName);
-                    var queryable = getDetailsListFunc(tableType, entity);
-                    member.SetValue(entity, queryable);
+                    var detailEntityType = Type.GetType(detailsProp.DetailTableTypeName);
+                    if (detailEntityType is not null)
+                    {
+                        var getDetailsList =
+                            getDetailsListGeneric.MakeGenericMethod(entityType, detailEntityType);
+                        var queryable = getDetailsList.Invoke(detailEntityGetter, [entity, loadNavigationProps]);
+                        member.SetValue(entity, queryable);
+                    }
                 }
-            }            
+            }
         }
 
-        if (getDetailsFunc is not null)
+        var getDetailsGeneric = detailGetterType.GetMethod(nameof(IDetailEntityGetter.GetDetails));
+        if (getDetailsGeneric is not null)
         {
             foreach (var detailsProp in table.DetailProperties)
             {
-                var member = type.GetMember(detailsProp.DetailsPropertyName).SingleOrDefault();
+                var member = entityType.GetMember(detailsProp.DetailsPropertyName).SingleOrDefault();
                 if (member is not null)
                 {
-                    var tableType = Type.GetType(detailsProp.DetailTableTypeName);
-                    var detailEntity = getDetailsFunc(tableType, entity);
-                    member.SetValue(entity, detailEntity);
+                    var detailEntityType = Type.GetType(detailsProp.DetailTableTypeName);
+                    if (detailEntityType is not null)
+                    {
+                        var getDetails =
+                            getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
+                        var detailEntity = getDetails.Invoke(detailEntityGetter, [entity, loadNavigationProps]);
+                        member.SetValue(entity, detailEntity);
+                    }
                 }
-            }             
+            }
         }
 
         return entity;

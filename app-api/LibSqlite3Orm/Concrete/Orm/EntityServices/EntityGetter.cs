@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Runtime.Serialization;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -10,14 +9,13 @@ using LibSqlite3Orm.Types.Orm;
 
 namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
-public class EntityGetter : IEntityGetter
+public class EntityGetter : IEntityGetter, IDetailEntityGetter
 {
     private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteEntityWriter entityWriter;
     private readonly ISqliteOrmDatabaseContext context;
-    private readonly Dictionary<Type, ConstructorInfo> lazyConstructors = new();
 
     public EntityGetter(Func<ISqliteConnection> connectionFactory,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
@@ -61,42 +59,10 @@ public class EntityGetter : IEntityGetter
                     return cmd.ExecuteQuery(synthesisResult.SqlText);
                 }
             }
-            
-            object GetDetailsListPropertyValue(Type detailTableType, T recordEntity)
-            {
-                if (loadNavigationProps)
-                {
-                    MethodInfo getDetailsListMethodGeneric = null;
-                    var getDetailsMethod = GetType().GetMethod(nameof(GetDetailsList),
-                        BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (getDetailsMethod is not null)
-                        getDetailsListMethodGeneric = getDetailsMethod.MakeGenericMethod(typeof(T), detailTableType);
-                    if (getDetailsListMethodGeneric is not null)
-                        return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
-                }
-                
-                return CreateLazyQueryableNull(detailTableType);
-            }
-            
-            object GetDetailsPropertyValue(Type detailTableType, T recordEntity)
-            {
-                if (loadNavigationProps)
-                {
-                    MethodInfo getDetailsListMethodGeneric = null;
-                    var getDetailsMethod = GetType().GetMethod(nameof(GetDetails),
-                        BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (getDetailsMethod is not null)
-                        getDetailsListMethodGeneric = getDetailsMethod.MakeGenericMethod(typeof(T), detailTableType);
-                    if (getDetailsListMethodGeneric is not null)
-                        return getDetailsListMethodGeneric.Invoke(this, [recordEntity]);
-                }
-
-                return CreateLazyNull(detailTableType);
-            }            
 
             T DeserializeRow(ISqliteDataRow row)
             {
-                return entityWriter.Deserialize<T>(table, row, GetDetailsListPropertyValue, GetDetailsPropertyValue);
+                return entityWriter.Deserialize<T>(table, row, this, loadNavigationProps);
             }
             
             return new SqliteOrderedQueryable<T>(ExecuteQuery, DeserializeRow, disposeConnection);
@@ -105,29 +71,13 @@ public class EntityGetter : IEntityGetter
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
     }
 
-    private object CreateLazyQueryableNull(Type type)
+    Lazy<TDetails> IDetailEntityGetter.GetDetails<TTable, TDetails>(TTable record, bool loadNavigationProps)
     {
-        return CreateLazyNull(typeof(ISqliteQueryable<>).MakeGenericType(type));
-    }
-
-    private object CreateLazyNull(Type type)
-    {
-        if (!lazyConstructors.TryGetValue(type, out var ctor))
+        if (!loadNavigationProps)
         {
-            var lazyType = typeof(Lazy<>).MakeGenericType(type);
-            ctor = lazyType.GetConstructors().FirstOrDefault(x =>
-            {
-                var p = x.GetParameters();
-                return p.Length == 1 && p[0].ParameterType == type;
-            });
-            lazyConstructors.Add(type, ctor);
+            return new Lazy<TDetails>(default(TDetails));
         }
         
-        return ctor?.Invoke([null]);
-    }
-
-    private Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record) where TDetails : new()
-    {
         return new Lazy<TDetails>(() =>
         {
             // Initialize the queryable, then build an expression in code to filter the results to the current record.
@@ -197,8 +147,13 @@ public class EntityGetter : IEntityGetter
         });
     }
 
-    private Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TTable, TDetails>(TTable record) where TDetails : new()
+    Lazy<ISqliteQueryable<TDetails>> IDetailEntityGetter.GetDetailsList<TTable, TDetails>(TTable record, bool loadNavigationProps)
     {
+        if (!loadNavigationProps)
+        {
+            return new Lazy<ISqliteQueryable<TDetails>>(default(ISqliteQueryable<TDetails>));
+        }
+        
         return new Lazy<ISqliteQueryable<TDetails>>(() =>
         {
             // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
