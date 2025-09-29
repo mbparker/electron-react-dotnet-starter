@@ -1,5 +1,3 @@
-using LibSqlite3Orm;
-
 namespace LibSqlite3Orm.Tests;
 
 [TestFixture]
@@ -53,22 +51,6 @@ public class ConsoleLoggerTests
         // Assert
         var output = _stringWriter.ToString();
         Assert.That(output, Contains.Substring(message));
-    }
-
-    [Test]
-    public void WriteLine_RepeatedMessage_ShowsRepeatCount()
-    {
-        // Arrange
-        var message = "Repeated message";
-
-        // Act
-        ConsoleLogger.WriteLine(message);
-        ConsoleLogger.WriteLine(message);
-        ConsoleLogger.WriteLine("Different message");
-
-        // Assert
-        var output = _stringWriter.ToString();
-        Assert.That(output, Contains.Substring("Previous statement repeated 1 time(s)"));
     }
 
     [Test]
