@@ -443,12 +443,6 @@ public class SqliteColumnOptionsBuilder
         return this;
     }
 
-    public SqliteColumnOptionsBuilder WithConversion<TConverter>()
-    {
-        options.SerializerType = typeof(TConverter);
-        return this;
-    }
-
     public SqliteColumnOptionsBuilder IgnoreOnUpdates(bool enabled = true)
     {
         options.IsImmutable = enabled;

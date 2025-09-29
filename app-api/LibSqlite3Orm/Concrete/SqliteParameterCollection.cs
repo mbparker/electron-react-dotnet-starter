@@ -31,26 +31,6 @@ public class SqliteParameterCollection : ISqliteParameterCollection, ISqlitePara
         return result;
     }
 
-    public ISqliteParameter Add(string name, object value, Type modelType)
-    {
-        var result = parameterFactory(name, parameters.Count + 1);
-        if (modelType is not null)
-            result.UseSerializer(modelType);
-        result.Set(value);
-        parameters.Add(result);
-        return result;
-    }
-
-    public ISqliteParameter Add(string name, object value, ISqliteFieldSerializer serializer)
-    {
-        var result = parameterFactory(name, parameters.Count + 1);
-        if (serializer is not null)
-            result.UseSerializer(serializer);
-        result.Set(value);
-        parameters.Add(result);
-        return result;
-    }
-
     public void BindAll(IntPtr statement)
     {
         foreach (var param in parameters)

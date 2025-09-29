@@ -15,21 +15,18 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     private readonly ISqliteSchemaObjectRelationalMapping<TContext> modelOrm;
     private readonly Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory;
     private readonly ISqliteDbFactory dbFactory;
-    private readonly ISqliteFieldValueSerialization fieldSerialization;
     private readonly ISqliteFieldConversion fieldConversion;
     private bool initialized;
 
     public SqliteDbSchemaMigrator(ISqliteSchemaObjectRelationalMapping<SqliteOrmSchemaContext> schemaOrm,
         ISqliteSchemaObjectRelationalMapping<TContext> modelOrm,
         Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory,
-        ISqliteDbFactory dbFactory, ISqliteFieldValueSerialization fieldSerialization,
-        ISqliteFieldConversion fieldConversion)
+        ISqliteDbFactory dbFactory, ISqliteFieldConversion fieldConversion)
     {
         this.schemaOrm = schemaOrm;
         this.modelOrm = modelOrm;
         this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory;
         this.dbFactory  = dbFactory;
-        this.fieldSerialization = fieldSerialization;
         this.fieldConversion = fieldConversion;
     }
 
@@ -351,7 +348,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
                             }
                         }
                         
-                        insertCmd.Parameters.Add(col.Name, value, fieldSerialization[newValType]);
+                        insertCmd.Parameters.Add(col.Name, value);
                     }
                 }
 

@@ -24,6 +24,8 @@ public class DemoEntity : BaseEntity
     public decimal? DecimalValue { get; set; }
     public long LongValue { get; set; }
     public ulong? ULongValue { get; set; }
+    public Int128 Int128Value { get; set; }
+    public UInt128 UInt128Value { get; set; }
     public Guid? GuidValue { get; set; }
     public DateOnly? DateOnlyValue { get; set; }
     public DateTime? DateTimeValue { get; set; }
@@ -45,6 +47,8 @@ public class DemoEntity : BaseEntity
         sb.AppendLine($"DecimalValue: {DecimalValue}");
         sb.AppendLine($"LongValue: {LongValue}");
         sb.AppendLine($"ULongValue: {ULongValue}");
+        sb.AppendLine($"Int128Value: {Int128Value}");
+        sb.AppendLine($"UInt128Value: {UInt128Value}");
         sb.AppendLine($"GuidValue: {GuidValue}");
         sb.AppendLine($"DateOnlyValue: {DateOnlyValue}");
         sb.AppendLine($"DateTimeValue: {DateTimeValue}");

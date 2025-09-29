@@ -58,7 +58,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             foreach (var parm in synthesisResult.ExtractedParameters.Values)
             {
                 var col = synthesisResult.Table.Columns[parm.DbFieldName];
-                parameterCollection.Add(parm.Name, parm.Value, serialization[Type.GetType(col.ModelFieldTypeName)]);
+                parameterCollection.Add(parm.Name, parm.Value);
             }
         }
     }
@@ -86,7 +86,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                parameterCollection.Add(col.Name, member.GetValue(entity), serialization[Type.GetType(col.ModelFieldTypeName)]);
+                parameterCollection.Add(col.Name, member.GetValue(entity));
             }
             else
                 throw new InvalidDataContractException(
@@ -109,7 +109,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                parameterCollection.Add(col.Name, member.GetValue(entity), serialization[Type.GetType(col.ModelFieldTypeName)]);
+                parameterCollection.Add(col.Name, member.GetValue(entity));
             }
             else
                 throw new InvalidDataContractException(
@@ -122,7 +122,7 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
             var member = type.GetMember(keyCol.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
-                parameterCollection.Add(keyCol.Name, member.GetValue(entity), serialization[Type.GetType(keyCol.ModelFieldTypeName)]);
+                parameterCollection.Add(keyCol.Name, member.GetValue(entity));
             }
             else
                 throw new InvalidDataContractException(

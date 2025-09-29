@@ -86,6 +86,7 @@ try
                             EnumValue = isEven ? Entitykind.Kind1 : Entitykind.Kind2,
                             StringValue = $"This is string value {i}", BoolValue = isSixth, LongValue = long.MinValue,
                             ULongValue = isEighth ? null : ulong.MaxValue, GuidValue = Guid.NewGuid(),
+                            Int128Value = Int128.MinValue, UInt128Value = UInt128.MaxValue,
                             DateTimeOffsetValue = DateTimeOffset.Now,
                             DateOnlyValue = DateOnly.FromDateTime(DateTime.Today), DateTimeValue = DateTime.Now,
                             DecimalValue = Decimal.MaxValue, DoubleValue = double.MinValue,

@@ -43,7 +43,10 @@ public class ContainerModule : Module
         builder.RegisterType<TimeSpanTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
         builder.RegisterType<BooleanLongFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
         builder.RegisterType<CharTextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
-        builder.RegisterType<EnumStringFieldSerializer>().As<ISqliteEnumFieldSerializer>().InstancePerDependency();
+        builder.RegisterType<EnumStringFieldSerializer>().As<ISqliteEnumFieldSerializer>().InstancePerDependency(); // NOT single instance!
+        builder.RegisterType<UInt64TextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<Int128TextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
+        builder.RegisterType<UInt128TextFieldSerializer>().As<ISqliteFieldSerializer>().SingleInstance();
 
         builder.RegisterType<SqliteFieldConversion>().As<ISqliteFieldConversion>().SingleInstance();
         builder.RegisterType<IntegralFieldConverter>().As<ISqliteFailoverFieldConverter>().SingleInstance();

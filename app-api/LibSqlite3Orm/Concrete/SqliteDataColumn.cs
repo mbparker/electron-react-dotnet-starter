@@ -89,57 +89,41 @@ public class SqliteDataColumn : ISqliteDataColumn
                 result = DeserializeBlob(targetType);
                 break;
         }
-        
+
         if (result is null)
-            throw new InvalidOperationException($"Type {serializedValue.GetType()} could not be converted to {targetType}. Consider using an {nameof(ISqliteFieldSerializer)} implementation.");
+            throw new InvalidOperationException(
+                $"Type {serializedValue.GetType()} could not be converted to {targetType} on column {Name}. Consider registering an {nameof(ISqliteFieldSerializer)} implementation.");
         return result;
     }
     
     private object DeserializeInteger(Type targetType)
     {
-        if (targetType == typeof(bool)) return serialization[typeof(bool)].Deserialize(serializedValue);
-        
+        if (targetType == typeof(long)) return (long)serializedValue;
         if (targetType == typeof(sbyte)) return Convert.ToSByte(serializedValue);
         if (targetType == typeof(short)) return Convert.ToInt16(serializedValue);
         if (targetType == typeof(int)) return Convert.ToInt32(serializedValue);
-        if (targetType == typeof(long)) return (long)serializedValue;
         if (targetType == typeof(byte)) return Convert.ToByte(serializedValue);
         if (targetType == typeof(ushort)) return Convert.ToUInt16(serializedValue);
         if (targetType == typeof(uint)) return Convert.ToUInt32(serializedValue);
-        if (targetType == typeof(ulong)) return BitConverter.ToUInt64(BitConverter.GetBytes((long)serializedValue));
-
-        return null;
+        return serialization[targetType]?.Deserialize(serializedValue);
     }
     
     private object DeserializeDouble(Type targetType)
     {
-        if (targetType == typeof(float)) return Convert.ToDouble(serializedValue);
         if (targetType == typeof(double)) return (double)serializedValue;
-        
-        return null;
+        if (targetType == typeof(float)) return Convert.ToSingle(serializedValue);
+        return serialization[targetType]?.Deserialize(serializedValue);
     }
 
     private object DeserializeText(Type targetType)
     {
-        if (targetType.IsEnum) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(char)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(decimal)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(DateTime)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(DateTimeOffset)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(TimeSpan)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(DateOnly)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(TimeOnly)) return serialization[targetType].Deserialize(serializedValue);
-        if (targetType == typeof(Guid)) return serialization[targetType].Deserialize(serializedValue);
-        
         if (targetType == typeof(string)) return (string)serializedValue;
-        
-        return null;
+        return serialization[targetType]?.Deserialize(serializedValue);
     }    
 
     private object DeserializeBlob(Type targetType)
     {
         if (targetType == typeof(byte[])) return (byte[])serializedValue;
-        
-        return null;
+        return serialization[targetType]?.Deserialize(serializedValue);
     }
 }

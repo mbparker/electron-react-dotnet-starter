@@ -1,5 +1,6 @@
 using System.Text;
 using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.PInvoke.Types.Enums;
 
 namespace LibSqlite3Orm.Models.Orm.Events;
 
@@ -28,7 +29,10 @@ public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
                 {
                     foreach (var p in parameters)
                     {
-                        sb.Append($"\t\t{p.Name} = {p.GetDebugValue()}\n");
+                        var deserializedType =
+                            p.DeserializedValue is not null ? p.DeserializedValue.GetType().Name : "NULL";
+                        var serializedType = p.SerialzedValue is not null ? p.SerialzedValue.GetType().Name : "NULL";
+                        sb.Append($"\t\t{p.Name}: [{deserializedType}] --> [{serializedType}] ({nameof(SqliteColType)}.{p.SerializedTypeAffinity}) = {p.GetDebugValue()}\n");
                     }
                 }
                 else
