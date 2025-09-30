@@ -74,7 +74,7 @@ public class EntityGetterTests
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Select, _mockSchema, mockTable, "SELECT * FROM TestTable", new Dictionary<string, ExtractedParameter>());
         _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
-        _entityGetter = new EntityGetter(_connectionFactory, _synthesizerFactory, _mockParameterPopulator, _mockEntityWriter, _mockContext);
+        _entityGetter = new EntityGetter(_connectionFactory, _synthesizerFactory, _mockParameterPopulator, (ctx) => _mockEntityWriter, _mockContext);
     }
 
     [TearDown]
@@ -97,7 +97,7 @@ public class EntityGetterTests
     {
         // Act & Assert - Constructor doesn't validate null parameters
         Assert.DoesNotThrow(() =>
-            new EntityGetter(null, _synthesizerFactory, _mockParameterPopulator, _mockEntityWriter, _mockContext));
+            new EntityGetter(null, _synthesizerFactory, _mockParameterPopulator, (ctx) => _mockEntityWriter, _mockContext));
     }
 
     [Test]
@@ -105,7 +105,7 @@ public class EntityGetterTests
     {
         // Act & Assert - Constructor doesn't validate null parameters
         Assert.DoesNotThrow(() =>
-            new EntityGetter(_connectionFactory, null, _mockParameterPopulator, _mockEntityWriter, _mockContext));
+            new EntityGetter(_connectionFactory, null, _mockParameterPopulator, (ctx) => _mockEntityWriter, _mockContext));
     }
 
     [Test]
@@ -113,15 +113,7 @@ public class EntityGetterTests
     {
         // Act & Assert - Constructor doesn't validate null parameters
         Assert.DoesNotThrow(() =>
-            new EntityGetter(_connectionFactory, _synthesizerFactory, null, _mockEntityWriter, _mockContext));
-    }
-
-    [Test]
-    public void Constructor_WithNullEntityWriter_DoesNotThrow()
-    {
-        // Act & Assert - Constructor doesn't validate null parameters
-        Assert.DoesNotThrow(() =>
-            new EntityGetter(_connectionFactory, _synthesizerFactory, _mockParameterPopulator, null, _mockContext));
+            new EntityGetter(_connectionFactory, _synthesizerFactory, null, (ctx) => _mockEntityWriter, _mockContext));
     }
 
     [Test]
@@ -129,7 +121,7 @@ public class EntityGetterTests
     {
         // Act & Assert - Constructor doesn't validate null parameters
         Assert.DoesNotThrow(() =>
-            new EntityGetter(_connectionFactory, _synthesizerFactory, _mockParameterPopulator, _mockEntityWriter, null));
+            new EntityGetter(_connectionFactory, _synthesizerFactory, _mockParameterPopulator, (ctx) => _mockEntityWriter, null));
     }
 
     [Test]

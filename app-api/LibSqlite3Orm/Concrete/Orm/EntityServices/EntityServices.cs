@@ -10,6 +10,7 @@ public class EntityServices : IEntityServices
 {
     private readonly IEntityCreator creator;
     private readonly IEntityGetter getter;
+    private readonly IEntityDetailGetter detailGetter;
     private readonly IEntityUpdater updater;
     private readonly IEntityDeleter deleter;
     private readonly IEntityUpserter upserter;
@@ -18,11 +19,13 @@ public class EntityServices : IEntityServices
         Func<ISqliteOrmDatabaseContext, IEntityUpdater> entityUpdaterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityUpserter> entityUpserterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityGetter> entityGetterFactory,
+        Func<ISqliteOrmDatabaseContext, IEntityDetailGetter> detailGetterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityDeleter> entityDeleterFactory,
         ISqliteOrmDatabaseContext context)
     {
         creator = entityCreatorFactory(context);
         getter = entityGetterFactory(context);
+        detailGetter = detailGetterFactory(context);
         updater = entityUpdaterFactory(context);
         deleter = entityDeleterFactory(context);
         upserter = entityUpserterFactory(context);
@@ -62,6 +65,16 @@ public class EntityServices : IEntityServices
     {
         return getter.Get<T>(connection, loadNavigationProps);
     }
+    
+    public Lazy<TDetails> GetDetails<TEntity, TDetails>(TEntity entity, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
+    {
+        return detailGetter.GetDetails<TEntity, TDetails>(entity, loadNavigationProps, connection);
+    }    
+    
+    public Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TEntity, TDetails>(TEntity entity, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
+    {
+        return detailGetter.GetDetailsList<TEntity, TDetails>(entity, loadNavigationProps, connection);
+    }     
 
     public bool Update<T>(T entity)
     {

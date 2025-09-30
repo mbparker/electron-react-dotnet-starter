@@ -1,6 +1,5 @@
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
-using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Concrete.Orm.EntityServices;
 using LibSqlite3Orm.Models.Orm;
@@ -17,7 +16,7 @@ public class EntityCreatorTests
     private ISqliteParameterCollection _mockParameters;
     private ISqliteDmlSqlSynthesizer _mockSynthesizer;
     private ISqliteParameterPopulator _mockParameterPopulator;
-    private ISqliteEntityWriter _mockEntityWriter;
+    private ISqliteEntityPostInsertPrimaryKeySetter _mockPrimaryKeySetter;
     private ISqliteOrmDatabaseContext _mockContext;
     private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
@@ -36,7 +35,7 @@ public class EntityCreatorTests
         _mockParameters = Substitute.For<ISqliteParameterCollection>();
         _mockSynthesizer = Substitute.For<ISqliteDmlSqlSynthesizer>();
         _mockParameterPopulator = Substitute.For<ISqliteParameterPopulator>();
-        _mockEntityWriter = Substitute.For<ISqliteEntityWriter>();
+        _mockPrimaryKeySetter = Substitute.For<ISqliteEntityPostInsertPrimaryKeySetter>();
         _mockContext = Substitute.For<ISqliteOrmDatabaseContext>();
 
         var mockSchema = Substitute.For<SqliteDbSchema>();
@@ -59,7 +58,7 @@ public class EntityCreatorTests
             _connectionFactory,
             _synthesizerFactory,
             _mockParameterPopulator,
-            _mockEntityWriter,
+            _mockPrimaryKeySetter,
             _mockContext);
     }
 
@@ -86,7 +85,7 @@ public class EntityCreatorTests
         _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
         _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, entity);
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
-        _mockEntityWriter.Received(1).SetGeneratedKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, entity);
+        _mockPrimaryKeySetter.Received(1).SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, entity);
     }
 
     [Test]
@@ -101,7 +100,7 @@ public class EntityCreatorTests
 
         // Assert
         Assert.That(result, Is.False);
-        _mockEntityWriter.DidNotReceive().SetGeneratedKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), Arg.Any<ISqliteConnection>(), Arg.Any<object>());
+        _mockPrimaryKeySetter.DidNotReceive().SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), Arg.Any<ISqliteConnection>(), Arg.Any<object>());
     }
 
     [Test]
@@ -148,7 +147,7 @@ public class EntityCreatorTests
         Assert.That(result, Is.True);
         _mockParameterPopulator.Received(1).Populate(synthesisResult, parameters, entity);
         command.Received(1).ExecuteNonQuery("INSERT INTO Test VALUES (:Name)");
-        _mockEntityWriter.Received(1).SetGeneratedKeyOnEntityIfNeeded(_mockContext.Schema, connection, entity);
+        _mockPrimaryKeySetter.Received(1).SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(_mockContext.Schema, connection, entity);
     }
 
     [Test]
@@ -169,7 +168,7 @@ public class EntityCreatorTests
         Assert.That(result, Is.EqualTo(2));
         _mockConnection.Received(1).Open("test.db", true);
         _mockCommand.Received(2).ExecuteNonQuery(Arg.Any<string>());
-        _mockEntityWriter.Received(2).SetGeneratedKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, Arg.Any<TestEntity>());
+        _mockPrimaryKeySetter.Received(2).SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, Arg.Any<TestEntity>());
     }
 
     [Test]

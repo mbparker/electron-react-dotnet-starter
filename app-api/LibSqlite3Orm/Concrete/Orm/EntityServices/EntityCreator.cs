@@ -12,17 +12,18 @@ public class EntityCreator : IEntityCreator
     private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
-    private readonly ISqliteEntityWriter entityWriter;
+    private readonly ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter;
     private readonly ISqliteOrmDatabaseContext context;
 
     public EntityCreator(Func<ISqliteConnection> connectionFactory,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
-        ISqliteParameterPopulator  parameterPopulator, ISqliteEntityWriter entityWriter, ISqliteOrmDatabaseContext context)
+        ISqliteParameterPopulator parameterPopulator, ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter,
+        ISqliteOrmDatabaseContext context)
     {
         this.connectionFactory = connectionFactory;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
-        this.entityWriter = entityWriter;
+        this.primaryKeySetter =  primaryKeySetter;
         this.context = context;
     }
 
@@ -49,7 +50,7 @@ public class EntityCreator : IEntityCreator
             parameterPopulator.Populate(synthesisResult, cmd.Parameters, entity);
             if (cmd.ExecuteNonQuery(synthesisResult.SqlText) == 1)
             {
-                entityWriter.SetGeneratedKeyOnEntityIfNeeded(context.Schema, connection, entity);
+                primaryKeySetter.SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(context.Schema, connection, entity);
                 return true;
             }
 

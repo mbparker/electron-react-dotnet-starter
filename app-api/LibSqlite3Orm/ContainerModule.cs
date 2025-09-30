@@ -26,7 +26,7 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteFieldValueSerialization>().As<ISqliteFieldValueSerialization>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameterCollection>().As<ISqliteParameterCollection>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameterPopulator>().As<ISqliteParameterPopulator>().SingleInstance();
-        builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().SingleInstance();
+        builder.RegisterType<SqliteEntityPostInsertPrimaryKeySetter>().As<ISqliteEntityPostInsertPrimaryKeySetter>().SingleInstance();
         
         builder.RegisterType<OrmGenerativeLogicTracer>().As<IOrmGenerativeLogicTracer>().SingleInstance();
         
@@ -55,8 +55,10 @@ public class ContainerModule : Module
         builder.RegisterType<EntityUpdater>().As<IEntityUpdater>().InstancePerDependency();
         builder.RegisterType<EntityUpserter>().As<IEntityUpserter>().InstancePerDependency();
         builder.RegisterType<EntityGetter>().As<IEntityGetter>().InstancePerDependency();
+        builder.RegisterType<EntityDetailGetter>().As<IEntityDetailGetter>().InstancePerDependency();
         builder.RegisterType<EntityDeleter>().As<IEntityDeleter>().InstancePerDependency();
         builder.RegisterType<EntityServices>().As<IEntityServices>().InstancePerDependency();
+        builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().InstancePerDependency(); // Can't be a singleton anymore
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
         builder.RegisterGeneric(typeof(SqliteObjectRelationalMapping<>)).As(typeof(ISqliteObjectRelationalMapping<>))

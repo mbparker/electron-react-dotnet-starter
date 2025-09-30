@@ -1,9 +1,7 @@
-using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
-using LibSqlite3Orm.Concrete.Orm.EntityServices;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
 
@@ -15,6 +13,7 @@ public class LibSqliteEntityServicesTests
     private LibSqlite3Orm.Concrete.Orm.EntityServices.EntityServices _entityServices;
     private IEntityCreator _mockCreator;
     private IEntityGetter _mockGetter;
+    private IEntityDetailGetter _mockDetailGetter;
     private IEntityUpdater _mockUpdater;
     private IEntityDeleter _mockDeleter;
     private IEntityUpserter _mockUpserter;
@@ -25,6 +24,7 @@ public class LibSqliteEntityServicesTests
     {
         _mockCreator = Substitute.For<IEntityCreator>();
         _mockGetter = Substitute.For<IEntityGetter>();
+        _mockDetailGetter = Substitute.For<IEntityDetailGetter>();
         _mockUpdater = Substitute.For<IEntityUpdater>();
         _mockDeleter = Substitute.For<IEntityDeleter>();
         _mockUpserter = Substitute.For<IEntityUpserter>();
@@ -32,12 +32,14 @@ public class LibSqliteEntityServicesTests
 
         var creatorFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityCreator>>();
         var getterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityGetter>>();
+        var detailGetterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityDetailGetter>>();
         var updaterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityUpdater>>();
         var deleterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityDeleter>>();
         var upserterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityUpserter>>();
 
         creatorFactory.Invoke(_mockContext).Returns(_mockCreator);
         getterFactory.Invoke(_mockContext).Returns(_mockGetter);
+        detailGetterFactory.Invoke(_mockContext).Returns(_mockDetailGetter);
         updaterFactory.Invoke(_mockContext).Returns(_mockUpdater);
         deleterFactory.Invoke(_mockContext).Returns(_mockDeleter);
         upserterFactory.Invoke(_mockContext).Returns(_mockUpserter);
@@ -47,6 +49,7 @@ public class LibSqliteEntityServicesTests
             updaterFactory,
             upserterFactory,
             getterFactory,
+            detailGetterFactory,
             deleterFactory,
             _mockContext);
     }

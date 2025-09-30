@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.Serialization;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -8,27 +9,20 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteEntityWriter : ISqliteEntityWriter
 {
-    public void SetGeneratedKeyOnEntityIfNeeded<T>(SqliteDbSchema schema, ISqliteConnection connection, T entity)
+    private readonly IEntityDetailGetter entityDetailGetter;
+
+    public SqliteEntityWriter(Func<ISqliteOrmDatabaseContext, IEntityDetailGetter> entityDetailGetterFactory,
+        ISqliteOrmDatabaseContext context)
     {
-        var type = typeof(T);
-        var table = schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == type.AssemblyQualifiedName);
-        if (table is not null)
-        {
-            var autoIncFieldName = table.PrimaryKey?.AutoIncrement ?? false ? table.PrimaryKey.FieldName : null;
-            if (!string.IsNullOrWhiteSpace(autoIncFieldName))
-            {
-                var id = connection.GetLastInsertedId();
-                var col = table.Columns[autoIncFieldName];
-                var member = type.GetMember(col.ModelFieldName).Single();
-                member.SetValue(entity, id);
-            }
-        }
-        else
-            throw new InvalidDataContractException($"Type {type.AssemblyQualifiedName} is not mapped in the schema.");
+        entityDetailGetter = entityDetailGetterFactory(context);
     }
 
-    public TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row,
-        IDetailEntityGetter detailEntityGetter, bool loadNavigationProps) where TEntity : new()
+    public TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row) where TEntity : new()
+    {
+        return Deserialize<TEntity>(table, row, false, null);
+    }
+
+    public TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row, bool loadNavigationProps, ISqliteConnection connection) where TEntity : new()
     {
         var entity = new TEntity();
         var entityType = entity.GetType();
@@ -42,8 +36,8 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             }
         }
 
-        var detailGetterType = typeof(IDetailEntityGetter);
-        var getDetailsListGeneric = detailGetterType.GetMethod(nameof(IDetailEntityGetter.GetDetailsList));
+        var detailGetterType = typeof(IEntityDetailGetter);
+        var getDetailsListGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetailsList));
         if (getDetailsListGeneric is not null)
         {
             foreach (var detailsProp in table.DetailListProperties)
@@ -56,14 +50,14 @@ public class SqliteEntityWriter : ISqliteEntityWriter
                     {
                         var getDetailsList =
                             getDetailsListGeneric.MakeGenericMethod(entityType, detailEntityType);
-                        var queryable = getDetailsList.Invoke(detailEntityGetter, [entity, loadNavigationProps]);
+                        var queryable = getDetailsList.Invoke(entityDetailGetter, [entity, loadNavigationProps, connection]);
                         member.SetValue(entity, queryable);
                     }
                 }
             }
         }
 
-        var getDetailsGeneric = detailGetterType.GetMethod(nameof(IDetailEntityGetter.GetDetails));
+        var getDetailsGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetails));
         if (getDetailsGeneric is not null)
         {
             foreach (var detailsProp in table.DetailProperties)
@@ -76,7 +70,7 @@ public class SqliteEntityWriter : ISqliteEntityWriter
                     {
                         var getDetails =
                             getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
-                        var detailEntity = getDetails.Invoke(detailEntityGetter, [entity, loadNavigationProps]);
+                        var detailEntity = getDetails.Invoke(entityDetailGetter, [entity, loadNavigationProps, connection]);
                         member.SetValue(entity, detailEntity);
                     }
                 }
