@@ -23,7 +23,7 @@ public class SqliteDataColumn : ISqliteDataColumn
     
     public string Name { get; }
     public int Index { get; }
-    public SqliteColType TypeAffinity { get; }
+    public SqliteDataType TypeAffinity { get; }
 
     public object Value()
     {
@@ -48,26 +48,26 @@ public class SqliteDataColumn : ISqliteDataColumn
     {
         switch (TypeAffinity)
         {
-            case SqliteColType.Integer:
+            case SqliteDataType.Integer:
                 serializedValue = SqliteExternals.ColumnInt64(statement, Index);
                 break;
-            case SqliteColType.Float:
+            case SqliteDataType.Float:
                 serializedValue = SqliteExternals.ColumnDouble(statement, Index);
                 break;
-            case SqliteColType.Text:
+            case SqliteDataType.Text:
                 serializedValue = SqliteExternals.ColumnText(statement, Index);
                 if (serializedValue is not null)
                     serializedValue = ((string)serializedValue).Utf8ToUnicode();
                 break;
-            case SqliteColType.Blob:
+            case SqliteDataType.Blob:
                 serializedValue = SqliteExternals.ColumnBlob(statement, Index);
                 break;
-            case SqliteColType.Null:
+            case SqliteDataType.Null:
                 serializedValue = null;
                 break;
             default:
                 throw new InvalidEnumArgumentException(nameof(TypeAffinity), (int)TypeAffinity,
-                    typeof(SqliteColType));
+                    typeof(SqliteDataType));
         }
     }
 
@@ -76,16 +76,16 @@ public class SqliteDataColumn : ISqliteDataColumn
         object result = null;
         switch (TypeAffinity)
         {
-            case SqliteColType.Integer:
+            case SqliteDataType.Integer:
                 result = DeserializeInteger(targetType);
                 break;
-            case SqliteColType.Float:
+            case SqliteDataType.Float:
                 result = DeserializeDouble(targetType);
                 break;
-            case SqliteColType.Text:
+            case SqliteDataType.Text:
                 result = DeserializeText(targetType);
                 break;
-            case SqliteColType.Blob:
+            case SqliteDataType.Blob:
                 result = DeserializeBlob(targetType);
                 break;
         }
@@ -98,32 +98,48 @@ public class SqliteDataColumn : ISqliteDataColumn
     
     private object DeserializeInteger(Type targetType)
     {
-        if (targetType == typeof(long)) return (long)serializedValue;
-        if (targetType == typeof(sbyte)) return Convert.ToSByte(serializedValue);
-        if (targetType == typeof(short)) return Convert.ToInt16(serializedValue);
-        if (targetType == typeof(int)) return Convert.ToInt32(serializedValue);
-        if (targetType == typeof(byte)) return Convert.ToByte(serializedValue);
-        if (targetType == typeof(ushort)) return Convert.ToUInt16(serializedValue);
-        if (targetType == typeof(uint)) return Convert.ToUInt32(serializedValue);
+        if (targetType.GetSqliteDataType() == SqliteDataType.Integer)
+        {
+            var value = (long)serializedValue;
+            if (targetType == typeof(sbyte)) return Convert.ToSByte(value);
+            if (targetType == typeof(short)) return Convert.ToInt16(value);
+            if (targetType == typeof(int)) return Convert.ToInt32(value);
+            if (targetType == typeof(byte)) return Convert.ToByte(value);
+            if (targetType == typeof(ushort)) return Convert.ToUInt16(value);
+            if (targetType == typeof(uint)) return Convert.ToUInt32(value);
+            return value;
+        }
+        
         return serialization[targetType]?.Deserialize(serializedValue);
     }
     
     private object DeserializeDouble(Type targetType)
     {
-        if (targetType == typeof(double)) return (double)serializedValue;
-        if (targetType == typeof(float)) return Convert.ToSingle(serializedValue);
+        if (targetType.GetSqliteDataType() == SqliteDataType.Float)
+        {
+            var value = (double)serializedValue;
+            if (targetType == typeof(float)) return Convert.ToSingle(value);
+            return value;
+        }
+        
         return serialization[targetType]?.Deserialize(serializedValue);
     }
 
     private object DeserializeText(Type targetType)
     {
-        if (targetType == typeof(string)) return (string)serializedValue;
+        if (targetType.GetSqliteDataType() == SqliteDataType.Text)
+        {
+            var value = (string)serializedValue;
+            if (targetType == typeof(char)) return value.ToCharArray().FirstOrDefault();
+            return value;
+        }
+        
         return serialization[targetType]?.Deserialize(serializedValue);
     }    
 
     private object DeserializeBlob(Type targetType)
     {
-        if (targetType == typeof(byte[])) return (byte[])serializedValue;
+        if (targetType.GetSqliteDataType() == SqliteDataType.Blob) return (byte[])serializedValue;
         return serialization[targetType]?.Deserialize(serializedValue);
     }
 }

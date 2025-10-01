@@ -40,21 +40,21 @@ public class SqliteSelectSqlSynthesizerTests
         {
             Name = "Id",
             ModelFieldName = "Id",
-            DbFieldTypeAffinity = SqliteColType.Integer
+            DbFieldTypeAffinity = SqliteDataType.Integer
         });
 
         _testTable.Columns.Add("Name", new SqliteDbSchemaTableColumn
         {
             Name = "Name",
             ModelFieldName = "Name",
-            DbFieldTypeAffinity = SqliteColType.Text
+            DbFieldTypeAffinity = SqliteDataType.Text
         });
 
         _testTable.Columns.Add("CreatedDate", new SqliteDbSchemaTableColumn
         {
             Name = "CreatedDate",
             ModelFieldName = "CreatedDate",
-            DbFieldTypeAffinity = SqliteColType.Text
+            DbFieldTypeAffinity = SqliteDataType.Text
         });
 
         _schema.Tables.Add("TestTable", _testTable);

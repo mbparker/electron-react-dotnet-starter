@@ -8,8 +8,8 @@ public interface ISqliteParameterDebug
     int Index { get; }
     object DeserializedValue { get; }
     object SerialzedValue { get; }
-    SqliteColType SerializedTypeAffinity { get; }    
-    string GetDebugValue();
+    SqliteDataType SerializedTypeAffinity { get; }    
+    string GetDebugValue(int truncateBlobsTo = 1024);
 }
 
 public interface ISqliteParameter
@@ -18,7 +18,7 @@ public interface ISqliteParameter
     int Index { get; }
     object DeserializedValue { get; }
     object SerialzedValue { get; }
-    SqliteColType SerializedTypeAffinity { get; }
+    SqliteDataType SerializedTypeAffinity { get; }
     void Set(object value);
     void Bind(IntPtr statement);
 }

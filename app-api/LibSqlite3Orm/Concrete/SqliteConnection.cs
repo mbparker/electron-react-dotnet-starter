@@ -58,14 +58,14 @@ public class SqliteConnection : ISqliteConnection
         dbFilename = filename;
     }
 
-    public void Open(string filename, bool mustExist)
+    public void OpenReadWrite(string filename, bool mustExist)
     {
         var flags = SqliteOpenFlags.ReadWrite;
         if (!mustExist) flags |= SqliteOpenFlags.Create;
         Open(filename, flags);
     }
     
-    public void Open(string filename)
+    public void OpenReadOnly(string filename)
     {
         Open(filename, SqliteOpenFlags.ReadOnly);
     }    

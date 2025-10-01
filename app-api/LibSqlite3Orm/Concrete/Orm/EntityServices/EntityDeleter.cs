@@ -11,44 +11,23 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityDeleter : IEntityDeleter
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityDeleter(Func<ISqliteConnection> connectionFactory,
+    public EntityDeleter(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         ISqliteParameterPopulator  parameterPopulator, ISqliteOrmDatabaseContext context)
     {
-        this.connectionFactory = connectionFactory;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
         this.context = context;
-    }
-    
-    public int Delete<T>(Expression<Func<T, bool>> predicate)
-    {
-        if (predicate is null) throw new ArgumentNullException(nameof(predicate));
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return DeleteInternal(connection, predicate);
-        }
     }
     
     public int Delete<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
     {
         if (predicate is null) throw new ArgumentNullException(nameof(predicate));
         return DeleteInternal(connection, predicate);  
-    }
-
-    public int DeleteAll<T>()
-    {
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return DeleteInternal<T>(connection, null);
-        }
     }
     
     public int DeleteAll<T>(ISqliteConnection connection)

@@ -9,32 +9,20 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityCreator : IEntityCreator
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityCreator(Func<ISqliteConnection> connectionFactory,
+    public EntityCreator(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         ISqliteParameterPopulator parameterPopulator, ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter,
         ISqliteOrmDatabaseContext context)
     {
-        this.connectionFactory = connectionFactory;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
         this.primaryKeySetter =  primaryKeySetter;
         this.context = context;
-    }
-
-    public bool Insert<T>(T entity)
-    {
-        var synthesisResult = SynthesizeSql<T>();
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return Insert(connection, synthesisResult, entity);
-        }
     }
     
     public bool Insert<T>(ISqliteConnection connection, T entity)
@@ -56,15 +44,6 @@ public class EntityCreator : IEntityCreator
 
             return false;
         }
-    }
-
-    public int InsertMany<T>(IEnumerable<T> entities)
-    {
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return InsertMany(connection, entities);
-        }   
     }
     
     public int InsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)

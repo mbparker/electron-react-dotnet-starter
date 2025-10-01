@@ -18,7 +18,6 @@ public class EntityUpdaterTests
     private ISqliteDmlSqlSynthesizer _mockSynthesizer;
     private ISqliteParameterPopulator _mockParameterPopulator;
     private ISqliteOrmDatabaseContext _mockContext;
-    private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
 
     private class TestEntity
@@ -43,18 +42,15 @@ public class EntityUpdaterTests
 
         _mockConnection.CreateCommand().Returns(_mockCommand);
         _mockCommand.Parameters.Returns(_mockParameters);
-
-        _connectionFactory = Substitute.For<Func<ISqliteConnection>>();
+        
         _synthesizerFactory = Substitute.For<Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer>>();
-
-        _connectionFactory.Invoke().Returns(_mockConnection);
+        
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Update, Arg.Any<SqliteDbSchema>()).Returns(_mockSynthesizer);
 
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Update, mockSchema, null, "UPDATE Test SET Name = :Name WHERE Id = :Id", null);
         _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
         _updater = new EntityUpdater(
-            _connectionFactory,
             _synthesizerFactory,
             _mockParameterPopulator,
             _mockContext);
@@ -65,40 +61,6 @@ public class EntityUpdaterTests
     {
         _mockConnection?.Dispose();
         _mockCommand?.Dispose();
-    }
-
-    [Test]
-    public void Update_WithEntity_CallsSynthesizerAndExecutesCommand()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        var result = _updater.Update(entity);
-
-        // Assert
-        Assert.That(result, Is.True);
-        _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
-        _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, entity);
-        _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
-    }
-
-    [Test]
-    public void Update_WhenCommandReturnsZero_ReturnsFalse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(0);
-
-        // Act
-        var result = _updater.Update(entity);
-
-        // Assert
-        Assert.That(result, Is.False);
-        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
-        _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
 
     [Test]
@@ -119,7 +81,7 @@ public class EntityUpdaterTests
 
         // Assert
         Assert.That(result, Is.True);
-        connection.DidNotReceive().Open(Arg.Any<string>(), Arg.Any<bool>());
+        connection.DidNotReceive().OpenReadWrite(Arg.Any<string>(), Arg.Any<bool>());
         _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), parameters, entity);
         command.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
@@ -166,78 +128,5 @@ public class EntityUpdaterTests
 
         // Assert
         Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public void Constructor_InitializesAllDependencies()
-    {
-        // Act & Assert - Constructor was called in SetUp
-        Assert.That(_updater, Is.Not.Null);
-        
-        // Verify synthesizer factory was called during setup for synthesis
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-        _updater.Update(entity);
-        
-        _synthesizerFactory.Received().Invoke(SqliteDmlSqlSynthesisKind.Update, Arg.Any<SqliteDbSchema>());
-    }
-
-    [Test]
-    public void Update_DisposesCommandAfterUse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        _updater.Update(entity);
-
-        // Assert
-        _mockCommand.Received(1).Dispose();
-    }
-
-    [Test]
-    public void Update_DisposesConnectionAfterUse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        _updater.Update(entity);
-
-        // Assert
-        _mockConnection.Received(1).Dispose();
-    }
-
-    [Test]
-    public void Update_WithMultipleRowsAffected_ReturnsFalse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(2); // More than 1 row affected
-
-        // Act
-        var result = _updater.Update(entity);
-
-        // Assert
-        Assert.That(result, Is.False);
-    }
-
-    [Test]
-    public void Update_CallsParameterPopulatorWithCorrectArguments()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        _updater.Update(entity);
-
-        // Assert
-        _mockParameterPopulator.Received(1).Populate(
-            Arg.Is<DmlSqlSynthesisResult>(r => r.SynthesisKind == SqliteDmlSqlSynthesisKind.Update),
-            _mockParameters,
-            entity);
     }
 }

@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 namespace LibSqlite3Orm.PInvoke.Types.Enums;
 
 [JsonConverter(typeof(StringEnumConverter))]
-public enum SqliteColType
+public enum SqliteDataType
 {
     Integer = 1,
     Float = 2,

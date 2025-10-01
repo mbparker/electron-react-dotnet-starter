@@ -8,7 +8,6 @@ using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
-using LibSqlite3Orm.PInvoke.Types.Enums;
 
 namespace LibSqlite3Orm.Types.Orm;
 
@@ -16,7 +15,7 @@ public class SqliteDbSchemaBuilder
 {
     private readonly ISqliteFieldValueSerialization serialization;
     private SqliteDbSchemaOptions schemaOptions;
-    
+
     public SqliteDbSchemaBuilder(ISqliteFieldValueSerialization serialization)
     {
         this.serialization = serialization;
@@ -42,10 +41,11 @@ public class SqliteDbSchemaBuilder
             tableIndexes = new List<SqliteIndexOptions>();
             schemaOptions.Indexes.Add(options.TableType.AssemblyQualifiedName, tableIndexes);
         }
+
         tableIndexes.Add(options);
         return new SqliteIndexOptionsBuilder<TTable>(options);
     }
-    
+
     public SqliteDbSchema Build()
     {
         var result = new SqliteDbSchema();
@@ -67,7 +67,7 @@ public class SqliteDbSchemaBuilder
                 serializedType = serialization[serializedType]?.SerializedType ?? serializedType;
                 schemaTableCol.SerializedFieldTypeName = serializedType.AssemblyQualifiedName;
 
-                var colAffinity = MapDbFieldAffinity(serializedType);
+                var colAffinity = serializedType.GetSqliteDataType();
                 if (colAffinity is null)
                     throw new InvalidOperationException(
                         $"Type {serializedType} is not directly storable. Consider using an {nameof(ISqliteFieldSerializer)} implementation for field {schemaTableCol.Name} on table {schemaTable.Name}.");
@@ -93,13 +93,13 @@ public class SqliteDbSchemaBuilder
                     schemaTable.PrimaryKey = pk;
                 }
             }
-            
+
             if (table.CompositePrimaryKeyProperties.Any())
             {
                 schemaTable.CompositePrimaryKeyFields =
                     table.CompositePrimaryKeyProperties.Select(x => table.Columns[x.Name].Name).ToArray();
             }
-            
+
             result.Tables.Add(schemaTable.Name, schemaTable);
         }
 
@@ -107,8 +107,10 @@ public class SqliteDbSchemaBuilder
         {
             foreach (var fko in table.ForeignKeys)
             {
-                var thisTable = result.Tables.Values.FirstOrDefault(x => x.ModelTypeName == table.TableType.AssemblyQualifiedName);
-                var foreignTable = result.Tables.Values.FirstOrDefault(x => x.ModelTypeName == fko.ForeignTableType.AssemblyQualifiedName);
+                var thisTable =
+                    result.Tables.Values.FirstOrDefault(x => x.ModelTypeName == table.TableType.AssemblyQualifiedName);
+                var foreignTable = result.Tables.Values.FirstOrDefault(x =>
+                    x.ModelTypeName == fko.ForeignTableType.AssemblyQualifiedName);
                 if (thisTable is not null && foreignTable is not null)
                 {
                     if (thisTable != foreignTable)
@@ -117,7 +119,8 @@ public class SqliteDbSchemaBuilder
                         fk.FieldNames = fko.TableProperties.Select(x => table.Columns[x.Name].Name).ToArray();
                         fk.ForeignTableName = foreignTable.Name;
                         fk.ForeignTableModelTypeName = foreignTable.ModelTypeName;
-                        fk.ForeignTableFields = fko.ForeignTableProperties.Select(x => fko.TableOptions.Columns[x.Name].Name).ToArray();
+                        fk.ForeignTableFields = fko.ForeignTableProperties
+                            .Select(x => fko.TableOptions.Columns[x.Name].Name).ToArray();
                         fk.UpdateAction = fko.UpdateAction;
                         fk.DeleteAction = fko.DeleteAction;
                         thisTable.ForeignKeys.Add(fk);
@@ -129,6 +132,7 @@ public class SqliteDbSchemaBuilder
                                 DetailsListPropertyName = fko.ForeignTableDetailListProperty.Name
                             });
                         }
+
                         if (fko.ForeignTableDetailProperty is not null)
                         {
                             thisTable.DetailProperties.Add(new SqliteOneToOneRelationship
@@ -166,7 +170,7 @@ public class SqliteDbSchemaBuilder
                 result.Indexes.Add(schemaIndex.IndexName, schemaIndex);
             }
         }
-        
+
         return result;
     }
 
@@ -181,70 +185,8 @@ public class SqliteDbSchemaBuilder
             sb.Append(col.Collation.GetValueOrDefault());
             sb.AppendLine($"{col.SortDescending}");
         }
+
         return Convert.ToHexStringLower(Crc32.Hash(Encoding.Unicode.GetBytes(sb.ToString())));
-    }
-
-    private SqliteColType? MapDbFieldAffinity(Type type)
-    {
-        var nullableType = Nullable.GetUnderlyingType(type);
-        type = nullableType ?? type;
-        
-        if (type == typeof(string))
-        {
-            return SqliteColType.Text;
-        }
-
-        if (type == typeof(byte))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(ushort))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(uint))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(sbyte))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(short))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(int))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(long))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(float))
-        {
-            return SqliteColType.Float;
-        }
-
-        if (type == typeof(double))
-        {
-            return SqliteColType.Float;
-        }
-
-        if (type == typeof(byte[]))
-        {
-            return SqliteColType.Blob;
-        }
-
-        return null;
     }
 }
 

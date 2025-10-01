@@ -41,7 +41,7 @@ public class SqliteIndexSqlSynthesizerTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (NameASC);"));
+        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (Name ASC);"));
     }
 
     [Test]
@@ -54,7 +54,7 @@ public class SqliteIndexSqlSynthesizerTests
         var result = _synthesizer.SynthesizeCreate("IX_TestTable_Name");
 
         // Assert
-        Assert.That(result, Is.EqualTo("CREATE UNIQUE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (NameASC);"));
+        Assert.That(result, Is.EqualTo("CREATE UNIQUE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (Name ASC);"));
     }
 
     [Test]
@@ -67,7 +67,7 @@ public class SqliteIndexSqlSynthesizerTests
         var result = _synthesizer.SynthesizeCreate("IX_TestTable_Name");
 
         // Assert
-        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (NameDESC);"));
+        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (Name DESC);"));
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class SqliteIndexSqlSynthesizerTests
         var result = _synthesizer.SynthesizeCreate("IX_TestTable_Name");
 
         // Assert
-        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (NameASC, CreatedDateDESC);"));
+        Assert.That(result, Is.EqualTo("CREATE INDEX IF NOT EXISTS IX_TestTable_Name ON TestTable (Name ASC, CreatedDate DESC);"));
     }
 
     [Test]

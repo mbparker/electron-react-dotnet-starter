@@ -27,7 +27,7 @@ public class SqliteDbFactory : ISqliteDbFactory
         var sql = SynthesizeCreateTablesAndIndexes(schema);
         using (var connection = connectionFactory())
         {
-            connection.Open(dbFilename, dbFileMustExist);
+            connection.OpenReadWrite(dbFilename, dbFileMustExist);
             using (var cmd = connection.CreateCommand())
             {
                 cmd.ExecuteNonQuery(sql);

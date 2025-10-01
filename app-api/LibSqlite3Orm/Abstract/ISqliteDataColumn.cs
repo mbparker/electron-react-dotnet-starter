@@ -6,7 +6,7 @@ public interface ISqliteDataColumn
 {
     string Name { get; }
     int Index { get; }
-    SqliteColType TypeAffinity { get; }
+    SqliteDataType TypeAffinity { get; }
     object Value();
     T ValueAs<T>();
     object ValueAs(Type type);

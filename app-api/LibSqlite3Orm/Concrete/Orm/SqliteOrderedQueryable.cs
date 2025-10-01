@@ -17,27 +17,26 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     private Expression<Func<T, bool>> wherePredicate;
     private int? skipCount;
     private int? takeCount;
-    private bool disposeConnection;
 
     public SqliteOrderedQueryable(
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
-        Func<ISqliteDataRow, T> modelDeserializerFunc, bool disposeConnection)
-        : this(executeFunc, modelDeserializerFunc, null, null, disposeConnection, null, null)
+        Func<ISqliteDataRow, T> modelDeserializerFunc)
+        : this(executeFunc, modelDeserializerFunc, null, null, null, null)
     {
     }
 
     private SqliteOrderedQueryable(
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
         Func<ISqliteDataRow, T> modelDeserializerFunc, Expression<Func<T, bool>> wherePredicate, SqliteSortSpec newSpec,
-        bool disposeConnection, int? skipCount, int? takeCount)
-        : this(executeFunc, modelDeserializerFunc, wherePredicate, [], skipCount, takeCount, newSpec, disposeConnection)
+        int? skipCount, int? takeCount)
+        : this(executeFunc, modelDeserializerFunc, wherePredicate, [], skipCount, takeCount, newSpec)
     {
     }
 
     private SqliteOrderedQueryable(
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
         Func<ISqliteDataRow, T> modelDeserializerFunc, Expression<Func<T, bool>> wherePredicate,
-        List<SqliteSortSpec> sortSpecs, int? skipCount, int? takeCount, SqliteSortSpec newSpec, bool disposeConnection)
+        List<SqliteSortSpec> sortSpecs, int? skipCount, int? takeCount, SqliteSortSpec newSpec)
     {
         this.executeFunc = executeFunc;
         this.modelDeserializerFunc = modelDeserializerFunc;
@@ -47,14 +46,13 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         this.takeCount = takeCount;        
         if (newSpec is not null)
             this.sortSpecs.Add(newSpec);
-        this.disposeConnection = disposeConnection;
     }
 
     public IEnumerator<T> GetEnumerator()
     {
         return new SqliteOrderedEnumerator(
             executeFunc.Invoke(new SynthesizeSelectSqlArgs(wherePredicate, sortSpecs.ToArray(), skipCount, takeCount)),
-            modelDeserializerFunc, disposeConnection);
+            modelDeserializerFunc);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -112,23 +110,21 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     private ISqliteOrderedQueryable<T> New<TKey>(Expression<Func<T, TKey>> keySelectorExpr, bool descending)
     {
         return new SqliteOrderedQueryable<T>(executeFunc, modelDeserializerFunc, wherePredicate, sortSpecs, skipCount,
-            takeCount, new SqliteSortSpec(keySelectorExpr, descending), disposeConnection);
+            takeCount, new SqliteSortSpec(keySelectorExpr, descending));
     }
 
     private class SqliteOrderedEnumerator : IEnumerator<T>
     {
-        private readonly ISqliteDataReader dataReader;
         private readonly Func<ISqliteDataRow, T> modelDeserializerFunc;
+        private ISqliteDataReader dataReader;
         private IEnumerator<ISqliteDataRow> enumerator;
         private T current;
         private bool disposed;
-        private bool disposeConnection;
 
-        internal SqliteOrderedEnumerator(ISqliteDataReader dataReader, Func<ISqliteDataRow, T> modelDeserializerFunc, bool disposeConnection)
+        internal SqliteOrderedEnumerator(ISqliteDataReader dataReader, Func<ISqliteDataRow, T> modelDeserializerFunc)
         {
             this.dataReader = dataReader;
             this.modelDeserializerFunc = modelDeserializerFunc;
-            this.disposeConnection = disposeConnection;
         }
 
         public bool MoveNext()
@@ -156,15 +152,10 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
             if (!disposed)
             {
                 current = default;
-                var conn = dataReader.Connection;
                 enumerator.Dispose();
+                enumerator = null;
                 dataReader.Dispose();
-                if (disposeConnection)
-                {
-                    // Must dispose of the connection due to the deferred execution - the Execute callback which allocates it must pass ownership to here.
-                    conn.Dispose();
-                }
-
+                dataReader = null;
                 disposed = true;
             }
         }

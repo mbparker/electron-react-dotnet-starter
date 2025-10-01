@@ -61,10 +61,10 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().InstancePerDependency(); // Can't be a singleton anymore
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
-        builder.RegisterGeneric(typeof(SqliteObjectRelationalMapping<>)).As(typeof(ISqliteObjectRelationalMapping<>))
-            .InstancePerDependency();
-        builder.RegisterGeneric(typeof(SqliteSchemaObjectRelationalMapping<>)).As(typeof(ISqliteSchemaObjectRelationalMapping<>))
-            .InstancePerDependency();
+        builder.RegisterGeneric(typeof(SqliteObjectRelationalMapperDatabaseManager<>)).As(typeof(ISqliteObjectRelationalMapperDatabaseManager<>))
+            .InstancePerDependency().ExternallyOwned();
+        builder.RegisterGeneric(typeof(SqliteObjectRelationalMapper<>)).As(typeof(ISqliteObjectRelationalMapper<>))
+            .InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteOrmSchemaContext>().SingleInstance();
         builder.RegisterType<SqliteFileOperations>().As<ISqliteFileOperations>().SingleInstance();
         builder.RegisterType<SqliteUniqueIdGenerator>().As<ISqliteUniqueIdGenerator>().SingleInstance();
@@ -73,7 +73,7 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteWhereClauseBuilder>().As<ISqliteWhereClauseBuilder>().InstancePerDependency();
 
         builder.RegisterGeneric(typeof(SqliteDbSchemaMigrator<>)).As(typeof(ISqliteDbSchemaMigrator<>))
-            .InstancePerDependency();
+            .InstancePerDependency().ExternallyOwned();
         
         builder.RegisterType<SqliteTableSqlSynthesizer>()
             .Keyed<ISqliteDdlSqlSynthesizer>(SqliteDdlSqlSynthesisKind.TableOps).InstancePerDependency();

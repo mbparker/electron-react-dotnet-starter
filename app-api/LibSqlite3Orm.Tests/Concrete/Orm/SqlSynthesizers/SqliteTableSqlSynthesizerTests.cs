@@ -23,13 +23,13 @@ public class SqliteTableSqlSynthesizerTests
         _testTable.Columns.Add("Id", new SqliteDbSchemaTableColumn 
         { 
             Name = "Id", 
-            DbFieldTypeAffinity = SqliteColType.Integer,
+            DbFieldTypeAffinity = SqliteDataType.Integer,
             IsNotNull = true
         });
         _testTable.Columns.Add("Name", new SqliteDbSchemaTableColumn 
         { 
             Name = "Name", 
-            DbFieldTypeAffinity = SqliteColType.Text
+            DbFieldTypeAffinity = SqliteDataType.Text
         });
 
         _testTable.PrimaryKey = new SqliteDbSchemaTablePrimaryKeyColumn

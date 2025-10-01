@@ -1,31 +1,47 @@
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
-using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.Models.Orm;
 
 namespace LibSqlite3Orm.Concrete.Orm;
 
-public class SqliteObjectRelationalMapping<TContext> : SqliteSchemaObjectRelationalMapping<TContext>, ISqliteObjectRelationalMapping<TContext> 
+public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObjectRelationalMapperDatabaseManager<TContext>
     where TContext : ISqliteOrmDatabaseContext
 {
-    private readonly ISqliteDbSchemaMigrator<TContext> migrator;
     private readonly ISqliteFileOperations fileOperations;
     private readonly ISqliteDbFactory dbFactory;
+    private readonly Func<TContext> contextFactory;
+    private ISqliteDbSchemaMigrator<TContext> migrator;
+    private TContext _context;
 
-    public SqliteObjectRelationalMapping(Func<ISqliteConnection> connectionFactory, 
+    public SqliteObjectRelationalMapperDatabaseManager(
         Func<TContext> contextFactory,
-        Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory,
-        ISqliteDbSchemaMigrator<TContext> migrator,
+        Func<ISqliteDbSchemaMigrator<TContext>> migratorFactory,
         ISqliteFileOperations fileOperations,
         ISqliteDbFactory dbFactory)
-        : base(connectionFactory, contextFactory, entityServicesFactory)
     {
-        this.migrator = migrator;
         this.fileOperations = fileOperations;
         this.dbFactory = dbFactory;
+        this.contextFactory = contextFactory;
+        migrator = migratorFactory();
+    }
+    
+    private TContext Context
+    {
+        get
+        {
+            if (_context is null)
+                _context = contextFactory();
+            return _context;
+        }
     }
 
     public SqliteDbSchemaChanges DetectedSchemaChanges { get; private set; } = new();
+
+    public void Dispose()
+    {
+        migrator?.Dispose();
+        migrator = null;
+    }
 
     public bool CreateDatabaseIfNotExists()
     {

@@ -13,7 +13,6 @@ public class LibSqliteEntityServicesTests
     private LibSqlite3Orm.Concrete.Orm.EntityServices.EntityServices _entityServices;
     private IEntityCreator _mockCreator;
     private IEntityGetter _mockGetter;
-    private IEntityDetailGetter _mockDetailGetter;
     private IEntityUpdater _mockUpdater;
     private IEntityDeleter _mockDeleter;
     private IEntityUpserter _mockUpserter;
@@ -24,7 +23,6 @@ public class LibSqliteEntityServicesTests
     {
         _mockCreator = Substitute.For<IEntityCreator>();
         _mockGetter = Substitute.For<IEntityGetter>();
-        _mockDetailGetter = Substitute.For<IEntityDetailGetter>();
         _mockUpdater = Substitute.For<IEntityUpdater>();
         _mockDeleter = Substitute.For<IEntityDeleter>();
         _mockUpserter = Substitute.For<IEntityUpserter>();
@@ -32,14 +30,12 @@ public class LibSqliteEntityServicesTests
 
         var creatorFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityCreator>>();
         var getterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityGetter>>();
-        var detailGetterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityDetailGetter>>();
         var updaterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityUpdater>>();
         var deleterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityDeleter>>();
         var upserterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityUpserter>>();
 
         creatorFactory.Invoke(_mockContext).Returns(_mockCreator);
         getterFactory.Invoke(_mockContext).Returns(_mockGetter);
-        detailGetterFactory.Invoke(_mockContext).Returns(_mockDetailGetter);
         updaterFactory.Invoke(_mockContext).Returns(_mockUpdater);
         deleterFactory.Invoke(_mockContext).Returns(_mockDeleter);
         upserterFactory.Invoke(_mockContext).Returns(_mockUpserter);
@@ -49,7 +45,6 @@ public class LibSqliteEntityServicesTests
             updaterFactory,
             upserterFactory,
             getterFactory,
-            detailGetterFactory,
             deleterFactory,
             _mockContext);
     }
@@ -59,22 +54,7 @@ public class LibSqliteEntityServicesTests
         public int Id { get; set; }
         public string Name { get; set; }
     }
-
-    [Test]
-    public void Insert_WithEntity_CallsCreatorInsert()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCreator.Insert(entity).Returns(true);
-
-        // Act
-        var result = _entityServices.Insert(entity);
-
-        // Assert
-        Assert.That(result, Is.True);
-        _mockCreator.Received(1).Insert(entity);
-    }
-
+    
     [Test]
     public void Insert_WithConnectionAndEntity_CallsCreatorInsert()
     {
@@ -110,21 +90,6 @@ public class LibSqliteEntityServicesTests
     }
 
     [Test]
-    public void InsertMany_WithEntities_CallsCreatorInsertMany()
-    {
-        // Arrange
-        var entities = new[] { new TestEntity { Id = 1, Name = "Test1" }, new TestEntity { Id = 2, Name = "Test2" } };
-        _mockCreator.InsertMany(entities).Returns(2);
-
-        // Act
-        var result = _entityServices.InsertMany(entities);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(2));
-        _mockCreator.Received(1).InsertMany(entities);
-    }
-
-    [Test]
     public void InsertMany_WithConnectionAndEntities_CallsCreatorInsertMany()
     {
         // Arrange
@@ -145,14 +110,15 @@ public class LibSqliteEntityServicesTests
     {
         // Arrange
         var mockQueryable = Substitute.For<ISqliteQueryable<TestEntity>>();
-        _mockGetter.Get<TestEntity>(false).Returns(mockQueryable);
+        var connection = Substitute.For<ISqliteConnection>();
+        _mockGetter.Get<TestEntity>(connection, false).Returns(mockQueryable);
 
         // Act
-        var result = _entityServices.Get<TestEntity>();
+        var result = _entityServices.Get<TestEntity>(connection);
 
         // Assert
         Assert.That(result, Is.EqualTo(mockQueryable));
-        _mockGetter.Received(1).Get<TestEntity>(false);
+        _mockGetter.Received(1).Get<TestEntity>(connection, false);
     }
 
     [Test]
@@ -160,14 +126,15 @@ public class LibSqliteEntityServicesTests
     {
         // Arrange
         var mockQueryable = Substitute.For<ISqliteQueryable<TestEntity>>();
-        _mockGetter.Get<TestEntity>(true).Returns(mockQueryable);
+        var connection = Substitute.For<ISqliteConnection>();
+        _mockGetter.Get<TestEntity>(connection, true).Returns(mockQueryable);
 
         // Act
-        var result = _entityServices.Get<TestEntity>(true);
+        var result = _entityServices.Get<TestEntity>(connection, true);
 
         // Assert
         Assert.That(result, Is.EqualTo(mockQueryable));
-        _mockGetter.Received(1).Get<TestEntity>(true);
+        _mockGetter.Received(1).Get<TestEntity>(connection, true);
     }
 
     [Test]
@@ -187,21 +154,6 @@ public class LibSqliteEntityServicesTests
     }
 
     [Test]
-    public void Update_WithEntity_CallsUpdaterUpdate()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Updated" };
-        _mockUpdater.Update(entity).Returns(true);
-
-        // Act
-        var result = _entityServices.Update(entity);
-
-        // Assert
-        Assert.That(result, Is.True);
-        _mockUpdater.Received(1).Update(entity);
-    }
-
-    [Test]
     public void Update_WithConnectionAndEntity_CallsUpdaterUpdate()
     {
         // Arrange
@@ -215,21 +167,6 @@ public class LibSqliteEntityServicesTests
         // Assert
         Assert.That(result, Is.True);
         _mockUpdater.Received(1).Update(connection, entity);
-    }
-
-    [Test]
-    public void Delete_WithPredicate_CallsDeleterDelete()
-    {
-        // Arrange
-        Expression<Func<TestEntity, bool>> predicate = e => e.Id == 1;
-        _mockDeleter.Delete(predicate).Returns(1);
-
-        // Act
-        var result = _entityServices.Delete(predicate);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(1));
-        _mockDeleter.Received(1).Delete(predicate);
     }
 
     [Test]
@@ -249,21 +186,6 @@ public class LibSqliteEntityServicesTests
     }
 
     [Test]
-    public void Upsert_WithEntity_CallsUpserterUpsert()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Upsert" };
-        _mockUpserter.Upsert(entity).Returns(UpsertResult.Inserted);
-
-        // Act
-        var result = _entityServices.Upsert(entity);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(UpsertResult.Inserted));
-        _mockUpserter.Received(1).Upsert(entity);
-    }
-
-    [Test]
     public void Upsert_WithConnectionAndEntity_CallsUpserterUpsert()
     {
         // Arrange
@@ -277,22 +199,6 @@ public class LibSqliteEntityServicesTests
         // Assert
         Assert.That(result, Is.EqualTo(UpsertResult.Updated));
         _mockUpserter.Received(1).Upsert(connection, entity);
-    }
-
-    [Test]
-    public void UpsertMany_WithEntities_CallsUpserterUpsertMany()
-    {
-        // Arrange
-        var entities = new[] { new TestEntity { Id = 1, Name = "Test1" }, new TestEntity { Id = 2, Name = "Test2" } };
-        var expectedResult = new UpsertManyResult(1, 1, 0);
-        _mockUpserter.UpsertMany(entities).Returns(expectedResult);
-
-        // Act
-        var result = _entityServices.UpsertMany(entities);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(expectedResult));
-        _mockUpserter.Received(1).UpsertMany(entities);
     }
 
     [Test]

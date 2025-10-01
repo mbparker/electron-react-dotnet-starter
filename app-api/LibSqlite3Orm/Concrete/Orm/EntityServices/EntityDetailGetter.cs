@@ -19,9 +19,9 @@ public class EntityDetailGetter : IEntityDetailGetter
         entityGetter = new Lazy<IEntityGetter>(() => entityGetterFactory(this.context));
     }
     
-    public Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
+    public Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record, bool loadNavigationProps, ISqliteConnection connection) where TDetails : new()
     {
-        if (!loadNavigationProps)
+        if (!loadNavigationProps || connection is null)
         {
             return new Lazy<TDetails>(default(TDetails));
         }
@@ -30,9 +30,7 @@ public class EntityDetailGetter : IEntityDetailGetter
         {
             // Initialize the queryable, then build an expression in code to filter the results to the current record.
             // Do not fetch detail records in order to help prevent infinite recursion in apps using this library.
-            var queryable = connection is not null
-                ? entityGetter.Value.Get<TDetails>(connection, loadNavigationProps: false)
-                : entityGetter.Value.Get<TDetails>(loadNavigationProps: false); 
+            var queryable = entityGetter.Value.Get<TDetails>(connection, loadNavigationProps: false);
             var tableType = typeof(TTable);
             var detailTableType = typeof(TDetails);
             var entityTypeName = detailTableType.AssemblyQualifiedName;
@@ -97,9 +95,9 @@ public class EntityDetailGetter : IEntityDetailGetter
         });
     }
     
-    public Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TTable, TDetails>(TTable record, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
+    public Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TTable, TDetails>(TTable record, bool loadNavigationProps, ISqliteConnection connection) where TDetails : new()
     {
-        if (!loadNavigationProps)
+        if (!loadNavigationProps || connection is null)
         {
             return new Lazy<ISqliteQueryable<TDetails>>(default(ISqliteQueryable<TDetails>));
         }
@@ -107,9 +105,7 @@ public class EntityDetailGetter : IEntityDetailGetter
         return new Lazy<ISqliteQueryable<TDetails>>(() =>
         {
             // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
-            var queryable = connection is not null
-                ? entityGetter.Value.Get<TDetails>(connection, loadNavigationProps: true)
-                : entityGetter.Value.Get<TDetails>(loadNavigationProps: true); 
+            var queryable = entityGetter.Value.Get<TDetails>(connection, loadNavigationProps: true); 
             var tableType = typeof(TTable);
             var detailTableType = typeof(TDetails);
             var entityTypeName = detailTableType.AssemblyQualifiedName;

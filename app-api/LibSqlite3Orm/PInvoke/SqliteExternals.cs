@@ -102,7 +102,7 @@ public static partial class SqliteExternals
 	static extern IntPtr ColumnNameInternal(IntPtr stmt, int index);
 
 	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_column_type", CallingConvention = CallingConvention.Cdecl)]
-	public static extern SqliteColType ColumnType(IntPtr stmt, int index);
+	public static extern SqliteDataType ColumnType(IntPtr stmt, int index);
 
 	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_column_int", CallingConvention = CallingConvention.Cdecl)]
 	public static extern int ColumnInt(IntPtr stmt, int index);

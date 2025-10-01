@@ -10,7 +10,6 @@ public class EntityServices : IEntityServices
 {
     private readonly IEntityCreator creator;
     private readonly IEntityGetter getter;
-    private readonly IEntityDetailGetter detailGetter;
     private readonly IEntityUpdater updater;
     private readonly IEntityDeleter deleter;
     private readonly IEntityUpserter upserter;
@@ -19,21 +18,14 @@ public class EntityServices : IEntityServices
         Func<ISqliteOrmDatabaseContext, IEntityUpdater> entityUpdaterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityUpserter> entityUpserterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityGetter> entityGetterFactory,
-        Func<ISqliteOrmDatabaseContext, IEntityDetailGetter> detailGetterFactory,
         Func<ISqliteOrmDatabaseContext, IEntityDeleter> entityDeleterFactory,
         ISqliteOrmDatabaseContext context)
     {
         creator = entityCreatorFactory(context);
         getter = entityGetterFactory(context);
-        detailGetter = detailGetterFactory(context);
         updater = entityUpdaterFactory(context);
         deleter = entityDeleterFactory(context);
         upserter = entityUpserterFactory(context);
-    }
-
-    public bool Insert<T>(T entity)
-    {
-        return creator.Insert(entity);
     }
     
     public bool Insert<T>(ISqliteConnection connection, T entity)
@@ -45,40 +37,15 @@ public class EntityServices : IEntityServices
     {
         return creator.Insert(connection, synthesisResult, entity);
     }
-
-    public int InsertMany<T>(IEnumerable<T> entities)
-    {
-        return creator.InsertMany(entities);
-    }
     
     public int InsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
     {
         return creator.InsertMany(connection, entities);
     }
-
-    public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
-    {
-        return getter.Get<T>(loadNavigationProps);
-    }
     
     public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool loadNavigationProps = false) where T : new()
     {
         return getter.Get<T>(connection, loadNavigationProps);
-    }
-    
-    public Lazy<TDetails> GetDetails<TEntity, TDetails>(TEntity entity, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
-    {
-        return detailGetter.GetDetails<TEntity, TDetails>(entity, loadNavigationProps, connection);
-    }    
-    
-    public Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TEntity, TDetails>(TEntity entity, bool loadNavigationProps = false, ISqliteConnection connection = null) where TDetails : new()
-    {
-        return detailGetter.GetDetailsList<TEntity, TDetails>(entity, loadNavigationProps, connection);
-    }     
-
-    public bool Update<T>(T entity)
-    {
-        return updater.Update(entity);
     }
     
     public bool Update<T>(ISqliteConnection connection, T entity)
@@ -90,50 +57,25 @@ public class EntityServices : IEntityServices
     {
         return updater.Update(connection, synthesisResult, entity);
     }
-
-    public int UpdateMany<T>(IEnumerable<T> entities)
-    {
-        return updater.UpdateMany(entities);
-    }
     
     public int UpdateMany<T>(ISqliteConnection connection, IEnumerable<T> entities)
     {
         return updater.UpdateMany(connection, entities);
-    }
-
-    public int Delete<T>(Expression<Func<T, bool>> predicate)
-    {
-        return deleter.Delete(predicate);
     }
     
     public int Delete<T>(ISqliteConnection connection, Expression<Func<T, bool>> predicate)
     {
         return deleter.Delete(connection, predicate);
     }
-
-    public int DeleteAll<T>()
-    {
-        return deleter.DeleteAll<T>();
-    }
     
     public int DeleteAll<T>(ISqliteConnection connection)
     {
         return deleter.DeleteAll<T>(connection);
     }
-
-    public UpsertResult Upsert<T>(T entity)
-    {
-        return upserter.Upsert(entity);
-    }
     
     public UpsertResult Upsert<T>(ISqliteConnection connection, T entity)
     {
         return upserter.Upsert(connection, entity);
-    }
-
-    public UpsertManyResult UpsertMany<T>(IEnumerable<T> entities)
-    {
-        return upserter.UpsertMany(entities);
     }
     
     public UpsertManyResult UpsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)

@@ -9,34 +9,23 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityUpserter : IEntityUpserter
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly ISqliteDmlSqlSynthesizer insertSqlSynthesizer;
     private readonly ISqliteDmlSqlSynthesizer updateSqlSynthesizer;
     private readonly IEntityCreator entityCreator;
     private readonly IEntityUpdater entityUpdater;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityUpserter(Func<ISqliteConnection> connectionFactory,
+    public EntityUpserter(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         Func<ISqliteOrmDatabaseContext, IEntityCreator> entityCreatorFactory,
         Func<ISqliteOrmDatabaseContext, IEntityUpdater> entityUpdaterFactory,
         ISqliteOrmDatabaseContext context)
     {
         this.context = context;
-        this.connectionFactory = connectionFactory;
         insertSqlSynthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Insert, this.context.Schema);
         updateSqlSynthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Update, this.context.Schema);
         entityCreator = entityCreatorFactory(this.context);
         entityUpdater = entityUpdaterFactory(this.context);
-    }
-
-    public UpsertResult Upsert<T>(T entity)
-    {
-        if (entityUpdater.Update(entity))
-            return UpsertResult.Updated;
-        if (entityCreator.Insert(entity))
-            return UpsertResult.Inserted;
-        return UpsertResult.Failed;
     }
     
     public UpsertResult Upsert<T>(ISqliteConnection connection, T entity)
@@ -46,15 +35,6 @@ public class EntityUpserter : IEntityUpserter
         if (entityCreator.Insert(connection, entity))
             return UpsertResult.Inserted;
         return UpsertResult.Failed;
-    }
-
-    public UpsertManyResult UpsertMany<T>(IEnumerable<T> entities)
-    { 
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return UpsertMany(connection, entities);
-        }
     }
     
     public UpsertManyResult UpsertMany<T>(ISqliteConnection connection, IEnumerable<T> entities)

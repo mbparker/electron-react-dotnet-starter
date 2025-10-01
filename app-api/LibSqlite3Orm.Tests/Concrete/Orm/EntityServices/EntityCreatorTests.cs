@@ -18,7 +18,6 @@ public class EntityCreatorTests
     private ISqliteParameterPopulator _mockParameterPopulator;
     private ISqliteEntityPostInsertPrimaryKeySetter _mockPrimaryKeySetter;
     private ISqliteOrmDatabaseContext _mockContext;
-    private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
 
     private class TestEntity
@@ -44,18 +43,15 @@ public class EntityCreatorTests
 
         _mockConnection.CreateCommand().Returns(_mockCommand);
         _mockCommand.Parameters.Returns(_mockParameters);
-
-        _connectionFactory = Substitute.For<Func<ISqliteConnection>>();
+        
         _synthesizerFactory = Substitute.For<Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer>>();
-
-        _connectionFactory.Invoke().Returns(_mockConnection);
+        
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Insert, Arg.Any<SqliteDbSchema>()).Returns(_mockSynthesizer);
 
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Insert, mockSchema, null, "INSERT INTO Test VALUES (1)", null);
         _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
         _creator = new EntityCreator(
-            _connectionFactory,
             _synthesizerFactory,
             _mockParameterPopulator,
             _mockPrimaryKeySetter,
@@ -67,40 +63,6 @@ public class EntityCreatorTests
     {
         _mockConnection?.Dispose();
         _mockCommand?.Dispose();
-    }
-
-    [Test]
-    public void Insert_WithEntity_CallsSynthesizerAndExecutesCommand()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        var result = _creator.Insert(entity);
-
-        // Assert
-        Assert.That(result, Is.True);
-        _mockConnection.Received(1).Open("test.db", true);
-        _mockSynthesizer.Received(1).Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>());
-        _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), _mockParameters, entity);
-        _mockCommand.Received(1).ExecuteNonQuery(Arg.Any<string>());
-        _mockPrimaryKeySetter.Received(1).SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, entity);
-    }
-
-    [Test]
-    public void Insert_WhenCommandReturnsZero_ReturnsFalse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(0);
-
-        // Act
-        var result = _creator.Insert(entity);
-
-        // Assert
-        Assert.That(result, Is.False);
-        _mockPrimaryKeySetter.DidNotReceive().SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), Arg.Any<ISqliteConnection>(), Arg.Any<object>());
     }
 
     [Test]
@@ -121,7 +83,7 @@ public class EntityCreatorTests
 
         // Assert
         Assert.That(result, Is.True);
-        connection.DidNotReceive().Open(Arg.Any<string>(), Arg.Any<bool>());
+        connection.DidNotReceive().OpenReadWrite(Arg.Any<string>(), Arg.Any<bool>());
         _mockParameterPopulator.Received(1).Populate(Arg.Any<DmlSqlSynthesisResult>(), parameters, entity);
         command.Received(1).ExecuteNonQuery(Arg.Any<string>());
     }
@@ -151,27 +113,6 @@ public class EntityCreatorTests
     }
 
     [Test]
-    public void InsertMany_WithEntities_InsertsAllEntities()
-    {
-        // Arrange
-        var entities = new[]
-        {
-            new TestEntity { Id = 1, Name = "Test1" },
-            new TestEntity { Id = 2, Name = "Test2" }
-        };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        var result = _creator.InsertMany(entities);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(2));
-        _mockConnection.Received(1).Open("test.db", true);
-        _mockCommand.Received(2).ExecuteNonQuery(Arg.Any<string>());
-        _mockPrimaryKeySetter.Received(2).SetAutoIncrementedPrimaryKeyOnEntityIfNeeded(Arg.Any<SqliteDbSchema>(), _mockConnection, Arg.Any<TestEntity>());
-    }
-
-    [Test]
     public void InsertMany_WithConnection_UsesProvidedConnection()
     {
         // Arrange
@@ -193,69 +134,7 @@ public class EntityCreatorTests
 
         // Assert
         Assert.That(result, Is.EqualTo(2));
-        connection.DidNotReceive().Open(Arg.Any<string>(), Arg.Any<bool>());
+        connection.DidNotReceive().OpenReadWrite(Arg.Any<string>(), Arg.Any<bool>());
         command.Received(2).ExecuteNonQuery(Arg.Any<string>());
-    }
-
-    [Test]
-    public void InsertMany_WithPartialFailures_ReturnsSuccessCount()
-    {
-        // Arrange
-        var entities = new[]
-        {
-            new TestEntity { Id = 1, Name = "Test1" },
-            new TestEntity { Id = 2, Name = "Test2" },
-            new TestEntity { Id = 3, Name = "Test3" }
-        };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1, 0, 1); // Success, Failure, Success
-
-        // Act
-        var result = _creator.InsertMany(entities);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(2));
-        _mockCommand.Received(3).ExecuteNonQuery(Arg.Any<string>());
-    }
-
-    [Test]
-    public void Constructor_InitializesAllDependencies()
-    {
-        // Act & Assert - Constructor was called in SetUp
-        Assert.That(_creator, Is.Not.Null);
-        
-        // Verify synthesizer factory was called during setup for synthesis
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-        _creator.Insert(entity);
-        
-        _synthesizerFactory.Received().Invoke(SqliteDmlSqlSynthesisKind.Insert, Arg.Any<SqliteDbSchema>());
-    }
-
-    [Test]
-    public void Insert_DisposesCommandAfterUse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        _creator.Insert(entity);
-
-        // Assert
-        _mockCommand.Received(1).Dispose();
-    }
-
-    [Test]
-    public void Insert_DisposesConnectionAfterUse()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockCommand.ExecuteNonQuery(Arg.Any<string>()).Returns(1);
-
-        // Act
-        _creator.Insert(entity);
-
-        // Assert
-        _mockConnection.Received(1).Dispose();
     }
 }

@@ -20,7 +20,6 @@ public class EntityUpserterTests
     private DmlSqlSynthesisResult _updateSynthesisResult;
     private DmlSqlSynthesisResult _insertSynthesisResult;
     private ISqliteOrmDatabaseContext _mockContext;
-    private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
 
     private class TestEntity
@@ -47,14 +46,12 @@ public class EntityUpserterTests
 
         var mockSchema = Substitute.For<SqliteDbSchema>();
         _mockContext.Schema.Returns(mockSchema);
-
-        _connectionFactory = Substitute.For<Func<ISqliteConnection>>();
+        
         _synthesizerFactory = Substitute.For<Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer>>();
 
         var creatorFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityCreator>>();
         var updaterFactory = Substitute.For<Func<ISqliteOrmDatabaseContext, IEntityUpdater>>();
-
-        _connectionFactory.Invoke().Returns(_mockConnection);
+        
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Insert, Arg.Any<SqliteDbSchema>()).Returns(_mockInsertSynthesizer);
         _synthesizerFactory.Invoke(SqliteDmlSqlSynthesisKind.Update, Arg.Any<SqliteDbSchema>()).Returns(_mockUpdateSynthesizer);
         creatorFactory.Invoke(_mockContext).Returns(_mockCreator);
@@ -68,61 +65,10 @@ public class EntityUpserterTests
         _mockInsertSynthesizer.Synthesize<TestEntity>(default).ReturnsForAnyArgs(_insertSynthesisResult);
 
         _upserter = new EntityUpserter(
-            _connectionFactory,
             _synthesizerFactory,
             creatorFactory,
             updaterFactory,
             _mockContext);
-    }
-
-    [Test]
-    public void Upsert_WhenUpdateSucceeds_ReturnsUpdated()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockUpdater.Update(entity).Returns(true);
-
-        // Act
-        var result = _upserter.Upsert(entity);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(UpsertResult.Updated));
-        _mockUpdater.Received(1).Update(entity);
-        _mockCreator.DidNotReceive().Insert(Arg.Any<TestEntity>());
-    }
-
-    [Test]
-    public void Upsert_WhenUpdateFailsAndInsertSucceeds_ReturnsInserted()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockUpdater.Update(entity).Returns(false);
-        _mockCreator.Insert(entity).Returns(true);
-
-        // Act
-        var result = _upserter.Upsert(entity);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(UpsertResult.Inserted));
-        _mockUpdater.Received(1).Update(entity);
-        _mockCreator.Received(1).Insert(entity);
-    }
-
-    [Test]
-    public void Upsert_WhenBothUpdateAndInsertFail_ReturnsFailed()
-    {
-        // Arrange
-        var entity = new TestEntity { Id = 1, Name = "Test" };
-        _mockUpdater.Update(entity).Returns(false);
-        _mockCreator.Insert(entity).Returns(false);
-
-        // Act
-        var result = _upserter.Upsert(entity);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(UpsertResult.Failed));
-        _mockUpdater.Received(1).Update(entity);
-        _mockCreator.Received(1).Insert(entity);
     }
 
     [Test]
@@ -176,32 +122,6 @@ public class EntityUpserterTests
         Assert.That(result, Is.EqualTo(UpsertResult.Failed));
         _mockUpdater.Received(1).Update(connection, entity);
         _mockCreator.Received(1).Insert(connection, entity);
-    }
-
-    [Test]
-    public void UpsertMany_WithEntities_CallsUpsertForEach()
-    {
-        // Arrange
-        var entities = new[]
-        {
-            new TestEntity { Id = 1, Name = "Test1" },
-            new TestEntity { Id = 2, Name = "Test2" }
-        };
-
-        _mockUpdater.Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, entities[0]).Returns(true);
-        _mockUpdater.Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, entities[1]).Returns(false);
-        _mockCreator.Insert(Arg.Any<ISqliteConnection>(), _insertSynthesisResult, entities[1]).Returns(true);
-
-        // Act
-        var result = _upserter.UpsertMany(entities);
-
-        // Assert
-        Assert.That(result.UpdateCount, Is.EqualTo(1));
-        Assert.That(result.InsertCount, Is.EqualTo(1));
-        Assert.That(result.FailedCount, Is.EqualTo(0));
-        
-        _mockCreator.Received(1).Insert(Arg.Any<ISqliteConnection>(), _insertSynthesisResult, Arg.Any<TestEntity>());
-        _mockUpdater.Received(2).Update(Arg.Any<ISqliteConnection>(), _updateSynthesisResult, Arg.Any<TestEntity>());
     }
 
     [Test]

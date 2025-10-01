@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Reflection;
 using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.PInvoke;
@@ -23,7 +24,7 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
     
     public object DeserializedValue { get; private set; }
     public object SerialzedValue { get; private set; }
-    public SqliteColType SerializedTypeAffinity { get; private set; }
+    public SqliteDataType SerializedTypeAffinity { get; private set; }
 
     public void Set(object value)
     {
@@ -31,11 +32,15 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
         SerializeValue();
     }
 
-    string ISqliteParameterDebug.GetDebugValue()
+    string ISqliteParameterDebug.GetDebugValue(int truncateBlobsTo)
     {
         if (SerialzedValue is null) return "NULL";
         if (SerialzedValue.GetType() == typeof(byte[]))
-            return Convert.ToHexString((byte[])SerialzedValue);
+        {
+            var array = (byte[])SerialzedValue;
+            return Convert.ToHexString(array.Take(Math.Min(truncateBlobsTo, array.Length)).ToArray());
+        }
+
         return SerialzedValue.ToString();
     }
 
@@ -43,35 +48,35 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
     {
         switch (SerializedTypeAffinity)
         {
-            case SqliteColType.Integer:
+            case SqliteDataType.Integer:
                 var intType = SerialzedValue.GetType();
                 if (intType == typeof(long))
                     SqliteExternals.BindInt64(statement, Index, (long)SerialzedValue);
                 else
                     SqliteExternals.BindInt64(statement, Index, Convert.ToInt64(SerialzedValue));
                 break;  
-            case SqliteColType.Float:
+            case SqliteDataType.Float:
                 var realType = SerialzedValue.GetType();
                 if (realType == typeof(double))
                     SqliteExternals.BindDouble(statement, Index, (double)SerialzedValue);
                 else
                     SqliteExternals.BindDouble(statement, Index, Convert.ToDouble(SerialzedValue));
                 break;
-            case SqliteColType.Text:
+            case SqliteDataType.Text:
                 var s = ((string)SerialzedValue).UnicodeToUtf8();
                 var n = Encoding.UTF8.GetByteCount(s);
                 SqliteExternals.BindText(statement, Index, s, n, NoDeallocator);
                 break;
-            case SqliteColType.Blob:
+            case SqliteDataType.Blob:
                 var blob = (byte[])SerialzedValue;
                 SqliteExternals.BindBlob(statement, Index, blob, blob.Length, NoDeallocator);
                 break;
-            case SqliteColType.Null:
+            case SqliteDataType.Null:
                 SqliteExternals.BindNull(statement, Index);
                 break;
             default:
                 throw new InvalidEnumArgumentException(nameof(SerializedTypeAffinity), (int)SerializedTypeAffinity,
-                    typeof(SqliteColType));
+                    typeof(SqliteDataType));
         }
     }
 
@@ -79,7 +84,7 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
     {
         if (DeserializedValue is null)
         {
-            SerializedTypeAffinity = SqliteColType.Null;
+            SerializedTypeAffinity = SqliteDataType.Null;
             SerialzedValue = null;
             return;
         }
@@ -93,7 +98,7 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
         var type = SerialzedValue.GetType();
         type = Nullable.GetUnderlyingType(type) ?? type;
 
-        var affinity = GetSerializedTypeAffinity(type);
+        var affinity = type.GetSqliteDataType();
         if (affinity.HasValue)
         {
             SerializedTypeAffinity = affinity.Value;
@@ -103,61 +108,5 @@ public class SqliteParameter : ISqliteParameter, ISqliteParameterDebug
         throw new InvalidOperationException(
             $"Type {type} is not supported. Consider registering an {nameof(ISqliteFieldSerializer)} implementation " +
             "to serialize that type to a type that can be stored.");
-    }
-
-    // These are the only fundamental types that can be stored in SQLite. Anything else must be serialized to one of these.
-    private SqliteColType? GetSerializedTypeAffinity(Type type)
-    {
-        if (type == typeof(string))
-        {
-            return SqliteColType.Text;
-        }
-
-        if (type == typeof(byte))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(ushort))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(uint))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(sbyte))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(short))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(int))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(long))
-        {
-            return SqliteColType.Integer;
-        }
-
-        if (type == typeof(double))
-        {
-            return SqliteColType.Float;
-        }
-
-        if (type == typeof(byte[]))
-        {
-            return SqliteColType.Blob;
-        }
-
-        return null;
     }
 }

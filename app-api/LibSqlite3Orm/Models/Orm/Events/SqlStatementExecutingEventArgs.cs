@@ -32,7 +32,7 @@ public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
                         var deserializedType =
                             p.DeserializedValue is not null ? p.DeserializedValue.GetType().Name : "NULL";
                         var serializedType = p.SerialzedValue is not null ? p.SerialzedValue.GetType().Name : "NULL";
-                        sb.Append($"\t\t{p.Name}: [{deserializedType}] --> [{serializedType}] ({nameof(SqliteColType)}.{p.SerializedTypeAffinity}) = {p.GetDebugValue()}\n");
+                        sb.Append($"\t\t{p.Name}: [{deserializedType}] --> [{serializedType}] ({nameof(SqliteDataType)}.{p.SerializedTypeAffinity}) = {p.GetDebugValue()}\n");
                     }
                 }
                 else

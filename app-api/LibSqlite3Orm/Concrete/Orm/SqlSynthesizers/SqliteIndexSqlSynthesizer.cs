@@ -28,8 +28,8 @@ public class SqliteIndexSqlSynthesizer : SqliteDdlSqlSynthesizerBase
             
             sb.Append(col.Name);
             if (col.Collation.HasValue)
-                sb.Append($" COLLATE {GetCollationString(col.Collation.Value)} ");
-            sb.Append(col.SortDescending ? "DESC" : "ASC");
+                sb.Append($" COLLATE {GetCollationString(col.Collation.Value)}");
+            sb.Append(col.SortDescending ? " DESC" : " ASC");
             
             firstCol = false;
         }

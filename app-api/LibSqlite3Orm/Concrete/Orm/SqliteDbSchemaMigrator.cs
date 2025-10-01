@@ -11,23 +11,31 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext> 
     where TContext : ISqliteOrmDatabaseContext
 {
-    private readonly ISqliteSchemaObjectRelationalMapping<SqliteOrmSchemaContext> schemaOrm;
-    private readonly ISqliteSchemaObjectRelationalMapping<TContext> modelOrm;
     private readonly Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory;
     private readonly ISqliteDbFactory dbFactory;
     private readonly ISqliteFieldConversion fieldConversion;
+    private ISqliteObjectRelationalMapper<SqliteOrmSchemaContext> schemaOrm;
+    private ISqliteObjectRelationalMapper<TContext> modelOrm;
     private bool initialized;
 
-    public SqliteDbSchemaMigrator(ISqliteSchemaObjectRelationalMapping<SqliteOrmSchemaContext> schemaOrm,
-        ISqliteSchemaObjectRelationalMapping<TContext> modelOrm,
+    public SqliteDbSchemaMigrator(Func<ISqliteObjectRelationalMapper<SqliteOrmSchemaContext>> schemaOrmFactory,
+        Func<ISqliteObjectRelationalMapper<TContext>> modelOrmFactory,
         Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory,
         ISqliteDbFactory dbFactory, ISqliteFieldConversion fieldConversion)
     {
-        this.schemaOrm = schemaOrm;
-        this.modelOrm = modelOrm;
         this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory;
         this.dbFactory  = dbFactory;
         this.fieldConversion = fieldConversion;
+        schemaOrm = schemaOrmFactory();
+        modelOrm = modelOrmFactory();
+    }
+
+    public void Dispose()
+    {
+        modelOrm?.Dispose();
+        modelOrm = null;
+        schemaOrm?.Dispose();
+        schemaOrm = null;
     }
 
     public void CreateInitialMigration()
@@ -323,7 +331,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         var rows = schemaOrm.ExecuteQuery($"SELECT * FROM {tempTableName}").AsEnumerable();
         foreach (var row in rows)
         {
-            using (var insertCmd = schemaOrm.CurrentTransactionConnection.CreateCommand())
+            using (var insertCmd = schemaOrm.CreateSqlCommand())
             {
                 foreach (var col in row)
                 {

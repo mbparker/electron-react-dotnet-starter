@@ -32,26 +32,29 @@ try
             ConsoleLogger.WriteLine(ConsoleColor.DarkMagenta, args.Message.Value);
 #endif
         };
-
-        var orm = container.Resolve<ISqliteObjectRelationalMapping<DemoContext>>();
-
-        //orm.DeleteDatabase();
-
-        var dbCreated = orm.CreateDatabaseIfNotExists();
-
-        if (!dbCreated)
+        
+        bool dbCreated;
+        
+        using (var dbManager = container.Resolve<ISqliteObjectRelationalMapperDatabaseManager<DemoContext>>())
         {
-            try
+            //dbManager.DeleteDatabase();
+
+            dbCreated = dbManager.CreateDatabaseIfNotExists();
+
+            if (!dbCreated)
             {
-                if (orm.Migrate())
-                    ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration performed");
-                else
-                    ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration not required");
-            }
-            catch (Exception e)
-            {
-                ConsoleLogger.WriteLine(ConsoleColor.Red, e.ToString());
-                return;
+                try
+                {
+                    if (dbManager.Migrate())
+                        ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration performed");
+                    else
+                        ConsoleLogger.WriteLine(ConsoleColor.Cyan, "Migration not required");
+                }
+                catch (Exception e)
+                {
+                    ConsoleLogger.WriteLine(ConsoleColor.Red, e.ToString());
+                    return;
+                }
             }
         }
 
@@ -63,6 +66,8 @@ try
             stopwatch.Stop();
             return stopwatch.Elapsed;
         }
+        
+        using var orm = container.Resolve<ISqliteObjectRelationalMapper<DemoContext>>();
 
         if (dbCreated)
         {

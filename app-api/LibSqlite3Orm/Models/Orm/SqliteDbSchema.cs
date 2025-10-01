@@ -42,7 +42,7 @@ public class SqliteDbSchemaTableColumn
     public string ModelFieldName { get; set; }
     public string ModelFieldTypeName { get; set; }
     public string SerializedFieldTypeName { get; set; }
-    public SqliteColType DbFieldTypeAffinity { get; set; }
+    public SqliteDataType DbFieldTypeAffinity { get; set; }
     public bool IsNotNull { get; set; }
     public SqliteLiteConflictAction? IsNotNullConflictAction { get; set; }
     public bool IsUnique { get; set; }

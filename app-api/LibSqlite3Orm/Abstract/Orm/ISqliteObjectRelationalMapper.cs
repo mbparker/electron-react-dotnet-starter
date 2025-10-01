@@ -3,11 +3,11 @@ using LibSqlite3Orm.Models.Orm;
 
 namespace LibSqlite3Orm.Abstract.Orm;
 
-public interface ISqliteSchemaObjectRelationalMapping<TContext> where TContext : ISqliteOrmDatabaseContext
+public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TContext : ISqliteOrmDatabaseContext
 {
     TContext Context { get; }
-    
-    ISqliteConnection CurrentTransactionConnection { get; }
+
+    ISqliteCommand CreateSqlCommand();
 
     void BeginTransaction();
     void CommitTransaction();

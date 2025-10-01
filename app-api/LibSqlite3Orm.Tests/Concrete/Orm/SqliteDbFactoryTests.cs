@@ -102,7 +102,7 @@ public class SqliteDbFactoryTests
         _dbFactory.Create(schema, _testDbPath, false);
 
         // Assert
-        _mockConnection.Received(1).Open(_testDbPath, false);
+        _mockConnection.Received(1).OpenReadWrite(_testDbPath, false);
     }
 
     [Test]

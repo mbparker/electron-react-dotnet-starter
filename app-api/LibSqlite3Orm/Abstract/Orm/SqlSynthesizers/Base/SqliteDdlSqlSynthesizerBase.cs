@@ -72,20 +72,20 @@ public abstract class SqliteDdlSqlSynthesizerBase : SqliteSqlSynthesizerBase, IS
         }
     }
 
-    protected string GetColumnTypeString(SqliteColType typeAffinity)
+    protected string GetColumnTypeString(SqliteDataType typeAffinity)
     {
         switch (typeAffinity)
         {
-            case SqliteColType.Integer:
+            case SqliteDataType.Integer:
                 return "INTEGER";
-            case SqliteColType.Float:
+            case SqliteDataType.Float:
                 return "REAL";
-            case SqliteColType.Text:
+            case SqliteDataType.Text:
                 return "TEXT";
-            case SqliteColType.Blob:
+            case SqliteDataType.Blob:
                 return "BLOB";
             default:
-                throw new InvalidEnumArgumentException(nameof(typeAffinity), (int)typeAffinity, typeof(SqliteColType));
+                throw new InvalidEnumArgumentException(nameof(typeAffinity), (int)typeAffinity, typeof(SqliteDataType));
         }
     }    
 }

@@ -9,29 +9,17 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityUpdater : IEntityUpdater
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityUpdater(Func<ISqliteConnection> connectionFactory,
+    public EntityUpdater(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         ISqliteParameterPopulator  parameterPopulator, ISqliteOrmDatabaseContext context)
     {
-        this.connectionFactory = connectionFactory;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
         this.context = context;
-    }
-    
-    public bool Update<T>(T entity)
-    {
-        var synthesisResult = SynthesizeSql<T>();
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return Update(connection, synthesisResult, entity);
-        }
     }
     
     public bool Update<T>(ISqliteConnection connection, T entity)
@@ -46,15 +34,6 @@ public class EntityUpdater : IEntityUpdater
         {
             parameterPopulator.Populate(synthesisResult, cmd.Parameters, entity);
             return cmd.ExecuteNonQuery(synthesisResult.SqlText) == 1;
-        }
-    }
-
-    public int UpdateMany<T>(IEnumerable<T> entities)
-    {
-        using (var connection = connectionFactory())
-        {
-            connection.Open(context.Filename, true);
-            return UpdateMany(connection, entities);
         }
     }
     

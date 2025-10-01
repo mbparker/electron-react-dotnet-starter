@@ -31,13 +31,13 @@ public interface ISqliteConnection : IDisposable
     /// </summary>
     /// <param name="filename"></param>
     /// <param name="mustExist"></param>
-    void Open(string filename, bool mustExist);
+    void OpenReadWrite(string filename, bool mustExist);
     
     /// <summary>
     /// This overload opens an existing database, in read-only mode, with extended error codes.
     /// </summary>
     /// <param name="filename"></param>
-    void Open(string filename);
+    void OpenReadOnly(string filename);
     
     IntPtr GetHandle();
     
