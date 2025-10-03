@@ -57,7 +57,6 @@ public class SqliteParameterPopulator : ISqliteParameterPopulator
         {
             foreach (var parm in synthesisResult.ExtractedParameters.Values)
             {
-                var col = synthesisResult.Table.Columns[parm.DbFieldName];
                 parameterCollection.Add(parm.Name, parm.Value);
             }
         }

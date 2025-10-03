@@ -6,7 +6,6 @@ using LibSqlite3Orm.Concrete.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.PInvoke.Types.Enums;
 using LibSqlite3Orm.Types.Orm;
-using NSubstitute;
 
 namespace LibSqlite3Orm.Tests.Concrete.Orm.SqlSynthesizers;
 
@@ -77,18 +76,18 @@ public class SqliteSelectSqlSynthesizerTests
         // Use reflection to create SqliteSortSpec with internal constructor
         var constructor = typeof(SqliteSortSpec).GetConstructor(
             BindingFlags.NonPublic | BindingFlags.Instance, 
-            null, 
-            new[] { typeof(Expression), typeof(bool) }, 
+            null,
+            [typeof(SqliteDbSchema), typeof(Expression), typeof(bool)], 
             null);
         
-        return (SqliteSortSpec)constructor.Invoke(new object[] { keySelector, descending });
+        return (SqliteSortSpec)constructor.Invoke([_schema, keySelector, descending]);
     }
 
     [Test]
     public void Synthesize_WithBasicSelectArgs_GeneratesCorrectSelectSql()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -96,7 +95,7 @@ public class SqliteSelectSqlSynthesizerTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable"));
         Assert.That(result.SynthesisKind, Is.EqualTo(SqliteDmlSqlSynthesisKind.Select));
         Assert.That(result.Schema, Is.EqualTo(_schema));
         Assert.That(result.Table, Is.EqualTo(_testTable));
@@ -107,13 +106,13 @@ public class SqliteSelectSqlSynthesizerTests
     {
         // Arrange
         Expression<Func<TestEntity, bool>> filterExpr = x => x.Id > 5;
-        var args = new SynthesizeSelectSqlArgs(filterExpr, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, filterExpr, null, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
-        _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("Id > @p1");
+        _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("TestTable.Id > :TestTableId");
         var extractedParams = new Dictionary<string, ExtractedParameter>
         {
-            { "@p1", new ExtractedParameter("@p1", 5, "Id") }
+            { "TestTableId", new ExtractedParameter("@p1", 5, "TestTable", "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
 
@@ -121,7 +120,7 @@ public class SqliteSelectSqlSynthesizerTests
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable WHERE Id > @p1"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable WHERE TestTable.Id > :TestTableId"));
         Assert.That(result.ExtractedParameters, Is.EqualTo(extractedParams));
         _whereClauseBuilderFactory.Received(1).Invoke(_schema);
         _mockWhereClauseBuilder.Received(1).Build(typeof(TestEntity), filterExpr);
@@ -134,14 +133,14 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, string>> keySelector = x => x.Name;
         var sortSpec = CreateSortSpec(keySelector, false);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable ORDER BY Name ASC"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable ORDER BY TestTable.Name ASC"));
     }
 
     [Test]
@@ -153,14 +152,14 @@ public class SqliteSelectSqlSynthesizerTests
         var sortSpec1 = CreateSortSpec(keySelector1, false);
         var sortSpec2 = CreateSortSpec(keySelector2, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec1, sortSpec2 };
-        var args = new SynthesizeSelectSqlArgs(null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable ORDER BY Name ASC, CreatedDate DESC"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable ORDER BY TestTable.Name ASC, TestTable.CreatedDate DESC"));
     }
 
     [Test]
@@ -170,56 +169,56 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, int>> keySelector = x => x.Id;
         var sortSpec = CreateSortSpec(keySelector, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable ORDER BY Id DESC"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable ORDER BY TestTable.Id DESC"));
     }
 
     [Test]
     public void Synthesize_WithTakeCount_IncludesLimitClause()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, null, 10);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 10);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable LIMIT 10"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable LIMIT 10"));
     }
 
     [Test]
     public void Synthesize_WithSkipCount_IncludesOffsetClause()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, 5, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable OFFSET 5"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable OFFSET 5"));
     }
 
     [Test]
     public void Synthesize_WithSkipAndTake_IncludesBothOffsetAndLimit()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, 5, 10);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, 10);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable LIMIT 10 OFFSET 5"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable LIMIT 10 OFFSET 5"));
     }
 
     [Test]
@@ -230,13 +229,13 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, string>> keySelector = x => x.Name;
         var sortSpec = CreateSortSpec(keySelector, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(filterExpr, sortSpecs, 10, 20);
+        var args = new SynthesizeSelectSqlArgs(false, filterExpr, sortSpecs, 10, 20);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
-        _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("Id > @p1");
+        _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("TestTable.Id > :TestTableId");
         var extractedParams = new Dictionary<string, ExtractedParameter>
         {
-            { "@p1", new ExtractedParameter("@p1", 0, "Id") }
+            { "TestTableId", new ExtractedParameter("TestTableId", 0, "TestTable", "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
 
@@ -244,7 +243,7 @@ public class SqliteSelectSqlSynthesizerTests
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable WHERE Id > @p1 ORDER BY Name DESC LIMIT 20 OFFSET 10"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable WHERE TestTable.Id > :TestTableId ORDER BY TestTable.Name DESC LIMIT 20 OFFSET 10"));
         Assert.That(result.ExtractedParameters, Is.EqualTo(extractedParams));
     }
 
@@ -252,7 +251,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithUnmappedEntityType_ThrowsInvalidDataContractException()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act & Assert
@@ -265,14 +264,14 @@ public class SqliteSelectSqlSynthesizerTests
     {
         // Arrange
         var emptySortSpecs = new List<SqliteSortSpec>();
-        var args = new SynthesizeSelectSqlArgs(null, emptySortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, emptySortSpecs, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable"));
     }
 
     [Test]
@@ -287,7 +286,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithNullFilterExpression_DoesNotCallWhereClauseBuilder()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -301,41 +300,41 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_ColumnsOrderedAlphabetically_ReturnsConsistentColumnOrder()
     {
         // Arrange - Columns are already ordered alphabetically in setup: CreatedDate, Id, Name
-        var args = new SynthesizeSelectSqlArgs(null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Does.StartWith("SELECT CreatedDate, Id, Name"));
+        Assert.That(result.SqlText, Does.StartWith("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName"));
     }
 
     [Test]
     public void Synthesize_WithZeroTakeCount_IncludesLimitZero()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, null, 0);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 0);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable LIMIT 0"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable LIMIT 0"));
     }
 
     [Test]
     public void Synthesize_WithZeroSkipCount_IncludesOffsetZero()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(null, null, 0, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 0, null);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
 
         // Assert
-        Assert.That(result.SqlText, Is.EqualTo("SELECT CreatedDate, Id, Name FROM TestTable OFFSET 0"));
+        Assert.That(result.SqlText, Is.EqualTo("SELECT TestTable.CreatedDate AS TestTableCreatedDate, TestTable.Id AS TestTableId, TestTable.Name AS TestTableName FROM TestTable OFFSET 0"));
     }
 }

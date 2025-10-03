@@ -59,6 +59,7 @@ public class ContainerModule : Module
         builder.RegisterType<EntityDeleter>().As<IEntityDeleter>().InstancePerDependency();
         builder.RegisterType<EntityServices>().As<IEntityServices>().InstancePerDependency();
         builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().InstancePerDependency(); // Can't be a singleton anymore
+        builder.RegisterType<SqliteDetailPropertyLoader>().As<ISqliteDetailPropertyLoader>().InstancePerDependency();
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
         builder.RegisterGeneric(typeof(SqliteObjectRelationalMapperDatabaseManager<>)).As(typeof(ISqliteObjectRelationalMapperDatabaseManager<>))

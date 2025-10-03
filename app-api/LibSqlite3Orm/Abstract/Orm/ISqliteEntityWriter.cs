@@ -4,8 +4,9 @@ namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface ISqliteEntityWriter
 {
-    TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row, bool loadNavigationProps, ISqliteConnection connection)
+    TEntity Deserialize<TEntity>(SqliteDbSchema schema, SqliteDbSchemaTable table, ISqliteDataRow row,
+        bool loadNavigationProps, ISqliteConnection connection)
         where TEntity : new();
-    TEntity Deserialize<TEntity>(SqliteDbSchemaTable table, ISqliteDataRow row)
+    TEntity Deserialize<TEntity>(SqliteDbSchema schema, SqliteDbSchemaTable table, ISqliteDataRow row)
         where TEntity : new();    
 }

@@ -7,10 +7,11 @@ namespace LibSqlite3Orm.Concrete;
 public class SqliteDataRow : ISqliteDataRow
 {
     private readonly IntPtr statement;
-    private readonly Func<int, IntPtr, ISqliteDataColumn> columnFactory;
+    private readonly Func<int, string, IntPtr, ISqliteDataColumn> columnFactory;
     private readonly List<ISqliteDataColumn> columns = new();
+    private readonly Dictionary<string, ISqliteDataColumn> columnLookup = new(StringComparer.OrdinalIgnoreCase);
     
-    public SqliteDataRow(IntPtr statement, Func<int, IntPtr, ISqliteDataColumn> columnFactory)
+    public SqliteDataRow(IntPtr statement, Func<int, string, IntPtr, ISqliteDataColumn> columnFactory)
     {
         this.statement = statement;
         this.columnFactory = columnFactory;
@@ -22,9 +23,15 @@ public class SqliteDataRow : ISqliteDataRow
 
     public ISqliteDataColumn this[int index] => columns[index];
 
-    public ISqliteDataColumn this[string name] =>
-        columns.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
-    
+    public ISqliteDataColumn this[string name]
+    {
+        get
+        {
+            columnLookup.TryGetValue(name, out var result);
+            return result;
+        }
+    }
+
     public IEnumerator<ISqliteDataColumn> GetEnumerator()
     {
         return columns.GetEnumerator();
@@ -40,7 +47,10 @@ public class SqliteDataRow : ISqliteDataRow
         if (ColumnCount == 0) return;
         for (var i = 0; i < ColumnCount; i++)
         {
-            columns.Add(columnFactory.Invoke(i, statement));
+            var colName = SqliteExternals.ColumnName(statement, i);
+            var column = columnFactory.Invoke(i, colName, statement);
+            columns.Add(column);
+            columnLookup.Add(colName, column);
         }
     }    
 }

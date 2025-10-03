@@ -57,7 +57,7 @@ public class SqliteDeleteSqlSynthesizerTestsFixed
         _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("Id = :Id");
         var extractedParams = new Dictionary<string, ExtractedParameter>
         {
-            { "Id", new ExtractedParameter("Id", 1, "Id") }
+            //{ "Id", new ExtractedParameter("Id", 1, "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
 
@@ -102,7 +102,7 @@ public class SqliteDeleteSqlSynthesizerTestsFixed
         _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("Name LIKE '%test%' AND Id > :Id");
         var extractedParams = new Dictionary<string, ExtractedParameter>
         {
-            { "Id", new ExtractedParameter("Id", 10, "Id") }
+            //{ "Id", new ExtractedParameter("Id", 10, "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
 

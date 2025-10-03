@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Linq.Expressions;
 using System.Text;
-using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 
@@ -234,6 +233,33 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 				Visit(Expression.Constant(value));
 				return m;
 			}
+
+			// x => x.Detail.Value.Member
+			if (m.Expression is MemberExpression { Expression: MemberExpression me3 } me2)
+			{
+				var linkTableName = table.DetailProperties.SingleOrDefault(x => x.DetailsPropertyName == me3.Member.Name)
+					?.DetailTableName;
+				
+				if (!string.IsNullOrWhiteSpace(linkTableName))
+				{
+					var colName = schema.Tables[linkTableName].Columns.Values
+						.SingleOrDefault(x => x.ModelFieldName == m.Member.Name)?.Name;
+					if (!string.IsNullOrWhiteSpace(colName))
+					{
+						currentMemberDbFieldName = $"{linkTableName}.{colName}";
+						sqlBuilder.Append(currentMemberDbFieldName);
+					}
+				}
+				
+				Visit(me2);
+				return m;
+			}
+
+			if (me.Expression is ParameterExpression pe)
+			{
+				Visit(pe);
+				return m;
+			}
 		}
 
 		throw new NotSupportedException($"The member '{m.Member.Name}' is not supported yet");
@@ -269,9 +295,10 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	private string GetDbFieldNameForMemberName(string memberName)
 	{
-		return table.Columns.Values.SingleOrDefault(x => x.ModelFieldName == memberName)?.Name ??
-		       throw new InvalidOperationException(
-			       $"Declaring type of member {memberName} does not exist in the schema.");
+		var col = table.Columns.Values.SingleOrDefault(x => x.ModelFieldName == memberName);
+		if (col is not null) return $"{table.Name}.{col.Name}";
+		throw new InvalidOperationException(
+			$"Declaring type of member {memberName} does not exist in the schema.");
 	}
 
 	private bool IsNullConstant(Expression exp)
@@ -281,9 +308,12 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	private string StoreParameterValueAndReturnName(string dbFieldName, object value)
 	{
-		var name = dbFieldName;
+		var baseName = dbFieldName.Replace(".", string.Empty);
+		var name = baseName;
+		var dbTableName = dbFieldName.Split('.')[0];
+		dbFieldName = dbFieldName.Split('.')[1];
 		var uniqueness = 1;
-		while (!extractedParameters.TryAdd(name, new ExtractedParameter(name, value, dbFieldName)))
+		while (!extractedParameters.TryAdd(name, new ExtractedParameter(name, value, dbTableName, dbFieldName)))
 		{
 			// Reuse the original parameter if the values are exactly the same.
 			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
@@ -293,7 +323,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 				return name;
 			}
 
-			name = $"{dbFieldName}{uniqueness++}";
+			name = $"{baseName}{uniqueness++}";
 		}
 
 		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));

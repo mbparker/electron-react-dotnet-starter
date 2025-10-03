@@ -24,37 +24,87 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
         if (table is not null)
         {
             IReadOnlyDictionary<string, ExtractedParameter> extractedParams = null;
+            HashSet<string> otherTablesReferenced = new(StringComparer.OrdinalIgnoreCase);
+            
             var sb = new StringBuilder();
-
-            // Field selection
-            var cols = table.Columns.Values.OrderBy(x => x.Name).ToArray();
-            var colNames = cols.Select(x => x.Name).ToArray();
-            sb.Append($"SELECT {string.Join(", ", colNames)} FROM {table.Name}");
 
             var selectArgs = args.GetArgs<SynthesizeSelectSqlArgs>();
 
-            // Filter
+            if (selectArgs.LoadNavigationProps)
+            {
+                foreach (var detProp in table.DetailProperties)
+                {
+                    otherTablesReferenced.Add(detProp.DetailTableName);
+                }
+            }
+
+            // Compute Filter
+            string whereClause = null;
             if (selectArgs.FilterExpr is not null)
             {
                 var wcb = whereClauseBuilderFactory(Schema);
-                var wc = wcb.Build(entityType, selectArgs.FilterExpr);
-                sb.Append($" WHERE {wc}");
+                whereClause = wcb.Build(entityType, selectArgs.FilterExpr);
                 extractedParams = wcb.ExtractedParameters;
             }
-
-            // Sort
+            
+            // Compute Sort
+            var sortFields = new List<string>();
             if (selectArgs.SortSpecs?.Any() ?? false)
             {
-                sb.Append(" ORDER BY ");
-                var fields = new List<string>();
                 foreach (var sortSpec in selectArgs.SortSpecs)
                 {
                     var dir = sortSpec.Descending ? "DESC" : "ASC";
-                    var fieldName = cols.Single(x => x.ModelFieldName == sortSpec.ModelMemberName).Name;
-                    fields.Add($"{fieldName} {dir}");
+                    var fieldName = $"{sortSpec.TableName}.{sortSpec.FieldName}";
+                    sortFields.Add($"{fieldName} {dir}");
                 }
+            }
+            
+            // Field selection
+            var cols = table.Columns.Values.OrderBy(x => x.Name).Select(x => $"{table.Name}.{x.Name} AS {table.Name}{x.Name}").ToList();
+            if (otherTablesReferenced.Any())
+            {
+                foreach (var otherTable in otherTablesReferenced)
+                {
+                    cols.AddRange(Schema.Tables[otherTable].Columns.Values.OrderBy(x => x.Name)
+                        .Select(x => $"{otherTable}.{x.Name} AS {otherTable}{x.Name}").ToList());
+                }
+            }
+            sb.Append($"SELECT {string.Join(", ", cols)} FROM {table.Name}");
 
-                sb.Append(string.Join(", ", fields));
+            // Join any additional tables
+            if (otherTablesReferenced.Any())
+            {
+                foreach (var otherTable in otherTablesReferenced)
+                {
+                    var fk = table.ForeignKeys.SingleOrDefault(x => x.ForeignTableName == otherTable);
+                    if (fk is not null)
+                    {
+                        if (fk.FieldNames.Length == fk.ForeignTableFields.Length)
+                        {
+                            var joinOnSb = new StringBuilder();
+                            for (var i = 0; i < fk.FieldNames.Length; i++)
+                            {
+                                if (i > 0)
+                                    joinOnSb.Append(" AND ");
+                                joinOnSb.Append(
+                                    $"{table.Name}.{fk.FieldNames[i]} = {otherTable}.{fk.ForeignTableFields[i]}");
+                            }
+                            
+                            sb.Append($" INNER JOIN {otherTable} ON {joinOnSb}");
+                        }
+                    }
+                }
+            }
+            
+            // Filter
+            if (!string.IsNullOrWhiteSpace(whereClause))
+                sb.Append($" WHERE {whereClause}");
+            
+            // Sort
+            if (sortFields.Any())
+            {
+                sb.Append(" ORDER BY ");
+                sb.Append(string.Join(", ", sortFields));
             }
 
             // Take
@@ -65,8 +115,9 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             if (selectArgs.SkipCount.HasValue)
                 sb.Append($" OFFSET {selectArgs.SkipCount.Value}");
 
-            return new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Select, Schema, table, sb.ToString(),
-                extractedParams);
+            return new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Select, Schema, table,
+                Schema.Tables.Values.Where(x => otherTablesReferenced.Contains(x.Name)).ToArray(), 
+                sb.ToString(), extractedParams);
         }
 
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");

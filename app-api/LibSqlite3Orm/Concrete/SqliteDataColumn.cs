@@ -11,12 +11,12 @@ public class SqliteDataColumn : ISqliteDataColumn
     private readonly ISqliteFieldValueSerialization serialization;
     private object serializedValue;
     
-    public SqliteDataColumn(int index, IntPtr statement, ISqliteFieldValueSerialization serialization)
+    public SqliteDataColumn(int index, string name, IntPtr statement, ISqliteFieldValueSerialization serialization)
     {
         Index = index;
         this.statement = statement;
         this.serialization = serialization;
-        Name = SqliteExternals.ColumnName(this.statement, Index);
+        Name = name;
         TypeAffinity = SqliteExternals.ColumnType(this.statement, Index);
         ReadSerializedValue();
     }

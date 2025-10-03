@@ -15,9 +15,11 @@ public class DemoContext : SqliteOrmDatabaseContext
     {
         var demoEntity = builder.HasTable<DemoEntity>();
         demoEntity.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        demoEntity.WithColumnChanges(x => x.StringValue).UsingCollation();
         
         var customTag = builder.HasTable<CustomTag>();
         customTag.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        customTag.WithColumnChanges(x => x.TagValue).UsingCollation().IsUnique().IsNotNull();
         
         var customTagLink = builder.HasTable<CustomTagLink>();
         customTagLink.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
@@ -33,6 +35,8 @@ public class DemoContext : SqliteOrmDatabaseContext
             .HasForeignNavigationCollectionProperty<DemoEntity>(x => x.Tags)
             .OnDelete(SqliteForeignKeyAction.Cascade);
         
+        builder.HasIndex<DemoEntity>().WithColumn(x => x.StringValue).UsingCollation().SortedAscending();
+        builder.HasIndex<CustomTag>().WithColumn(x => x.TagValue).UsingCollation().SortedAscending();
         builder.HasIndex<CustomTagLink>().WithColumn(x => x.EntityId).UsingCollation().SortedAscending();
         builder.HasIndex<CustomTagLink>().WithColumn(x => x.TagId).UsingCollation().SortedAscending();
     }

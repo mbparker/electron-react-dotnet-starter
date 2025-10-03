@@ -45,10 +45,10 @@ public class EntityGetter : IEntityGetter
 
             T DeserializeRow(ISqliteDataRow row)
             {
-                return entityWriter.Deserialize<T>(table, row, loadNavigationProps, connection);
+                return entityWriter.Deserialize<T>(context.Schema, table, row, loadNavigationProps, connection);
             }
             
-            return new SqliteOrderedQueryable<T>(ExecuteQuery, DeserializeRow);
+            return new SqliteOrderedQueryable<T>(context.Schema, ExecuteQuery, DeserializeRow, loadNavigationProps);
         }
         
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");

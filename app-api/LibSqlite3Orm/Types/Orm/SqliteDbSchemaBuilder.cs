@@ -259,19 +259,17 @@ public class SqliteTableOptionsBuilder<TTable>
                 var options = new SqliteTableColumnOptions(tableOptions);
                 options.Member = member;
                 options.Name = options.Member.Name;
-                
-                // Surely there is a better way of determining if a field or property can be set to null or not???
-                var possiblyNullableType = member.GetValueType();
-                var realType =  Nullable.GetUnderlyingType(possiblyNullableType) ?? possiblyNullableType;
-                if (realType == possiblyNullableType && realType.IsValueType)
+
+                var memberType = member.GetValueType();
+                if (memberType.IsNotNullable())
                 {
                     options.IsNotNull = true;
-                    var defaultValue = Activator.CreateInstance(realType) ?? throw new InvalidOperationException(
-                        $"Cannot get default value for non-nullable column {options.Name} of type {realType.Name}");
-                    defaultValue = serialization[realType]?.Serialize(defaultValue) ?? defaultValue;
+                    memberType = Nullable.GetUnderlyingType(memberType) ?? memberType;
+                    var defaultValue = Activator.CreateInstance(memberType) ?? throw new InvalidOperationException(
+                        $"Cannot get default value for non-nullable column {options.Name} of type {memberType.Name}");
+                    defaultValue = serialization[memberType]?.Serialize(defaultValue) ?? defaultValue;
                     options.DefaultValueLiteral = defaultValue.ToString();
                 }
-                //
                 
                 tableOptions.Columns.Add(options.Member.Name, options);
             }

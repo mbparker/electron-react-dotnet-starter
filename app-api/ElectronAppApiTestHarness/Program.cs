@@ -172,19 +172,20 @@ try
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     sqlStatementCount = 0;
-                    CustomTag[] tagRecords = [];
+                    var recCnt = 0;
                     var elapsedStep = ExecuteTimed(() =>
                     {
-                        tagRecords = orm.Get<CustomTag>().AsEnumerable().ToArray();
+                        var tagRecords = orm.Get<CustomTag>().AsEnumerable();
                         foreach (var record in tagRecords)
                         {
+                            recCnt++;
                             writer.WriteLine(record.ToString());
                         }
                     });
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     ConsoleLogger.WriteLine(ConsoleColor.Green,
-                        $"Read {tagRecords.Length} {nameof(CustomTag)} record(s), executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+                        $"Read {recCnt} {nameof(CustomTag)} record(s), executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
 
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
@@ -192,19 +193,20 @@ try
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     sqlStatementCount = 0;
-                    DemoEntity[] entityRecords = [];
+                    recCnt = 0;
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        entityRecords = orm.Get<DemoEntity>(loadNavigationProps: false).AsEnumerable().ToArray();
+                        var entityRecords = orm.Get<DemoEntity>(loadNavigationProps: false).AsEnumerable();
                         foreach (var record in entityRecords)
                         {
+                            recCnt++;
                             writer.WriteLine(record.ToString());
                         }
                     });
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     ConsoleLogger.WriteLine(ConsoleColor.Green,
-                        $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+                        $"Read {recCnt} {nameof(DemoEntity)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
 
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
@@ -212,19 +214,20 @@ try
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     sqlStatementCount = 0;
-                    CustomTagLink[] linkRecords = [];
+                    recCnt = 0;
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: false).AsEnumerable().ToArray();
+                        var linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: false).AsEnumerable();
                         foreach (var record in linkRecords)
                         {
+                            recCnt++;
                             writer.WriteLine(record.ToString());
                         }
                     });
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     ConsoleLogger.WriteLine(ConsoleColor.Green,
-                        $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+                        $"Read {recCnt} {nameof(CustomTagLink)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
 
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
@@ -232,19 +235,20 @@ try
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     sqlStatementCount = 0;
-                    entityRecords = [];
+                    recCnt = 0;
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        entityRecords = orm.Get<DemoEntity>(loadNavigationProps: true).AsEnumerable().ToArray();
+                        var entityRecords = orm.Get<DemoEntity>(loadNavigationProps: true).AsEnumerable();
                         foreach (var record in entityRecords)
                         {
+                            recCnt++;
                             writer.WriteLine(record.ToString());
                         }
                     });
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     ConsoleLogger.WriteLine(ConsoleColor.Green,
-                        $"Read {entityRecords.Length} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+                        $"Read {recCnt} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
 
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
@@ -252,19 +256,20 @@ try
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     sqlStatementCount = 0;
-                    linkRecords = [];
+                    recCnt = 0;
                     elapsedStep = ExecuteTimed(() =>
                     {
-                        linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: true).AsEnumerable().ToArray();
+                        var linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: true).AsEnumerable();
                         foreach (var record in linkRecords)
                         {
+                            recCnt++;
                             writer.WriteLine(record.ToString());
                         }
                     });
                     writer.WriteLine(
                         "--------------------------------------------------------------------------------");
                     ConsoleLogger.WriteLine(ConsoleColor.Green,
-                        $"Read {linkRecords.Length} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
+                        $"Read {recCnt} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
                 }
             }
         });

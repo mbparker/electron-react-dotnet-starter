@@ -62,15 +62,14 @@ public class DemoEntity : BaseEntity
         sb.AppendLine("Custom Tag Links:");
         if (Tags.Value is not null)
         {
-            var links = Tags.Value.AsEnumerable().ToArray();
-            if (links.Length != 0)
+            var hasLink = false;
+            var links = Tags.Value.AsEnumerable();
+            foreach (var link in links)
             {
-                foreach (var link in links)
-                {
-                    sb.AppendLine($"{link}");
-                }
+                hasLink = true;
+                sb.AppendLine($"{link}");
             }
-            else
+            if (!hasLink)
             {
                 sb.AppendLine("\tNo links");    
             }

@@ -11,35 +11,39 @@ namespace LibSqlite3Orm.Concrete.Orm;
 // Therefore, we can't actually query until we have that information. So the trigger becomes the invocation of GetEnumerator.
 public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQueryable<T>, IEnumerable<T>
 {
+    private readonly SqliteDbSchema schema;
     private readonly Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc;
     private readonly Func<ISqliteDataRow, T> modelDeserializerFunc;
     private readonly List<SqliteSortSpec> sortSpecs;
     private Expression<Func<T, bool>> wherePredicate;
     private int? skipCount;
     private int? takeCount;
+    private bool loadNavigationProps;
 
-    public SqliteOrderedQueryable(
+    public SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
-        Func<ISqliteDataRow, T> modelDeserializerFunc)
-        : this(executeFunc, modelDeserializerFunc, null, null, null, null)
+        Func<ISqliteDataRow, T> modelDeserializerFunc, bool loadNavigationProps)
+        : this(schema, executeFunc, modelDeserializerFunc, loadNavigationProps, null, null, null, null)
     {
     }
 
-    private SqliteOrderedQueryable(
+    private SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
-        Func<ISqliteDataRow, T> modelDeserializerFunc, Expression<Func<T, bool>> wherePredicate, SqliteSortSpec newSpec,
+        Func<ISqliteDataRow, T> modelDeserializerFunc, bool loadNavigationProps, Expression<Func<T, bool>> wherePredicate, SqliteSortSpec newSpec,
         int? skipCount, int? takeCount)
-        : this(executeFunc, modelDeserializerFunc, wherePredicate, [], skipCount, takeCount, newSpec)
+        : this(schema, executeFunc, modelDeserializerFunc, loadNavigationProps, wherePredicate, [], skipCount, takeCount, newSpec)
     {
     }
 
-    private SqliteOrderedQueryable(
+    private SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
-        Func<ISqliteDataRow, T> modelDeserializerFunc, Expression<Func<T, bool>> wherePredicate,
+        Func<ISqliteDataRow, T> modelDeserializerFunc, bool loadNavigationProps, Expression<Func<T, bool>> wherePredicate,
         List<SqliteSortSpec> sortSpecs, int? skipCount, int? takeCount, SqliteSortSpec newSpec)
     {
+        this.schema = schema;
         this.executeFunc = executeFunc;
         this.modelDeserializerFunc = modelDeserializerFunc;
+        this.loadNavigationProps = loadNavigationProps;
         this.wherePredicate = wherePredicate;
         this.sortSpecs = sortSpecs;
         this.skipCount = skipCount;
@@ -51,8 +55,8 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     public IEnumerator<T> GetEnumerator()
     {
         return new SqliteOrderedEnumerator(
-            executeFunc.Invoke(new SynthesizeSelectSqlArgs(wherePredicate, sortSpecs.ToArray(), skipCount, takeCount)),
-            modelDeserializerFunc);
+            executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps, wherePredicate, 
+                sortSpecs.ToArray(), skipCount, takeCount)), modelDeserializerFunc);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -109,8 +113,8 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
 
     private ISqliteOrderedQueryable<T> New<TKey>(Expression<Func<T, TKey>> keySelectorExpr, bool descending)
     {
-        return new SqliteOrderedQueryable<T>(executeFunc, modelDeserializerFunc, wherePredicate, sortSpecs, skipCount,
-            takeCount, new SqliteSortSpec(keySelectorExpr, descending));
+        return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, loadNavigationProps, wherePredicate, sortSpecs, skipCount,
+            takeCount, new SqliteSortSpec(schema, keySelectorExpr, descending));
     }
 
     private class SqliteOrderedEnumerator : IEnumerator<T>

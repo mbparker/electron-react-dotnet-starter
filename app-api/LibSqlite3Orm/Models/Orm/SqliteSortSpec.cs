@@ -5,16 +5,31 @@ namespace LibSqlite3Orm.Models.Orm;
 
 public class SqliteSortSpec
 {
-    internal SqliteSortSpec(Expression keySelectorExpr, bool descending)
+    internal SqliteSortSpec(SqliteDbSchema schema, Expression keySelectorExpr, bool descending)
     {
         if (keySelectorExpr is LambdaExpression { Body: MemberExpression me })
-            ModelMemberName = me.Member.Name;
-        else
-            throw new InvalidExpressionException(
-                $"OrderBy, OrderByDescending, ThenBy, and ThenByDescending predicates must be of type {nameof(LambdaExpression)} with a body of {nameof(MemberExpression)}.");
-        Descending = descending;
+        {
+            var tableClass = me.Member.DeclaringType?.AssemblyQualifiedName;
+            if (!string.IsNullOrEmpty(tableClass))
+            {
+                var table = schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == tableClass);
+                if (table is not null)
+                {
+                    TableName = table.Name;
+                    FieldName = table.Columns.Values.SingleOrDefault(x => x.ModelFieldName == me.Member.Name)?.Name;
+                    Descending = descending;
+                    return;
+                }
+            }
+
+            throw new InvalidExpressionException("Unable to find table class for " + me.Member.Name);
+        }
+
+        throw new InvalidExpressionException(
+            $"OrderBy, OrderByDescending, ThenBy, and ThenByDescending predicates must be of type {nameof(LambdaExpression)} with a body of {nameof(MemberExpression)}.");
     }
-        
-    public string ModelMemberName { get; }
+
+    public string TableName { get; }
+    public string FieldName { get; }
     public bool Descending { get; }
 }
