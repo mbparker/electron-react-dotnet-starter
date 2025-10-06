@@ -18,22 +18,25 @@ public class SqliteDbSchemaTable
     public SqliteDbSchemaTablePrimaryKeyColumn PrimaryKey { get; set; }
     public List<SqliteDbSchemaTableForeignKey> ForeignKeys { get; set; } = [];
     public string[] CompositePrimaryKeyFields { get; set; } = [];
-    public List<SqliteOneToManyRelationship> DetailListProperties { get; set; } = [];
-    public List<SqliteOneToOneRelationship> DetailProperties { get; set; } = [];
+    public List<SqliteDbSchemaTableForeignKeyNavigationProperty> NavigationProperties { get; set; } = [];
 }
 
-public class SqliteOneToManyRelationship
+public enum SqliteDbSchemaTableForeignKeyNavigationPropertyKind
 {
-    public string DetailsListPropertyName { get; set; }
-    public string DetailTableName { get; set; }
-    public string DetailTableTypeName { get; set; }
+    OneToOne,
+    OneToMany
 }
 
-public class SqliteOneToOneRelationship
+public class SqliteDbSchemaTableForeignKeyNavigationProperty
 {
-    public string DetailsPropertyName { get; set; }
-    public string DetailTableName { get; set; }
-    public string DetailTableTypeName { get; set; }
+    public string ForeignKeyTableName { get; set; }
+    public int ForeignKeyId { get; set; }
+    public SqliteDbSchemaTableForeignKeyNavigationPropertyKind Kind { get; set; }
+    public string ReferencedEntityTypeName { get; set; }
+    public string ReferencedEntityTableName { get; set; }
+    public string PropertyEntityTypeName { get; set; }
+    public string PropertyEntityTableName { get; set; }
+    public string PropertyEntityMember { get; set; }
 }
 
 public class SqliteDbSchemaTableColumn
@@ -50,7 +53,6 @@ public class SqliteDbSchemaTableColumn
     public SqliteLiteConflictAction? IsUniqueConflictAction { get; set; }
     public SqliteCollation? Collation { get; set; }
     public string DefaultValueLiteral { get; set; }
-    //public string SerializerTypeName { get; set; }
 }
 
 public class SqliteDbSchemaTablePrimaryKeyColumn
@@ -62,12 +64,20 @@ public class SqliteDbSchemaTablePrimaryKeyColumn
     public bool AutoGuid { get; set; }
 }
 
+public class SqliteDbSchemaTableForeignKeyFieldPair
+{
+    public string TableModelProperty { get; set; }
+    public string TableFieldName { get; set; }
+    public string ForeignTableModelProperty { get; set; }
+    public string ForeignTableFieldName { get; set; }
+}
+
 public class SqliteDbSchemaTableForeignKey
 {
-    public string[] FieldNames { get; set; }
+    public int Id { get; set; }
+    public SqliteDbSchemaTableForeignKeyFieldPair[] KeyFields { get; set; }
     public string ForeignTableName { get; set; }
     public string ForeignTableModelTypeName { get; set; }
-    public string[] ForeignTableFields { get; set; }
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
 }

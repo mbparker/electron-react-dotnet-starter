@@ -31,18 +31,22 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
         var getDetailsGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetails));
         if (getDetailsGeneric is not null)
         {
-            foreach (var detailsProp in table.DetailProperties)
+            foreach (var detailsProp in table.NavigationProperties)
             {
-                var member = entityType.GetMember(detailsProp.DetailsPropertyName).SingleOrDefault();
-                if (member is not null)
+                if (detailsProp.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne)
                 {
-                    var detailEntityType = Type.GetType(detailsProp.DetailTableTypeName);
-                    if (detailEntityType is not null)
+                    var member = entityType.GetMember(detailsProp.PropertyEntityMember).SingleOrDefault();
+                    if (member is not null)
                     {
-                        var getDetails =
-                            getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
-                        var detailEntity = getDetails.Invoke(entityDetailGetter.Value, [entity, loadNavigationProps, row, connection]);
-                        member.SetValue(entity, detailEntity);
+                        var detailEntityType = Type.GetType(detailsProp.ReferencedEntityTypeName);
+                        if (detailEntityType is not null)
+                        {
+                            var getDetails =
+                                getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
+                            var detailEntity = getDetails.Invoke(entityDetailGetter.Value,
+                                [entity, loadNavigationProps, row, connection]);
+                            member.SetValue(entity, detailEntity);
+                        }
                     }
                 }
             }
@@ -55,18 +59,22 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
         var getDetailsListGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetailsList));
         if (getDetailsListGeneric is not null)
         {
-            foreach (var detailsProp in table.DetailListProperties)
+            foreach (var detailsProp in table.NavigationProperties)
             {
-                var member = entityType.GetMember(detailsProp.DetailsListPropertyName).SingleOrDefault();
-                if (member is not null)
+                if (detailsProp.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToMany)
                 {
-                    var detailEntityType = Type.GetType(detailsProp.DetailTableTypeName);
-                    if (detailEntityType is not null)
+                    var member = entityType.GetMember(detailsProp.PropertyEntityMember).SingleOrDefault();
+                    if (member is not null)
                     {
-                        var getDetailsList =
-                            getDetailsListGeneric.MakeGenericMethod(entityType, detailEntityType);
-                        var queryable = getDetailsList.Invoke(entityDetailGetter.Value, [entity, loadNavigationProps, connection]);
-                        member.SetValue(entity, queryable);
+                        var detailEntityType = Type.GetType(detailsProp.ReferencedEntityTypeName);
+                        if (detailEntityType is not null)
+                        {
+                            var getDetailsList =
+                                getDetailsListGeneric.MakeGenericMethod(entityType, detailEntityType);
+                            var queryable = getDetailsList.Invoke(entityDetailGetter.Value,
+                                [entity, loadNavigationProps, connection]);
+                            member.SetValue(entity, queryable);
+                        }
                     }
                 }
             }

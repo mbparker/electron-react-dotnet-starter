@@ -32,7 +32,7 @@ public class DemoContext : SqliteOrmDatabaseContext
             .WithForeignKey(x => x.EntityId)
             .References<DemoEntity>(x => x.Id)
             .HasNavigationProperty(x => x.Entity)
-            .HasForeignNavigationCollectionProperty<DemoEntity>(x => x.Tags)
+            .HasForeignNavigationProperty<DemoEntity>(x => x.Tags)
             .OnDelete(SqliteForeignKeyAction.Cascade);
         
         builder.HasIndex<DemoEntity>().WithColumn(x => x.StringValue).UsingCollation().SortedAscending();

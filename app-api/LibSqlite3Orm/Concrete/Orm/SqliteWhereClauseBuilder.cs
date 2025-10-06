@@ -237,8 +237,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			// x => x.Detail.Value.Member
 			if (m.Expression is MemberExpression { Expression: MemberExpression me3 } me2)
 			{
-				var linkTableName = table.DetailProperties.SingleOrDefault(x => x.DetailsPropertyName == me3.Member.Name)
-					?.DetailTableName;
+				var linkTableName = table.NavigationProperties
+					.SingleOrDefault(x => x.PropertyEntityMember == me3.Member.Name)?.ReferencedEntityTableName;
 				
 				if (!string.IsNullOrWhiteSpace(linkTableName))
 				{

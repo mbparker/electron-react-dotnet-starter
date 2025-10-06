@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
+using LibSqlite3Orm.Models.Orm;
 
 namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
@@ -30,77 +31,17 @@ public class EntityDetailGetter : IEntityDetailGetter
                GetDetailsFromNewQuery<TTable, TDetails>(record, loadNavigationProps, connection);
     }
     
-    public Lazy<ISqliteQueryable<TDetails>> GetDetailsList<TTable, TDetails>(TTable record, bool loadNavigationProps, ISqliteConnection connection) where TDetails : new()
+    public Lazy<ISqliteQueryable<TDetailEntity>> GetDetailsList<TEntity, TDetailEntity>(TEntity record, bool loadNavigationProps, ISqliteConnection connection) where TDetailEntity : new()
     {
         if (!loadNavigationProps || connection is null)
         {
-            return new Lazy<ISqliteQueryable<TDetails>>(default(ISqliteQueryable<TDetails>));
+            return new Lazy<ISqliteQueryable<TDetailEntity>>(default(ISqliteQueryable<TDetailEntity>));
         }
         
-        return new Lazy<ISqliteQueryable<TDetails>>(() =>
-        {
-            // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
-            var queryable = entityGetter.Value.Get<TDetails>(connection, loadNavigationProps: true); 
-            var tableType = typeof(TTable);
-            var detailTableType = typeof(TDetails);
-            var entityTypeName = detailTableType.AssemblyQualifiedName;
-            var detailTable = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityTypeName);
-            if (detailTable is not null)
-            {
-                var whereMethod = queryable.GetType().GetMethod(nameof(ISqliteQueryable<TDetails>.Where));
-                if (whereMethod is not null)
-                {
-                    var fks = detailTable.ForeignKeys
-                        .Where(x => x.ForeignTableModelTypeName == tableType.AssemblyQualifiedName)
-                        .ToArray();
-                    Expression<Func<TDetails, bool>> wherePredicate = null;
-                    foreach (var fk in fks)
-                    {
-                        for (var i = 0; i < fk.FieldNames.Length; i++)
-                        {
-                            // This is from the perspective of the details table, since were getting our info from the foreign key specs.
-                            // Examples in plain text:
-                            // x => x.ForeignId == 1234
-                            // x => x.ForeignId1 == 1234 && x.ForeignId2 == 5678 
-                            //
-                            // Get the member info for both sides. On the master table, we will use it to get a live value.
-                            var masterMemberInfo = tableType.GetMember(fk.ForeignTableFields[i]).First();
-                            // On the detail side, we are using a member access expression to build a where clause later.
-                            var detailsMemberInfo = detailTableType.GetMember(fk.FieldNames[i]).First();
-                            // Define "x" with a param expression.
-                            var detailTableParamExpr = Expression.Parameter(detailTableType, "x");
-                            // Specify what member on "x" we are accessing
-                            var detailsMemberExpr =
-                                Expression.MakeMemberAccess(detailTableParamExpr, detailsMemberInfo);
-                            // Create a constant value expression for comparison against
-                            var masterValueConstExpr = Expression.Constant(masterMemberInfo.GetValue(record),
-                                masterMemberInfo.GetValueType());
-                            // Now build the equals binary expression
-                            var equalComparisonExpr = Expression.MakeBinary(ExpressionType.Equal, detailsMemberExpr,
-                                masterValueConstExpr);
-                            // Lastly, wrap the binary expression in a lambda expression to match the Where method's input predicate type
-                            var lambdaWrapperExpr =
-                                Expression.Lambda<Func<TDetails, bool>>(equalComparisonExpr, detailTableParamExpr);
-                            // Set the predicate expression. If we already set one, link them together with a logical AND expression.
-                            if (wherePredicate is null)
-                                wherePredicate = lambdaWrapperExpr;
-                            else
-                                wherePredicate =
-                                    Expression.Lambda<Func<TDetails, bool>>(Expression.AndAlso(wherePredicate.Body,
-                                        lambdaWrapperExpr.Body), detailTableParamExpr);
-                        }
-                    }
-
-                    // Now that we've built the predicate we can manually invoke the Where function which will build the where clause when the queryable is finally enumerated.
-                    return whereMethod.Invoke(queryable, [wherePredicate]) as ISqliteQueryable<TDetails>;
-                }
-            }
-
-            throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
-        });
+        return new Lazy<ISqliteQueryable<TDetailEntity>>(() => GetDetailsQueryable<TEntity, TDetailEntity>(record, connection));
     }
     
-        private Lazy<TEntity> GetDetailsFromRow<TEntity>(bool loadNavigationProps, ISqliteDataRow row, ISqliteConnection connection) where TEntity : new()
+    private Lazy<TEntity> GetDetailsFromRow<TEntity>(bool loadNavigationProps, ISqliteDataRow row, ISqliteConnection connection) where TEntity : new()
     {
         if (!loadNavigationProps || connection is null)
         {
@@ -123,7 +64,7 @@ public class EntityDetailGetter : IEntityDetailGetter
             return new Lazy<TEntity>(() =>
             {
                 var entity =
-                    entityType
+                    (TEntity)entityType
                         .GetConstructor(BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod, [])
                         ?.Invoke(null) ??
                     throw new ApplicationException(
@@ -138,7 +79,7 @@ public class EntityDetailGetter : IEntityDetailGetter
                     }
                 }
 
-                detailPropertyLoader.Value.LoadDetailProperties(entity, table, row, loadNavigationProps, connection);
+                detailPropertyLoader.Value.LoadDetailProperties<TEntity>(entity, table, row, loadNavigationProps, connection);
 
                 return (TEntity)entity;
             });
@@ -153,72 +94,96 @@ public class EntityDetailGetter : IEntityDetailGetter
         {
             return new Lazy<TDetails>(default(TDetails));
         }
-        
+
         return new Lazy<TDetails>(() =>
         {
-            // Initialize the queryable, then build an expression in code to filter the results to the current record.
-            var queryable = entityGetter.Value.Get<TDetails>(connection, true);
-            var tableType = typeof(TTable);
-            var detailTableType = typeof(TDetails);
-            var entityTypeName = detailTableType.AssemblyQualifiedName;
-            var masterTable =
-                context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == tableType.AssemblyQualifiedName);
-            var detailTable = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityTypeName);
-            if (detailTable is not null && masterTable is not null)
+            var enumerable = GetDetailsQueryable<TTable, TDetails>(record, connection);
+            return enumerable.AsEnumerable().SingleOrDefault();
+        });
+    }
+
+    private ISqliteQueryable<TDetailEntity> GetDetailsQueryable<TEntity, TDetailEntity>(TEntity record,
+        ISqliteConnection connection) where TDetailEntity : new()
+    {
+        // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
+        var queryable = entityGetter.Value.Get<TDetailEntity>(connection, loadNavigationProps: true);
+        var entityType = typeof(TEntity);
+        var entityTypeName = entityType.AssemblyQualifiedName;
+        var detailEntityType = typeof(TDetailEntity);
+        var detailEntityTypeName = detailEntityType.AssemblyQualifiedName;
+        var entityTable =
+            context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
+        var detailEntityTable =
+            context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == detailEntityTypeName);
+        if (entityTable is not null && detailEntityTable is not null)
+        {
+            var whereMethod = queryable.GetType().GetMethod(nameof(ISqliteQueryable<TDetailEntity>.Where));
+            if (whereMethod is not null)
             {
-                var whereMethod = queryable.GetType().GetMethod(nameof(ISqliteQueryable<TDetails>.Where));
-                if (whereMethod is not null)
+                var navProp = entityTable.NavigationProperties.SingleOrDefault(x =>
+                    x.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToMany &&
+                    x.PropertyEntityTypeName == entityTypeName &&
+                    x.ReferencedEntityTypeName == detailEntityTypeName);
+
+                if (navProp is not null)
                 {
-                    var fks = masterTable.ForeignKeys
-                        .Where(x => x.ForeignTableModelTypeName == detailTableType.AssemblyQualifiedName)
-                        .ToArray();
-                    Expression<Func<TDetails, bool>> wherePredicate = null;
-                    foreach (var fk in fks)
+                    var fk = context.Schema.Tables[navProp.ForeignKeyTableName].ForeignKeys
+                        .Single(x => x.Id == navProp.ForeignKeyId);
+                    var fkFromEntityTable = fk.ForeignTableName == detailEntityTable.Name;
+
+                    if (fk is not null)
                     {
-                        for (var i = 0; i < fk.FieldNames.Length; i++)
+                        Expression<Func<TDetailEntity, bool>> wherePredicate = null;
+                        for (var i = 0; i < fk.KeyFields.Length; i++)
                         {
                             // This is from the perspective of the details table, since were getting our info from the foreign key specs.
                             // Examples in plain text:
-                            // x => x.Id1 == 1234
-                            // x => x.Id1 == 1234 && x.Id2 == 5678 
+                            // x => x.ForeignId == 1234
+                            // x => x.ForeignId1 == 1234 && x.ForeignId2 == 5678 
                             //
-                            // Get the member info for both sides. On the master table, we are using a member access expression to build a where clause later.
-                            var masterMemberInfo = tableType.GetMember(fk.FieldNames[i]).First();
-                            // On the detail side, we will use it to get a live value.
-                            var detailsMemberInfo = detailTableType.GetMember(fk.ForeignTableFields[i]).First();
+                            // Get the member info for both sides. On the master table, we will use it to get a live value.
+                            var rightSideOperandMember = entityType
+                                .GetMember(fkFromEntityTable
+                                    ? fk.KeyFields[i].TableModelProperty
+                                    : fk.KeyFields[i].ForeignTableModelProperty)
+                                .Single();
+                            // On the detail side, we are using a member access expression to build a where clause later.
+                            var leftSideOperandMember = detailEntityType
+                                .GetMember(fkFromEntityTable
+                                    ? fk.KeyFields[i].ForeignTableModelProperty
+                                    : fk.KeyFields[i].TableModelProperty)
+                                .Single();
                             // Define "x" with a param expression.
-                            var detailTableParamExpr = Expression.Parameter(detailTableType, "x");
+                            var detailEntityTypeParamExpr = Expression.Parameter(detailEntityType, "x");
                             // Specify what member on "x" we are accessing
-                            var detailsMemberExpr =
-                                Expression.MakeMemberAccess(detailTableParamExpr, detailsMemberInfo);
+                            var leftSideMemberExpr =
+                                Expression.MakeMemberAccess(detailEntityTypeParamExpr, leftSideOperandMember);
                             // Create a constant value expression for comparison against
-                            var masterValueConstExpr = Expression.Constant(masterMemberInfo.GetValue(record),
-                                masterMemberInfo.GetValueType());
+                            var rightSideValueConstExpr = Expression.Constant(rightSideOperandMember.GetValue(record),
+                                rightSideOperandMember.GetValueType());
                             // Now build the equals binary expression
-                            var equalComparisonExpr = Expression.MakeBinary(ExpressionType.Equal, detailsMemberExpr,
-                                masterValueConstExpr);
+                            var equalComparisonExpr = Expression.MakeBinary(ExpressionType.Equal, leftSideMemberExpr,
+                                rightSideValueConstExpr);
                             // Lastly, wrap the binary expression in a lambda expression to match the Where method's input predicate type
                             var lambdaWrapperExpr =
-                                Expression.Lambda<Func<TDetails, bool>>(equalComparisonExpr, detailTableParamExpr);
+                                Expression.Lambda<Func<TDetailEntity, bool>>(equalComparisonExpr,
+                                    detailEntityTypeParamExpr);
                             // Set the predicate expression. If we already set one, link them together with a logical AND expression.
                             if (wherePredicate is null)
                                 wherePredicate = lambdaWrapperExpr;
                             else
                                 wherePredicate =
-                                    Expression.Lambda<Func<TDetails, bool>>(Expression.AndAlso(wherePredicate.Body,
-                                        lambdaWrapperExpr.Body), detailTableParamExpr);
+                                    Expression.Lambda<Func<TDetailEntity, bool>>(Expression.AndAlso(wherePredicate.Body,
+                                        lambdaWrapperExpr.Body), detailEntityTypeParamExpr);
                         }
-                    }
 
-                    // Now that we've built the predicate we can manually invoke the Where function which will build the where clause when the queryable is enumerated.
-                    // Then we take what should be a single record.
-                    if (whereMethod.Invoke(queryable, [wherePredicate]) is ISqliteQueryable<TDetails> enumerable)
-                        return enumerable.AsEnumerable().SingleOrDefault();
-                    return default;
+                        // Now that we've built the predicate we can manually invoke the Where function which will build the where clause when the queryable is finally enumerated.
+                        return whereMethod.Invoke(queryable, [wherePredicate]) as ISqliteQueryable<TDetailEntity>;
+                    }
                 }
             }
+        }
 
-            throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
-        });
+        throw new InvalidDataContractException($"Type {detailEntityTypeName} is not mapped in the schema.");
     }
 }

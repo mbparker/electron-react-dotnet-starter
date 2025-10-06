@@ -3,7 +3,7 @@ using LibSqlite3Orm.Types.FieldSerializers;
 namespace LibSqlite3Orm.Tests.Types.FieldSerializers;
 
 [TestFixture]
-public class EnumStringFieldSerializerTests
+public class EnumLongFieldSerializerTests
 {
     private enum TestEnum
     {
@@ -12,12 +12,12 @@ public class EnumStringFieldSerializerTests
         ValueWithSpecialName
     }
 
-    private EnumStringFieldSerializer _serializer;
+    private EnumLongFieldSerializer _serializer;
 
     [SetUp]
     public void SetUp()
     {
-        _serializer = new EnumStringFieldSerializer(typeof(TestEnum));
+        _serializer = new EnumLongFieldSerializer(typeof(TestEnum));
     }
 
     [Test]
@@ -32,7 +32,7 @@ public class EnumStringFieldSerializerTests
     public void SerializedType_ReturnsStringType()
     {
         // Act & Assert
-        Assert.That(_serializer.SerializedType, Is.EqualTo(typeof(string)));
+        Assert.That(_serializer.SerializedType, Is.EqualTo(typeof(long)));
     }
 
     [Test]
@@ -42,8 +42,8 @@ public class EnumStringFieldSerializerTests
         var result = _serializer.Serialize(TestEnum.Value1);
 
         // Assert
-        Assert.That(result, Is.EqualTo("Value1"));
-        Assert.That(result, Is.TypeOf<string>());
+        Assert.That(result, Is.EqualTo(0));
+        Assert.That(result, Is.TypeOf<long>());
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class EnumStringFieldSerializerTests
         var result = _serializer.Serialize(TestEnum.ValueWithSpecialName);
 
         // Assert
-        Assert.That(result, Is.EqualTo("ValueWithSpecialName"));
+        Assert.That(result, Is.EqualTo(2));
     }
 
     [Test]
@@ -65,40 +65,6 @@ public class EnumStringFieldSerializerTests
         // Assert
         Assert.That(result, Is.EqualTo(TestEnum.Value1));
         Assert.That(result, Is.TypeOf<TestEnum>());
-    }
-
-    [Test]
-    public void Deserialize_WithCaseInsensitiveName_ReturnsEnumValue()
-    {
-        // Act
-        var result = _serializer.Deserialize("value1");
-
-        // Assert
-        Assert.That(result, Is.EqualTo(TestEnum.Value1));
-    }
-
-    [Test]
-    public void Deserialize_WithUpperCaseName_ReturnsEnumValue()
-    {
-        // Act
-        var result = _serializer.Deserialize("VALUE1");
-
-        // Assert
-        Assert.That(result, Is.EqualTo(TestEnum.Value1));
-    }
-
-    [Test]
-    public void Deserialize_WithInvalidEnumName_ThrowsArgumentException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => _serializer.Deserialize("InvalidValue"));
-    }
-
-    [Test]
-    public void Deserialize_WithNullString_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _serializer.Deserialize(null));
     }
 
     [Test]
@@ -136,14 +102,14 @@ public class EnumStringFieldSerializerTests
     public void DifferentEnumType_WorksCorrectly()
     {
         // Arrange
-        var anotherSerializer = new EnumStringFieldSerializer(typeof(AnotherEnum));
+        var anotherSerializer = new EnumLongFieldSerializer(typeof(AnotherEnum));
 
         // Act
         var serialized = anotherSerializer.Serialize(AnotherEnum.First);
-        var deserialized = anotherSerializer.Deserialize("First");
+        var deserialized = anotherSerializer.Deserialize(1);
 
         // Assert
-        Assert.That(serialized, Is.EqualTo("First"));
+        Assert.That(serialized, Is.EqualTo(1));
         Assert.That(deserialized, Is.EqualTo(AnotherEnum.First));
         Assert.That(anotherSerializer.EnumType, Is.EqualTo(typeof(AnotherEnum)));
     }

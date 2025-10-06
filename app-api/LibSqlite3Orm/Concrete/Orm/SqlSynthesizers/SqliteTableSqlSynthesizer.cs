@@ -68,7 +68,8 @@ public class SqliteTableSqlSynthesizer : SqliteDdlSqlSynthesizerBase
             foreach (var fk in table.ForeignKeys)
             {
                 sb.Append(
-                    $", FOREIGN KEY ({string.Join(',', fk.FieldNames)}) REFERENCES {fk.ForeignTableName} ({string.Join(',', fk.ForeignTableFields)})");
+                    $", FOREIGN KEY ({string.Join(',', fk.KeyFields.Select(x => x.TableFieldName))}) " +
+                    $"REFERENCES {fk.ForeignTableName} ({string.Join(',', fk.KeyFields.Select(x => x.ForeignTableFieldName))})");
                 if (fk.UpdateAction.HasValue)
                     sb.Append($" ON UPDATE {GetForeignKeyActionString(fk.UpdateAction.Value)}");
                 if (fk.DeleteAction.HasValue)

@@ -23,9 +23,6 @@ public class SqliteTableOptions
     public SqliteTablePrimaryKeyColumnOptions PrimaryKeyColumnOptions { get; set; }
     public MemberInfo[] CompositePrimaryKeyProperties { get; set; } = [];
     public List<SqliteTableForeignKeyOptions> ForeignKeys { get; } = [];
-
-    public Dictionary<string, SqliteTableForeignKeyOptions> DetailProperties { get; } =
-        new(StringComparer.OrdinalIgnoreCase);
 }
 
 public class SqliteTableColumnOptions
@@ -67,6 +64,27 @@ public class SqliteTablePrimaryKeyColumnOptions : SqliteTableColumnOptions
     public bool AutoGuid { get; set; }
 }
 
+public class SqliteTableForeignKeyFieldPair
+{
+    public MemberInfo TableProperty { get; set; }
+    public MemberInfo ForeignTableProperty { get; set; }
+}
+
+public enum SqliteTableForeignKeyNavigationPropertyKind
+{
+    OneToOne,
+    OneToMany
+}
+
+public class SqliteTableForeignKeyNavigationProperty
+{
+    public SqliteTableForeignKeyNavigationPropertyKind Kind { get; set; }
+    public Type ReferencedEntityType { get; set; }
+    public Type PropertyEntityType { get; set; }
+    public MemberInfo PropertyEntityMember { get; set; }
+    public SqliteTableForeignKeyOptions ForeignKeyOptions { get; set; }
+}
+
 public class SqliteTableForeignKeyOptions
 {
     public SqliteTableForeignKeyOptions(SqliteTableOptions tableOptions)
@@ -75,12 +93,10 @@ public class SqliteTableForeignKeyOptions
     }
     
     public SqliteTableOptions TableOptions { get; }
-    
-    public MemberInfo[] TableProperties { get; set; }
     public Type ForeignTableType { get; set; }
-    public MemberInfo[] ForeignTableProperties { get; set; }
-    public MemberInfo ForeignTableDetailListProperty { get; set; }
-    public MemberInfo ForeignTableDetailProperty { get; set; }
+    public SqliteTableForeignKeyFieldPair[] ModelProperties { get; set; }
+    public Dictionary<string, SqliteTableForeignKeyNavigationProperty> NavigationProperties { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
 }

@@ -12,6 +12,7 @@ public static class TypeExtensions
     {
         // These are the only fundamental types that can be stored in SQLite. Anything else must be serialized to one of these.
         type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type.IsEnum) return null;
         switch (Type.GetTypeCode(type))
         {
             case TypeCode.Byte:
