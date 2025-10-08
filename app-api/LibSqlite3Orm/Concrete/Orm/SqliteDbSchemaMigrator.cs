@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -108,7 +109,17 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             {
                 foreach (var col in table.Value.Columns)
                     if (!previousTable.Columns.ContainsKey(col.Key))
+                    {
+                        if (col.Value.IsNotNull)
+                        {
+                            if (string.IsNullOrWhiteSpace(col.Value.DefaultValueLiteral))
+                            {
+                                throw new InvalidDataContractException($"Added column {table.Value.Name}.{col.Key} is NON NULL, but no default value was specified.");
+                            }
+                        }
+                        
                         newCols.Add(col.Key);
+                    }
                 foreach (var col in previousTable.Columns)
                     if (!table.Value.Columns.ContainsKey(col.Key))
                         removedCols.Add(col.Key);
@@ -224,7 +235,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         foreach (var table in changesRenamedTables)
         {
             CopyRecordsToOtherTable(table.OldName, previousSchema.Tables[table.OldName],
-                modelOrm.Context.Schema.Tables[table.NewName], [], sb);
+                table.NewName, modelOrm.Context.Schema.Tables[table.NewName], [], sb);
         }
     }
     
@@ -271,7 +282,8 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         foreach (var table in changesAlteredTables)
         {
             var tempTableName = $"{table.OldTableSchema.Name}_TEMP";
-            CopyRecordsToOtherTable(tempTableName, table.OldTableSchema, table.OldTableSchema, [], sb);
+            CopyRecordsToOtherTable(table.OldTableSchema.Name, table.OldTableSchema, tempTableName,
+                table.OldTableSchema, table.RemovedColumnNames, sb);
         }
     }
 
@@ -307,8 +319,8 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         foreach (var table in changesAlteredTables)
         {
             var tempTableName = $"{table.OldTableSchema.Name}_TEMP";
-            CopyRecordsToOtherTable(tempTableName, table.OldTableSchema, table.NewTableSchema,
-                table.RemovedColumnNames, sb);
+            CopyRecordsToOtherTable(tempTableName, table.OldTableSchema, table.NewTableSchema.Name,
+                table.NewTableSchema, table.RemovedColumnNames, sb);
         }
     }
 
@@ -325,10 +337,10 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         schemaOrm.ExecuteNonQuery(sb.ToString());
     }
 
-    private void CopyRecordsToOtherTable(string tempTableName, SqliteDbSchemaTable fromTableSchema,
-        SqliteDbSchemaTable toTableSchema, IReadOnlyList<string> doNotCopyFieldNames, StringBuilder sb)
+    private void CopyRecordsToOtherTable(string fromTableName, SqliteDbSchemaTable fromTableSchema,
+        string toTableName, SqliteDbSchemaTable toTableSchema, IReadOnlyList<string> doNotCopyFieldNames, StringBuilder sb)
     {
-        var rows = schemaOrm.ExecuteQuery($"SELECT * FROM {tempTableName}").AsEnumerable();
+        var rows = schemaOrm.ExecuteQuery($"SELECT * FROM {fromTableName}").AsEnumerable();
         foreach (var row in rows)
         {
             using (var insertCmd = schemaOrm.CreateSqlCommand())
@@ -351,7 +363,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
                             catch (Exception ex)
                             {
                                 throw new InvalidDataException(
-                                    $"Failed to convert field '{toTableSchema.Name}.{col.Name}' from type '{previousValType?.Name}' to '{newValType?.Name}': {ex.Message}",
+                                    $"Failed to convert field '{toTableName}.{col.Name}' from type '{previousValType?.Name}' to '{newValType?.Name}': {ex.Message}",
                                     ex);
                             }
                         }
@@ -361,7 +373,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
                 }
 
                 sb.Clear();
-                sb.Append($"INSERT INTO {toTableSchema.Name} (");
+                sb.Append($"INSERT INTO {toTableName} (");
                 var fieldNames = insertCmd.Parameters.Select(x => x.Name).ToList();
                 sb.Append($"{string.Join(",", fieldNames)}) VALUES (");
                 var paramNames = insertCmd.Parameters.Select(x => $":{x.Name}").ToList();

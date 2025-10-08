@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text;
 using LibSqlite3Orm.Abstract.Orm;
@@ -62,7 +63,7 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
 
             // Compute Sort
             var sortFields = new List<string>();
-            if (!selectArgs.CountOnly)
+            if (selectArgs.AggFunc is null)
             {
                 if (selectArgs.SortSpecs?.Any() ?? false)
                 {
@@ -77,9 +78,33 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             }
 
             // Field selection
-            if (selectArgs.CountOnly)
+            if (selectArgs.AggFunc is not null)
             {
-                sb.Append($"SELECT COUNT(*) AS Count FROM {table.Name}");
+                string colName;
+                switch (selectArgs.AggFunc)
+                {
+                    case SqliteAggregateFunction.Count:
+                        sb.Append($"SELECT COUNT(*) AS AF_COUNT FROM {table.Name}");
+                        break;
+                    case SqliteAggregateFunction.Sum:
+                        colName = table.Columns.Values
+                            .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
+                        sb.Append($"SELECT SUM({colName}) AS AF_SUM FROM {table.Name}");
+                        break;
+                    case SqliteAggregateFunction.Min:
+                        colName = table.Columns.Values
+                            .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
+                        sb.Append($"SELECT MIN({colName}) AS AF_MIN FROM {table.Name}");
+                        break;
+                    case SqliteAggregateFunction.Max:
+                        colName = table.Columns.Values
+                            .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
+                        sb.Append($"SELECT MAX({colName}) AS AF_MAX FROM {table.Name}");
+                        break;
+                    default:
+                        throw new InvalidEnumArgumentException(nameof(selectArgs.AggFunc), (int)selectArgs.AggFunc,
+                            typeof(SqliteAggregateFunction));
+                }
             }
             else
             {
@@ -129,7 +154,7 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             if (!string.IsNullOrWhiteSpace(whereClause))
                 sb.Append($" WHERE {whereClause}");
 
-            if (!selectArgs.CountOnly)
+            if (selectArgs.AggFunc is null)
             {
                 // Sort
                 if (sortFields.Any())

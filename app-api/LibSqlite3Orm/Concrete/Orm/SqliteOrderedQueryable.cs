@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq.Expressions;
+using System.Numerics;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
@@ -56,7 +57,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     {
         return new SqliteOrderedEnumerator(
             executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
-                wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, countOnly: false)), modelDeserializerFunc);
+                wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, aggFunc: null, null)), modelDeserializerFunc);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -99,10 +100,52 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         }
 
         using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
-                   wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, true)))
+                   wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Count, null)))
         {
             return dataReader.First()[0].ValueAs<int>();
         }
+    }
+
+    public TValue Sum<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
+    {
+        if (valueSelector.Body is MemberExpression me)
+        {
+            using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Sum, me.Member)))
+            {
+                return dataReader.First()[0].ValueAs<TValue>();
+            }
+        }
+        
+        return default;
+    }
+    
+    public TValue Min<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
+    {
+        if (valueSelector.Body is MemberExpression me)
+        {
+            using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Min, me.Member)))
+            {
+                return dataReader.First()[0].ValueAs<TValue>();
+            }
+        }
+        
+        return default;
+    }
+    
+    public TValue Max<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
+    {
+        if (valueSelector.Body is MemberExpression me)
+        {
+            using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Max, me.Member)))
+            {
+                return dataReader.First()[0].ValueAs<TValue>();
+            }
+        }
+        
+        return default;
     }
 
     public ISqliteQueryable<T> Where(Expression<Func<T, bool>> predicate)
