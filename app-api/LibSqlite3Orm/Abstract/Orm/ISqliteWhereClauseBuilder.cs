@@ -6,6 +6,6 @@ namespace LibSqlite3Orm.Abstract.Orm;
 public interface ISqliteWhereClauseBuilder
 {
     IReadOnlyDictionary<string, ExtractedParameter> ExtractedParameters{ get; }
-    
+    HashSet<string> ReferencedTables { get; }
     string Build(Type entityType, Expression expression);
 }

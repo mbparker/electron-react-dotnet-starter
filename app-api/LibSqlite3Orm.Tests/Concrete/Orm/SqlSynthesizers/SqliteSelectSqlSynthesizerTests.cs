@@ -87,7 +87,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithBasicSelectArgs_GeneratesCorrectSelectSql()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -106,7 +106,7 @@ public class SqliteSelectSqlSynthesizerTests
     {
         // Arrange
         Expression<Func<TestEntity, bool>> filterExpr = x => x.Id > 5;
-        var args = new SynthesizeSelectSqlArgs(false, filterExpr, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, filterExpr, null, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("TestTable.Id > :TestTableId");
@@ -115,6 +115,7 @@ public class SqliteSelectSqlSynthesizerTests
             { "TestTableId", new ExtractedParameter("@p1", 5, "TestTable", "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
+        _mockWhereClauseBuilder.ReferencedTables.Returns(new HashSet<string>());
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
@@ -133,7 +134,7 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, string>> keySelector = x => x.Name;
         var sortSpec = CreateSortSpec(keySelector, false);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -152,7 +153,7 @@ public class SqliteSelectSqlSynthesizerTests
         var sortSpec1 = CreateSortSpec(keySelector1, false);
         var sortSpec2 = CreateSortSpec(keySelector2, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec1, sortSpec2 };
-        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -169,7 +170,7 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, int>> keySelector = x => x.Id;
         var sortSpec = CreateSortSpec(keySelector, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, sortSpecs, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -183,7 +184,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithTakeCount_IncludesLimitClause()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 10);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 10, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -197,7 +198,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithSkipCount_IncludesOffsetClause()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -211,7 +212,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithSkipAndTake_IncludesBothOffsetAndLimit()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, 10);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 5, 10, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -229,7 +230,7 @@ public class SqliteSelectSqlSynthesizerTests
         Expression<Func<TestEntity, string>> keySelector = x => x.Name;
         var sortSpec = CreateSortSpec(keySelector, true);
         var sortSpecs = new List<SqliteSortSpec> { sortSpec };
-        var args = new SynthesizeSelectSqlArgs(false, filterExpr, sortSpecs, 10, 20);
+        var args = new SynthesizeSelectSqlArgs(false, filterExpr, sortSpecs, 10, 20, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         _mockWhereClauseBuilder.Build(typeof(TestEntity), filterExpr).Returns("TestTable.Id > :TestTableId");
@@ -238,6 +239,7 @@ public class SqliteSelectSqlSynthesizerTests
             { "TestTableId", new ExtractedParameter("TestTableId", 0, "TestTable", "Id") }
         };
         _mockWhereClauseBuilder.ExtractedParameters.Returns(extractedParams);
+        _mockWhereClauseBuilder.ReferencedTables.Returns(new HashSet<string>());
 
         // Act
         var result = _synthesizer.Synthesize(typeof(TestEntity), sqlArgs);
@@ -251,7 +253,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithUnmappedEntityType_ThrowsInvalidDataContractException()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act & Assert
@@ -264,7 +266,7 @@ public class SqliteSelectSqlSynthesizerTests
     {
         // Arrange
         var emptySortSpecs = new List<SqliteSortSpec>();
-        var args = new SynthesizeSelectSqlArgs(false, null, emptySortSpecs, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, emptySortSpecs, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -286,7 +288,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithNullFilterExpression_DoesNotCallWhereClauseBuilder()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -300,7 +302,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_ColumnsOrderedAlphabetically_ReturnsConsistentColumnOrder()
     {
         // Arrange - Columns are already ordered alphabetically in setup: CreatedDate, Id, Name
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -314,7 +316,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithZeroTakeCount_IncludesLimitZero()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 0);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, null, 0, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act
@@ -328,7 +330,7 @@ public class SqliteSelectSqlSynthesizerTests
     public void Synthesize_WithZeroSkipCount_IncludesOffsetZero()
     {
         // Arrange
-        var args = new SynthesizeSelectSqlArgs(false, null, null, 0, null);
+        var args = new SynthesizeSelectSqlArgs(false, null, null, 0, null, false);
         var sqlArgs = new SqliteDmlSqlSynthesisArgs(args);
 
         // Act

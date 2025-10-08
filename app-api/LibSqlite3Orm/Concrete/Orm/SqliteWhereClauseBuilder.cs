@@ -24,12 +24,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	}
 
 	public IReadOnlyDictionary<string, ExtractedParameter> ExtractedParameters => extractedParameters;
+	public HashSet<string> ReferencedTables { get; } = new(StringComparer.OrdinalIgnoreCase);
 
 	public string Build(Type entityType, Expression expression)
 	{
 		table = schema.Tables.Values.Single(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
 		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parse where predicate for table ({table.Name}): {expression}"));
 		extractedParameters.Clear();
+		ReferencedTables.Clear();
 		sqlBuilder = new StringBuilder();
 		Visit(expression);
 		return sqlBuilder.ToString();
@@ -242,6 +244,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 				
 				if (!string.IsNullOrWhiteSpace(linkTableName))
 				{
+					ReferencedTables.Add(linkTableName);
 					var colName = schema.Tables[linkTableName].Columns.Values
 						.SingleOrDefault(x => x.ModelFieldName == m.Member.Name)?.Name;
 					if (!string.IsNullOrWhiteSpace(colName))

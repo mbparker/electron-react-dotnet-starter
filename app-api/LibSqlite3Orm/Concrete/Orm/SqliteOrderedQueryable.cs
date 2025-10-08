@@ -55,8 +55,8 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     public IEnumerator<T> GetEnumerator()
     {
         return new SqliteOrderedEnumerator(
-            executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps, wherePredicate, 
-                sortSpecs.ToArray(), skipCount, takeCount)), modelDeserializerFunc);
+            executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, countOnly: false)), modelDeserializerFunc);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -79,6 +79,30 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     {
         takeCount = count;
         return this;
+    }
+
+    public int Count()
+    {
+        return Count(null);
+    }
+
+    public int Count(Expression<Func<T, bool>> predicate)
+    {
+        if (predicate is not null)
+        {
+            if (wherePredicate is not null)
+                wherePredicate = Expression.Lambda<Func<T, bool>>(
+                    Expression.AndAlso(wherePredicate.Body, predicate.Body),
+                    predicate.Parameters);
+            else
+                wherePredicate = predicate;
+        }
+
+        using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                   wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, true)))
+        {
+            return dataReader.First()[0].ValueAs<int>();
+        }
     }
 
     public ISqliteQueryable<T> Where(Expression<Func<T, bool>> predicate)
@@ -113,8 +137,8 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
 
     private ISqliteOrderedQueryable<T> New<TKey>(Expression<Func<T, TKey>> keySelectorExpr, bool descending)
     {
-        return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, loadNavigationProps, wherePredicate, sortSpecs, skipCount,
-            takeCount, new SqliteSortSpec(schema, keySelectorExpr, descending));
+        return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, loadNavigationProps,
+            wherePredicate, sortSpecs, skipCount, takeCount, new SqliteSortSpec(schema, keySelectorExpr, descending));
     }
 
     private class SqliteOrderedEnumerator : IEnumerator<T>

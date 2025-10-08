@@ -25,18 +25,25 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
         {
             IReadOnlyDictionary<string, ExtractedParameter> extractedParams = null;
             HashSet<string> otherTablesReferenced = new(StringComparer.OrdinalIgnoreCase);
-            
+
             var sb = new StringBuilder();
 
             var selectArgs = args.GetArgs<SynthesizeSelectSqlArgs>();
 
+            void ReferenceTable(string otherTableName)
+            {
+                var isValid = table.NavigationProperties.Any(x =>
+                    x.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne &&
+                    x.ForeignKeyTableName == table.Name);
+                if (isValid)
+                    otherTablesReferenced.Add(otherTableName);
+            }
+            
             if (selectArgs.LoadNavigationProps)
             {
                 foreach (var detProp in table.NavigationProperties)
                 {
-                    if (detProp.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne &&
-                        detProp.ForeignKeyTableName == table.Name)
-                        otherTablesReferenced.Add(detProp.ReferencedEntityTableName);
+                    ReferenceTable(detProp.ReferencedEntityTableName);
                 }
             }
 
@@ -47,31 +54,48 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                 var wcb = whereClauseBuilderFactory(Schema);
                 whereClause = wcb.Build(entityType, selectArgs.FilterExpr);
                 extractedParams = wcb.ExtractedParameters;
+                foreach (var item in wcb.ReferencedTables)
+                {
+                    ReferenceTable(item);
+                }
             }
-            
+
             // Compute Sort
             var sortFields = new List<string>();
-            if (selectArgs.SortSpecs?.Any() ?? false)
+            if (!selectArgs.CountOnly)
             {
-                foreach (var sortSpec in selectArgs.SortSpecs)
+                if (selectArgs.SortSpecs?.Any() ?? false)
                 {
-                    var dir = sortSpec.Descending ? "DESC" : "ASC";
-                    var fieldName = $"{sortSpec.TableName}.{sortSpec.FieldName}";
-                    sortFields.Add($"{fieldName} {dir}");
+                    foreach (var sortSpec in selectArgs.SortSpecs)
+                    {
+                        var dir = sortSpec.Descending ? "DESC" : "ASC";
+                        var fieldName = $"{sortSpec.TableName}.{sortSpec.FieldName}";
+                        sortFields.Add($"{fieldName} {dir}");
+                        ReferenceTable(sortSpec.TableName);
+                    }
                 }
             }
-            
+
             // Field selection
-            var cols = table.Columns.Values.OrderBy(x => x.Name).Select(x => $"{table.Name}.{x.Name} AS {table.Name}{x.Name}").ToList();
-            if (otherTablesReferenced.Any())
+            if (selectArgs.CountOnly)
             {
-                foreach (var otherTable in otherTablesReferenced)
-                {
-                    cols.AddRange(Schema.Tables[otherTable].Columns.Values.OrderBy(x => x.Name)
-                        .Select(x => $"{otherTable}.{x.Name} AS {otherTable}{x.Name}").ToList());
-                }
+                sb.Append($"SELECT COUNT(*) AS Count FROM {table.Name}");
             }
-            sb.Append($"SELECT {string.Join(", ", cols)} FROM {table.Name}");
+            else
+            {
+                var cols = table.Columns.Values.OrderBy(x => x.Name)
+                    .Select(x => $"{table.Name}.{x.Name} AS {table.Name}{x.Name}").ToList();
+                if (otherTablesReferenced.Any())
+                {
+                    foreach (var otherTable in otherTablesReferenced)
+                    {
+                        cols.AddRange(Schema.Tables[otherTable].Columns.Values.OrderBy(x => x.Name)
+                            .Select(x => $"{otherTable}.{x.Name} AS {otherTable}{x.Name}").ToList());
+                    }
+                }
+
+                sb.Append($"SELECT {string.Join(", ", cols)} FROM {table.Name}");
+            }
 
             // Join any additional tables
             if (otherTablesReferenced.Any())
@@ -104,21 +128,24 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             // Filter
             if (!string.IsNullOrWhiteSpace(whereClause))
                 sb.Append($" WHERE {whereClause}");
-            
-            // Sort
-            if (sortFields.Any())
-            {
-                sb.Append(" ORDER BY ");
-                sb.Append(string.Join(", ", sortFields));
-            }
 
-            // Take
-            if (selectArgs.TakeCount.HasValue)
-                sb.Append($" LIMIT {selectArgs.TakeCount.Value}");
-            
-            // Skip
-            if (selectArgs.SkipCount.HasValue)
-                sb.Append($" OFFSET {selectArgs.SkipCount.Value}");
+            if (!selectArgs.CountOnly)
+            {
+                // Sort
+                if (sortFields.Any())
+                {
+                    sb.Append(" ORDER BY ");
+                    sb.Append(string.Join(", ", sortFields));
+                }
+
+                // Take
+                if (selectArgs.TakeCount.HasValue)
+                    sb.Append($" LIMIT {selectArgs.TakeCount.Value}");
+
+                // Skip
+                if (selectArgs.SkipCount.HasValue)
+                    sb.Append($" OFFSET {selectArgs.SkipCount.Value}");
+            }
 
             return new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Select, Schema, table,
                 Schema.Tables.Values.Where(x => otherTablesReferenced.Contains(x.Name)).ToArray(), 
