@@ -91,6 +91,11 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                             .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
                         sb.Append($"SELECT SUM({colName}) AS AF_SUM FROM {table.Name}");
                         break;
+                    case SqliteAggregateFunction.Total:
+                        colName = table.Columns.Values
+                            .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
+                        sb.Append($"SELECT TOTAL({colName}) AS AF_TOTAL FROM {table.Name}");
+                        break;
                     case SqliteAggregateFunction.Min:
                         colName = table.Columns.Values
                             .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
@@ -100,6 +105,11 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                         colName = table.Columns.Values
                             .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
                         sb.Append($"SELECT MAX({colName}) AS AF_MAX FROM {table.Name}");
+                        break;
+                    case SqliteAggregateFunction.Avg:
+                        colName = table.Columns.Values
+                            .Single(x => x.ModelFieldName == selectArgs.AggTargetMember.Name).Name;
+                        sb.Append($"SELECT AVG({colName}) AS AF_AVG FROM {table.Name}");
                         break;
                     default:
                         throw new InvalidEnumArgumentException(nameof(selectArgs.AggFunc), (int)selectArgs.AggFunc,

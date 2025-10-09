@@ -120,6 +120,20 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         return default;
     }
     
+    public double Total<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
+    {
+        if (valueSelector.Body is MemberExpression me)
+        {
+            using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Total, me.Member)))
+            {
+                return dataReader.First()[0].ValueAs<double>();
+            }
+        }
+        
+        return 0;
+    }
+    
     public TValue Min<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
     {
         if (valueSelector.Body is MemberExpression me)
@@ -146,6 +160,20 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         }
         
         return default;
+    }
+    
+    public double Average<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>
+    {
+        if (valueSelector.Body is MemberExpression me)
+        {
+            using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(loadNavigationProps,
+                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Avg, me.Member)))
+            {
+                return dataReader.First()[0].ValueAs<double>();
+            }
+        }
+        
+        return 0;
     }
 
     public ISqliteQueryable<T> Where(Expression<Func<T, bool>> predicate)

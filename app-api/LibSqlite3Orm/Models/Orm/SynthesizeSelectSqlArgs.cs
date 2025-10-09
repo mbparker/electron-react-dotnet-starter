@@ -7,8 +7,10 @@ public enum SqliteAggregateFunction
 {
     Count,
     Sum,
+    Total,
     Min,
     Max,
+    Avg
 }
 
 public class SynthesizeSelectSqlArgs
