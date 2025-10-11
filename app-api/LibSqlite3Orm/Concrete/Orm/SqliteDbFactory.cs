@@ -35,6 +35,23 @@ public class SqliteDbFactory : ISqliteDbFactory
         }
     }
     
+    public ISqliteConnection CreateSchema(ISqliteConnection connection, SqliteDbSchema schema) 
+    {
+        if (schema is null) throw new ArgumentNullException(nameof(schema));
+        var sql = SynthesizeCreateTablesAndIndexes(schema);
+        if (connection is null)
+        {
+            connection = connectionFactory();
+            connection.OpenReadWriteInMemory();
+        }
+        using (var cmd = connection.CreateCommand())
+        {
+            cmd.ExecuteNonQuery(sql);
+        }
+
+        return connection;
+    }
+    
     private string SynthesizeCreateTablesAndIndexes(SqliteDbSchema schema)
     {
         var tableSynthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, schema);

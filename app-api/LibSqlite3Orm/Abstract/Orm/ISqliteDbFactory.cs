@@ -5,4 +5,5 @@ namespace LibSqlite3Orm.Abstract.Orm;
 public interface ISqliteDbFactory
 {
     void Create(SqliteDbSchema schema, string dbFilename, bool dbFileMustExist);
+    ISqliteConnection CreateSchema(ISqliteConnection connection, SqliteDbSchema schema);
 }

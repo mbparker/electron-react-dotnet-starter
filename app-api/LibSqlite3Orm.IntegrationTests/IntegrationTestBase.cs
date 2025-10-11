@@ -46,14 +46,15 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     public virtual void SetUp()
     {
         filename = Path.GetTempFileName();
+        Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
+        Orm.Filename = filename;
         using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
         {
             dbManager.Filename = filename;
-            dbManager.CreateDatabase(ifNotExists: false);
+            dbManager.CreateInMemoryDatabase();
+            Orm.SetConnection(dbManager.GetConnection());
+            dbManager.SetConnection(null);
         }
-
-        Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
-        Orm.Filename = filename;
     }
 
     [TearDown]

@@ -52,10 +52,15 @@ public class SqliteConnection : ISqliteConnection
         VirtualFileSystemName = string.IsNullOrWhiteSpace(virtualFileSystemName) ? null : virtualFileSystemName.UnicodeToUtf8();
         dbHandle = IntPtr.Zero;
         // Specifying the ExtendedErrorCodes flag will cause all API calls to return the extended code - including this one.
-        var ret = SqliteExternals.Open2(filename.UnicodeToUtf8(), out dbHandle, (int)flags, VirtualFileSystemName);
+        var ret = SqliteExternals.Open2(filename?.UnicodeToUtf8(), out dbHandle, (int)flags, VirtualFileSystemName);
         if (ret != SqliteResult.OK)
             throw new SqliteException(ret, $"Cannot open database '{filename}', Code: {ret:X}");
         dbFilename = filename;
+    }
+    
+    public void OpenReadWriteInMemory()
+    {
+        Open(null, SqliteOpenFlags.ReadWrite | SqliteOpenFlags.Memory);
     }
 
     public void OpenReadWrite(string filename, bool mustExist)

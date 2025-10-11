@@ -44,10 +44,26 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
 
     public SqliteDbSchemaChanges DetectedSchemaChanges { get; private set; } = new();
 
+    public void SetConnection(ISqliteConnection connection)
+    {
+        migrator.SetConnection(connection);
+    }
+    
+    public ISqliteConnection GetConnection()
+    {
+        return migrator.GetConnection();
+    }
+
     public void Dispose()
     {
         migrator?.Dispose();
         migrator = null;
+    }
+
+    public void CreateInMemoryDatabase()
+    {
+        //dbFactory.CreateInMemory(Context.Schema);
+        migrator.CreateInitialMigration();
     }
 
     public bool CreateDatabase(bool ifNotExists)

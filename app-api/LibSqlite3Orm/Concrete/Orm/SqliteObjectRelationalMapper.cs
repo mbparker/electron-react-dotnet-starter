@@ -61,6 +61,16 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         }
     }
 
+    public void SetConnection(ISqliteConnection connection)
+    {
+        _connection = connection;
+    }
+
+    public ISqliteConnection GetConnection()
+    {
+        return _connection;
+    }
+
     public virtual void Dispose()
     {
         if (_connection is not null)

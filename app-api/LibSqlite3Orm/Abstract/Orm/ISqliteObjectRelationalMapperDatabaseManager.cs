@@ -6,7 +6,11 @@ public interface ISqliteObjectRelationalMapperDatabaseManager<TContext> : IDispo
 {
     string Filename { get; set; }
     SqliteDbSchemaChanges DetectedSchemaChanges { get; }
+    
+    void SetConnection(ISqliteConnection connection);
+    ISqliteConnection GetConnection();
 
+    void CreateInMemoryDatabase();
     bool CreateDatabase(bool ifNotExists);
     bool Migrate();
     void DeleteDatabase();

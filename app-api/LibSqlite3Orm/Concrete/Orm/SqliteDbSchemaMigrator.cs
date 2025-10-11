@@ -1,5 +1,6 @@
 using System.Runtime.Serialization;
 using System.Text;
+using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
@@ -36,6 +37,17 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         set => schemaOrm.Filename = modelOrm.Filename = _filename = value;
     }
 
+    public void SetConnection(ISqliteConnection connection)
+    {
+        schemaOrm.SetConnection(connection);
+        modelOrm.SetConnection(connection);
+    }
+
+    public ISqliteConnection GetConnection()
+    {
+        return schemaOrm.GetConnection();
+    }
+
     public void Dispose()
     {
         modelOrm?.Dispose();
@@ -46,9 +58,11 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
 
     public void CreateInitialMigration()
     {
-        ThrowIfNoFilename();
+        //ThrowIfNoFilename();
         
-        dbFactory.Create(schemaOrm.Context.Schema, Filename, true);
+        //dbFactory.Create(schemaOrm.Context.Schema, Filename, true);
+        SetConnection(dbFactory.CreateSchema(null, schemaOrm.Context.Schema));
+        dbFactory.CreateSchema(modelOrm.GetConnection(), modelOrm.Context.Schema);
         
         if (GetMostRecentMigration() is null)
         {
@@ -393,8 +407,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         return schemaOrm.Get<SchemaMigration>()
             .OrderByDescending(x => x.Timestamp)
             .Take(1)
-            .AsEnumerable()
-            .SingleOrDefault();
+            .SingleRecord();
     }
     
     private void ThrowIfNoFilename()

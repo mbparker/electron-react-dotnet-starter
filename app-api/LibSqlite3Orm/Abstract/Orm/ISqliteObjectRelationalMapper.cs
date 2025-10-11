@@ -8,6 +8,9 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     string Filename { get; set; }
     TContext Context { get; }
 
+    void SetConnection(ISqliteConnection connection);
+    ISqliteConnection GetConnection();
+
     ISqliteCommand CreateSqlCommand();
 
     void BeginTransaction();
