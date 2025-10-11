@@ -52,7 +52,8 @@ public class SqliteConnection : ISqliteConnection
         VirtualFileSystemName = string.IsNullOrWhiteSpace(virtualFileSystemName) ? null : virtualFileSystemName.UnicodeToUtf8();
         dbHandle = IntPtr.Zero;
         // Specifying the ExtendedErrorCodes flag will cause all API calls to return the extended code - including this one.
-        var ret = SqliteExternals.Open2(filename.UnicodeToUtf8(), out dbHandle, (int)flags, VirtualFileSystemName);
+        //var ret = SqliteExternals.Open2(filename.UnicodeToUtf8(), out dbHandle, (int)flags, VirtualFileSystemName);
+        var ret = SqliteExternals.Open(filename.UnicodeToUtf8(), out dbHandle);
         if (ret != SqliteResult.OK)
             throw new SqliteException(ret, $"Cannot open database '{filename}', Code: {ret:X}");
         dbFilename = filename;
