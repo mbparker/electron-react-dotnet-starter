@@ -52,14 +52,14 @@ jobs:
       - name: Run Unit Tests (macOS)
         if: runner.os == 'macOS'
         # working-directory: app-api
-        run: dotnet test ./app-api --logger "trx;LogFileName=test-results.trx" --arch arm64
+        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx" --arch arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Run Unit Tests (Windows, Linux)
         if: runner.os != 'macOS'
         # working-directory: app-api
-        run: dotnet test .\app-api --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
