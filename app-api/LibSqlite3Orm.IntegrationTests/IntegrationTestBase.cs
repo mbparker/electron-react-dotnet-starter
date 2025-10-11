@@ -45,23 +45,37 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     [SetUp]
     public virtual void SetUp()
     {
-        filename = Path.GetTempFileName();
-        File.Delete(filename);
-        using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
+        try
         {
-            dbManager.Filename = filename;
-            dbManager.CreateDatabaseIfNotExists();
-        }
+            filename = Path.GetTempFileName();
+            File.Delete(filename);
+            using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
+            {
+                dbManager.Filename = filename;
+                dbManager.CreateDatabaseIfNotExists();
+            }
 
-        Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
-        Orm.Filename = filename;
+            Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
+            Orm.Filename = filename;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
 
     [TearDown]
     public virtual void TearDown()
     {
-        Orm.Dispose();
-        File.Delete(filename);
+        try
+        {
+            Orm.Dispose();
+            File.Delete(filename);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
     
     [OneTimeSetUp]
@@ -89,8 +103,15 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 
     protected void DisposeContainer()
     {
-        container?.Dispose();
-        container = null;
+        try
+        {
+            container?.Dispose();
+            container = null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
     }
 
     protected void AssertThatRecordsMatch(object expected, object actual)
