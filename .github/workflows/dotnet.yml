@@ -56,12 +56,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Run Integration Tests (macOS)
+        if: runner.os == 'macOS'
+        # working-directory: app-api
+        run: dotnet test ./app-api/LibSqlite3Orm.UnitTests/LibSqlite3Orm.UnitTests.csproj --logger "trx;LogFileName=test-results.trx" --arch arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+
       - name: Run Unit Tests (Windows, Linux)
         if: runner.os != 'macOS'
         # working-directory: app-api
-        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test ./app-api/LibSqlite3Orm.UnitTests/LibSqlite3Orm.UnitTests.csproj --logger "trx;LogFileName=test-results.trx"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Run Integration Tests (Linux)
+        if: runner.os == 'Linux'
+        # working-directory: app-api
+        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
