@@ -18,8 +18,6 @@ public interface ISqliteConnection : IDisposable
 
     string VirtualFileSystemName { get; }
 
-    void OpenReadWriteInMemory();
-
     /// <summary>
     /// Open a database with full control over the connection flags and optionally specify a VFS module name.
     /// </summary>
