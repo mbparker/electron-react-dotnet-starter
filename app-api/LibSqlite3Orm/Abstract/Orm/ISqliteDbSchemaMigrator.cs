@@ -4,9 +4,9 @@ namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface ISqliteDbSchemaMigrator<TContext> : IDisposable where TContext : ISqliteOrmDatabaseContext
 {
-    void CreateInitialMigration();
+    string Filename { get; set; }
     
+    void CreateInitialMigration();
     SqliteDbSchemaChanges CheckForSchemaChanges();
-
     void Migrate(SqliteDbSchemaChanges changes);
 }

@@ -44,7 +44,6 @@ public class EntityGetterTests
 
         _mockSchema = new SqliteDbSchema();
         _mockContext.Schema.Returns(_mockSchema);
-        _mockContext.Filename.Returns("test.db");
 
         _mockConnection.CreateCommand().Returns(_mockCommand);
         _mockCommand.Parameters.Returns(_mockParameters);

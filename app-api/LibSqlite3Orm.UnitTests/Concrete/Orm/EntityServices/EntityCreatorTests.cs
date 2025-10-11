@@ -39,7 +39,6 @@ public class EntityCreatorTests
 
         var mockSchema = Substitute.For<SqliteDbSchema>();
         _mockContext.Schema.Returns(mockSchema);
-        _mockContext.Filename.Returns("test.db");
 
         _mockConnection.CreateCommand().Returns(_mockCommand);
         _mockCommand.Parameters.Returns(_mockParameters);

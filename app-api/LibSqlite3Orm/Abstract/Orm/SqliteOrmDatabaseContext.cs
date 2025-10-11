@@ -1,4 +1,3 @@
-using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
 
@@ -13,8 +12,6 @@ public abstract class SqliteOrmDatabaseContext : ISqliteOrmDatabaseContext
     {
         this.schemaBuilderFactory = schemaBuilderFactory;
     }
-    
-    public string Filename { get; set; }
     
     public SqliteDbSchema Schema
     {

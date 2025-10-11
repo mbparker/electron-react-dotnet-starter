@@ -1,6 +1,5 @@
 using System.Runtime.Serialization;
 using System.Text;
-using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
@@ -17,7 +16,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     private readonly ISqliteFieldConversion fieldConversion;
     private ISqliteObjectRelationalMapper<SqliteOrmSchemaContext> schemaOrm;
     private ISqliteObjectRelationalMapper<TContext> modelOrm;
-    private bool initialized;
+    private string _filename;
 
     public SqliteDbSchemaMigrator(Func<ISqliteObjectRelationalMapper<SqliteOrmSchemaContext>> schemaOrmFactory,
         Func<ISqliteObjectRelationalMapper<TContext>> modelOrmFactory,
@@ -30,6 +29,12 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         schemaOrm = schemaOrmFactory();
         modelOrm = modelOrmFactory();
     }
+    
+    public string Filename
+    {
+        get => _filename;
+        set => schemaOrm.Filename = modelOrm.Filename = _filename = value;
+    }
 
     public void Dispose()
     {
@@ -41,9 +46,9 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
 
     public void CreateInitialMigration()
     {
-        EnsureInitialized();
+        ThrowIfNoFilename();
         
-        dbFactory.Create(schemaOrm.Context.Schema, schemaOrm.Context.Filename, true);
+        dbFactory.Create(schemaOrm.Context.Schema, Filename, true);
         
         if (GetMostRecentMigration() is null)
         {
@@ -55,7 +60,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     
     public SqliteDbSchemaChanges CheckForSchemaChanges()
     {
-        EnsureInitialized();
+        ThrowIfNoFilename();
         
         var previousSchema = JsonConvert.DeserializeObject<SqliteDbSchema>(GetMostRecentMigration().Schema);
         var newTables = new List<SqliteDbSchemaTable>();
@@ -154,8 +159,8 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
 
     public void Migrate(SqliteDbSchemaChanges changes)
     {
-        EnsureInitialized();
-
+        ThrowIfNoFilename();
+        
         schemaOrm.BeginTransaction();
         try
         {
@@ -392,15 +397,10 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             .SingleOrDefault();
     }
     
-    private void EnsureInitialized()
+    private void ThrowIfNoFilename()
     {
-        if (!initialized)
-        {
-            if (string.IsNullOrWhiteSpace(modelOrm.Context.Filename))
-                throw new InvalidOperationException(
-                    "The model ORM context filename must be set prior to working with migrations.");
-            schemaOrm.Context.Filename = modelOrm.Context.Filename;
-            initialized = true;
-        }
+        if (string.IsNullOrWhiteSpace(Filename))
+            throw new InvalidOperationException(
+                "The Filename must be set prior to working with migrations.");
     }
 }

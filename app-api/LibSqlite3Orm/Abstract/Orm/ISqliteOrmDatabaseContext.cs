@@ -4,6 +4,5 @@ namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface ISqliteOrmDatabaseContext
 {
-    string Filename { get; set; }
     SqliteDbSchema Schema { get; }
 }

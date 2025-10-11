@@ -8,7 +8,6 @@ public class DemoContext : SqliteOrmDatabaseContext
     public DemoContext(Func<SqliteDbSchemaBuilder> schemaBuilderFactory)
         : base(schemaBuilderFactory)
     {
-        Filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test.sqlite");
     }
     
     protected override void BuildSchema(SqliteDbSchemaBuilder builder)

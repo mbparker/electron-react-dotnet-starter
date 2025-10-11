@@ -24,6 +24,8 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         this.contextFactory = contextFactory;
         this.entityServicesFactory = entityServicesFactory;
     }
+    
+    public string Filename { get; set; }
 
     public TContext Context
     {
@@ -52,7 +54,7 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
             if (_connection is null)
             {
                 _connection = connectionFactory();
-                _connection.OpenReadWrite(Context.Filename, true);
+                _connection.OpenReadWrite(Filename, true);
             }
 
             return _connection;

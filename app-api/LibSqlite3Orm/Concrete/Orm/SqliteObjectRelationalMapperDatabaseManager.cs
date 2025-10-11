@@ -12,6 +12,7 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
     private readonly Func<TContext> contextFactory;
     private ISqliteDbSchemaMigrator<TContext> migrator;
     private TContext _context;
+    private string _filename;
 
     public SqliteObjectRelationalMapperDatabaseManager(
         Func<TContext> contextFactory,
@@ -23,6 +24,12 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
         this.dbFactory = dbFactory;
         this.contextFactory = contextFactory;
         migrator = migratorFactory();
+    }
+    
+    public string Filename
+    {
+        get => _filename;
+        set => migrator.Filename = _filename = value;
     }
     
     private TContext Context
@@ -45,9 +52,9 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
 
     public bool CreateDatabaseIfNotExists()
     {
-        if (!fileOperations.FileExists(Context.Filename))
+        if (!fileOperations.FileExists(Filename))
         {
-            dbFactory.Create(Context.Schema, Context.Filename, false);
+            dbFactory.Create(Context.Schema, Filename, false);
             migrator.CreateInitialMigration();
             return true;
         }
@@ -66,10 +73,10 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
 
     public void DeleteDatabase()
     {
-        if (fileOperations.FileExists(Context.Filename))
+        if (fileOperations.FileExists(Filename))
         {
             ConsoleLogger.WriteLine(ConsoleColor.Red, "DELETING DATABASE!!");
-            fileOperations.DeleteFile(Context.Filename);
+            fileOperations.DeleteFile(Filename);
         }
     }
     

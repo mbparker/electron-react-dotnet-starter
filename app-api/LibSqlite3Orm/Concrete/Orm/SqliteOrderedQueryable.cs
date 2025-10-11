@@ -70,6 +70,11 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         return this;
     }
 
+    public T SingleRecord()
+    {
+        return this.AsEnumerable().SingleOrDefault();
+    }
+
     public ISqliteEnumerable<T> Skip(int count)
     {
         skipCount = count;

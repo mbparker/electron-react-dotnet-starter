@@ -33,10 +33,14 @@ try
 #endif
         };
         
+        var dbFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "test.sqlite");
+        
         bool dbCreated;
         
         using (var dbManager = container.Resolve<ISqliteObjectRelationalMapperDatabaseManager<DemoContext>>())
         {
+            dbManager.Filename = dbFilename;
+            
             //dbManager.DeleteDatabase();
 
             dbCreated = dbManager.CreateDatabaseIfNotExists();
@@ -68,6 +72,7 @@ try
         }
         
         using var orm = container.Resolve<ISqliteObjectRelationalMapper<DemoContext>>();
+        orm.Filename = dbFilename;
 
         if (dbCreated)
         {
