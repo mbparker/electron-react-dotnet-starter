@@ -51,15 +51,15 @@ jobs:
       # --- macOS agents are run on Apple Silicon CPUS! ---
       - name: Run Unit Tests (macOS)
         if: runner.os == 'macOS'
-        working-directory: app-api
-        run: dotnet test --logger "trx;LogFileName=test-results.trx" --arch arm64
+        # working-directory: app-api
+        run: dotnet test ./app-api --logger "trx;LogFileName=test-results.trx" --arch arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Run Unit Tests (Windows, Linux)
         if: runner.os != 'macOS'
-        working-directory: app-api
-        run: dotnet test --logger "trx;LogFileName=test-results.trx"
+        # working-directory: app-api
+        run: dotnet test .\app-api --logger "trx;LogFileName=test-results.trx"
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
