@@ -50,9 +50,9 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
         migrator = null;
     }
 
-    public bool CreateDatabaseIfNotExists()
+    public bool CreateDatabase(bool ifNotExists)
     {
-        if (!fileOperations.FileExists(Filename))
+        if (!ifNotExists || !fileOperations.FileExists(Filename))
         {
             dbFactory.Create(Context.Schema, Filename, false);
             migrator.CreateInitialMigration();

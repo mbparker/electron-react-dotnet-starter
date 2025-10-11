@@ -7,7 +7,7 @@ public interface ISqliteObjectRelationalMapperDatabaseManager<TContext> : IDispo
     string Filename { get; set; }
     SqliteDbSchemaChanges DetectedSchemaChanges { get; }
 
-    bool CreateDatabaseIfNotExists();
+    bool CreateDatabase(bool ifNotExists);
     bool Migrate();
     void DeleteDatabase();
 }

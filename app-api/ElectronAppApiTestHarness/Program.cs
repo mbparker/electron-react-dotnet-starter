@@ -43,7 +43,7 @@ try
             
             //dbManager.DeleteDatabase();
 
-            dbCreated = dbManager.CreateDatabaseIfNotExists();
+            dbCreated = dbManager.CreateDatabase(ifNotExists: true);
 
             if (!dbCreated)
             {
