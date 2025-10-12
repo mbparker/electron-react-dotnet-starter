@@ -133,6 +133,15 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         }
     }
 
+    protected TestEntityTag CreateTestEntityTagWithRandomValues()
+    {
+        return new TestEntityTag
+        {
+            TagValue = GenerateRandomStringWithWords(Rng.Next(1, 10)),
+            Description = GenerateRandomStringWithWords(Rng.Next(1, 100))
+        };
+    }
+
     protected TestEntityMaster CreateTestEntityMasterWithMaxValues()
     {
         return new TestEntityMaster

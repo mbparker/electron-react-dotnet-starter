@@ -38,5 +38,8 @@ public class TestDbContext : SqliteOrmDatabaseContext
         builder.HasIndex<TestEntityTag>().WithColumn(x => x.TagValue).UsingCollation().SortedAscending();
         builder.HasIndex<TestEntityTagLink>().WithColumn(x => x.EntityId).UsingCollation().SortedAscending();
         builder.HasIndex<TestEntityTagLink>().WithColumn(x => x.TagId).UsingCollation().SortedAscending();
+        var idx = builder.HasIndex<TestEntityTagLink>().IsUnique();
+        idx.WithColumn(x => x.TagId);
+        idx.WithColumn(x => x.EntityId);
     }
 }
