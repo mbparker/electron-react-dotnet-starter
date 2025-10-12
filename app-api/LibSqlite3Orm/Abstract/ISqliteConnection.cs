@@ -17,6 +17,8 @@ public interface ISqliteConnection : IDisposable
     SqliteOpenFlags ConnectionFlags { get; }
 
     string VirtualFileSystemName { get; }
+    
+    string Filename { get; }
 
     /// <summary>
     /// Open a database with full control over the connection flags and optionally specify a VFS module name.
@@ -38,6 +40,8 @@ public interface ISqliteConnection : IDisposable
     /// </summary>
     /// <param name="filename"></param>
     void OpenReadOnly(string filename);
+
+    void OpenInMemory();
     
     IntPtr GetHandle();
     
@@ -48,4 +52,6 @@ public interface ISqliteConnection : IDisposable
     long GetLastInsertedId();
 
     ISqliteTransaction BeginTransaction();
+
+    ISqliteConnection GetReference();
 }

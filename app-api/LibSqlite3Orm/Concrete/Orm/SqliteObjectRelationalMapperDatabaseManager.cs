@@ -1,6 +1,7 @@
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
+using LibSqlite3Orm.PInvoke.Types.Enums;
 
 namespace LibSqlite3Orm.Concrete.Orm;
 
@@ -12,7 +13,7 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
     private readonly Func<TContext> contextFactory;
     private ISqliteDbSchemaMigrator<TContext> migrator;
     private TContext _context;
-    private string _filename;
+    private ISqliteConnection _connection;
 
     public SqliteObjectRelationalMapperDatabaseManager(
         Func<TContext> contextFactory,
@@ -26,10 +27,14 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
         migrator = migratorFactory();
     }
     
-    public string Filename
-    {
-        get => _filename;
-        set => migrator.Filename = _filename = value;
+    private ISqliteConnection Connection {
+        get
+        {
+            if (_connection == null)
+                throw new InvalidOperationException("Connection not set.");
+            return _connection;
+        }
+        set => _connection = value;
     }
     
     private TContext Context
@@ -44,22 +49,23 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
 
     public SqliteDbSchemaChanges DetectedSchemaChanges { get; private set; } = new();
 
+    public void UseConnection(ISqliteConnection connection)
+    {
+        Connection = connection.GetReference();
+        migrator.UseConnection(Connection);
+    }
+
     public void Dispose()
     {
         migrator?.Dispose();
         migrator = null;
+        Connection = null;
     }
 
-    public bool CreateDatabase(bool ifNotExists)
+    public void CreateDatabase()
     {
-        if (!ifNotExists || !fileOperations.FileExists(Filename))
-        {
-            dbFactory.Create(Context.Schema, Filename, false);
-            migrator.CreateInitialMigration();
-            return true;
-        }
-        
-        return false;
+        dbFactory.Create(Context.Schema, Connection);
+        migrator.CreateInitialMigration();
     }
 
     public bool Migrate()
@@ -73,10 +79,16 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
 
     public void DeleteDatabase()
     {
-        if (fileOperations.FileExists(Filename))
+        if (Connection is not null && !string.IsNullOrWhiteSpace(Connection.Filename) &&
+            !Connection.ConnectionFlags.HasFlag(SqliteOpenFlags.Memory))
         {
-            ConsoleLogger.WriteLine(ConsoleColor.Red, "DELETING DATABASE!!");
-            fileOperations.DeleteFile(Filename);
+            if (fileOperations.FileExists(Connection.Filename))
+            {
+                var filename = Connection.Filename;
+                if (Connection.Connected) Connection.Close();
+                ConsoleLogger.WriteLine(ConsoleColor.Red, "DELETING DATABASE!!");
+                fileOperations.DeleteFile(filename);
+            }
         }
     }
     

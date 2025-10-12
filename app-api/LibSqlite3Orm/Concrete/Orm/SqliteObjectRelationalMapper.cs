@@ -9,23 +9,29 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMapper<TContext> 
     where TContext : ISqliteOrmDatabaseContext
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<TContext> contextFactory;
     private readonly Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory;
     private TContext _context;
     private IEntityServices _entityServices;
-    private ISqliteConnection _connection;
     private ISqliteTransaction _transaction;
+    private ISqliteConnection _connection;
 
-    public SqliteObjectRelationalMapper(Func<ISqliteConnection> connectionFactory, Func<TContext> contextFactory,
+    public SqliteObjectRelationalMapper(Func<TContext> contextFactory,
         Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory)
     {
-        this.connectionFactory = connectionFactory;
         this.contextFactory = contextFactory;
         this.entityServicesFactory = entityServicesFactory;
     }
     
-    public string Filename { get; set; }
+    private ISqliteConnection Connection {
+        get
+        {
+            if (_connection == null)
+                throw new InvalidOperationException("Connection not set.");
+            return _connection;
+        }
+        set => _connection = value;
+    }
 
     public TContext Context
     {
@@ -47,23 +53,14 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         }
     }
 
-    private ISqliteConnection DatabaseConnection
+    public void UseConnection(ISqliteConnection connection)
     {
-        get
-        {
-            if (_connection is null)
-            {
-                _connection = connectionFactory();
-                _connection.OpenReadWrite(Filename, true);
-            }
-
-            return _connection;
-        }
+        Connection = connection.GetReference();
     }
 
     public virtual void Dispose()
     {
-        if (_connection is not null)
+        if (Connection is not null)
         {
             if (_transaction is not null)
             {
@@ -71,17 +68,16 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
                 _transaction = null;
             }
             
-            _connection.Dispose();
-            _connection = null;
+            Connection = null;
         }
     }
     
-    public ISqliteCommand CreateSqlCommand() => DatabaseConnection.CreateCommand();
+    public ISqliteCommand CreateSqlCommand() => Connection.CreateCommand();
 
     public void BeginTransaction()
     {
         if (_transaction is not null) throw new InvalidOperationException("The global transaction has already been started.");
-        _transaction = DatabaseConnection.BeginTransaction();
+        _transaction = Connection.BeginTransaction();
     }
     
     public void CommitTransaction()
@@ -144,46 +140,46 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
     
     public bool Insert<T>(T entity)
     {
-        return EntityServices.Insert(DatabaseConnection, entity);
+        return EntityServices.Insert(Connection, entity);
     }
     
     public int InsertMany<T>(IEnumerable<T> entities)
     {
-        return EntityServices.InsertMany(DatabaseConnection, entities);
+        return EntityServices.InsertMany(Connection, entities);
     }
     
     public bool Update<T>(T entity)
     {
-        return EntityServices.Update(DatabaseConnection, entity); 
+        return EntityServices.Update(Connection, entity); 
     }
     
     public int UpdateMany<T>(IEnumerable<T> entities)
     {
-        return EntityServices.UpdateMany(DatabaseConnection, entities);
+        return EntityServices.UpdateMany(Connection, entities);
     }
     
     public UpsertResult Upsert<T>(T entity)
     {
-        return EntityServices.Upsert(DatabaseConnection, entity);
+        return EntityServices.Upsert(Connection, entity);
     }
     
     public UpsertManyResult UpsertMany<T>(IEnumerable<T> entities)
     {
-        return EntityServices.UpsertMany(DatabaseConnection, entities);
+        return EntityServices.UpsertMany(Connection, entities);
     }
 
     public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
     {
-        return EntityServices.Get<T>(DatabaseConnection, loadNavigationProps);
+        return EntityServices.Get<T>(Connection, loadNavigationProps);
     }
     
     public int Delete<T>(Expression<Func<T, bool>> predicate)
     {
-        return EntityServices.Delete(DatabaseConnection, predicate);
+        return EntityServices.Delete(Connection, predicate);
     }
 
     public int DeleteAll<T>()
     {
-        return EntityServices.DeleteAll<T>(DatabaseConnection);
+        return EntityServices.DeleteAll<T>(Connection);
     }
 }

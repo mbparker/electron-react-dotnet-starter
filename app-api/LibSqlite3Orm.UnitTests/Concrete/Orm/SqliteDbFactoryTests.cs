@@ -13,9 +13,7 @@ public class SqliteDbFactoryTests
     private ISqliteConnection _mockConnection;
     private ISqliteCommand _mockCommand;
     private ISqliteDdlSqlSynthesizer _mockSynthesizer;
-    private Func<ISqliteConnection> _connectionFactory;
     private Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> _synthesizerFactory;
-    private string _testDbPath;
 
     [SetUp]
     public void SetUp()
@@ -24,33 +22,17 @@ public class SqliteDbFactoryTests
         _mockCommand = Substitute.For<ISqliteCommand>();
         _mockSynthesizer = Substitute.For<ISqliteDdlSqlSynthesizer>();
         
-        _connectionFactory = Substitute.For<Func<ISqliteConnection>>();
         _synthesizerFactory = Substitute.For<Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer>>();
-
-        _connectionFactory.Invoke().Returns(_mockConnection);
+        
         _mockConnection.CreateCommand().Returns(_mockCommand);
         _synthesizerFactory.Invoke(Arg.Any<SqliteDdlSqlSynthesisKind>(), Arg.Any<SqliteDbSchema>()).Returns(_mockSynthesizer);
 
-        _dbFactory = new SqliteDbFactory(_connectionFactory, _synthesizerFactory);
-        
-        _testDbPath = Path.Combine(Path.GetTempPath(), $"test_{Guid.NewGuid()}.db");
+        _dbFactory = new SqliteDbFactory(_synthesizerFactory);
     }
 
     [TearDown]
     public void TearDown()
     {
-        if (File.Exists(_testDbPath))
-        {
-            try
-            {
-                File.Delete(_testDbPath);
-            }
-            catch (Exception)
-            {
-                // Ignore cleanup errors
-            }
-        }
-        
         // Dispose mocks to satisfy NUnit analyzer
         _mockConnection?.Dispose();
         _mockCommand?.Dispose();
@@ -60,49 +42,14 @@ public class SqliteDbFactoryTests
     public void Constructor_WithValidParameters_DoesNotThrow()
     {
         // Act & Assert
-        Assert.DoesNotThrow(() => new SqliteDbFactory(_connectionFactory, _synthesizerFactory));
-    }
-
-    [Test]
-    public void Constructor_WithNullConnectionFactory_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SqliteDbFactory(null, _synthesizerFactory));
+        Assert.DoesNotThrow(() => new SqliteDbFactory(_synthesizerFactory));
     }
 
     [Test]
     public void Constructor_WithNullSynthesizerFactory_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new SqliteDbFactory(_connectionFactory, null));
-    }
-
-    [Test]
-    public void Create_WithValidParameters_CallsConnectionFactory()
-    {
-        // Arrange
-        var schema = CreateTestSchema();
-        _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns("CREATE TABLE test (id INTEGER);");
-
-        // Act
-        _dbFactory.Create(schema, _testDbPath, false);
-
-        // Assert
-        _connectionFactory.Received(1).Invoke();
-    }
-
-    [Test]
-    public void Create_WithValidParameters_OpensConnection()
-    {
-        // Arrange
-        var schema = CreateTestSchema();
-        _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns("CREATE TABLE test (id INTEGER);");
-
-        // Act
-        _dbFactory.Create(schema, _testDbPath, false);
-
-        // Assert
-        _mockConnection.Received(1).OpenReadWrite(_testDbPath, false);
+        Assert.Throws<ArgumentNullException>(() => new SqliteDbFactory(null));
     }
 
     [Test]
@@ -113,7 +60,7 @@ public class SqliteDbFactoryTests
         _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns("CREATE TABLE test (id INTEGER);");
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         _mockConnection.Received(1).CreateCommand();
@@ -128,7 +75,7 @@ public class SqliteDbFactoryTests
         _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns(expectedSql);
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         _mockCommand.Received(1).ExecuteNonQuery(Arg.Is<string>(sql => sql.Contains(expectedSql)));
@@ -142,11 +89,10 @@ public class SqliteDbFactoryTests
         _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns("CREATE TABLE test (id INTEGER);");
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         _mockCommand.Received(1).Dispose();
-        _mockConnection.Received(1).Dispose();
     }
 
     [Test]
@@ -163,7 +109,7 @@ public class SqliteDbFactoryTests
         _mockSynthesizer.SynthesizeCreate("Table2").Returns("CREATE TABLE Table2 (id INTEGER);");
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         _mockSynthesizer.Received(1).SynthesizeCreate("Table1");
@@ -189,7 +135,7 @@ public class SqliteDbFactoryTests
         indexSynthesizer.SynthesizeCreate("Index2").Returns("CREATE INDEX Index2 ON TestTable (column);");
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         indexSynthesizer.Received(1).SynthesizeCreate("Index1");
@@ -200,27 +146,17 @@ public class SqliteDbFactoryTests
     public void Create_WithNullSchema_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _dbFactory.Create(null, _testDbPath, false));
+        Assert.Throws<ArgumentNullException>(() => _dbFactory.Create(null, _mockConnection));
     }
 
     [Test]
-    public void Create_WithNullDbFilename_ThrowsArgumentNullException()
+    public void Create_WithNullConnection_ThrowsArgumentNullException()
     {
         // Arrange
         var schema = CreateTestSchema();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _dbFactory.Create(schema, null, false));
-    }
-
-    [Test]
-    public void Create_WithEmptyDbFilename_ThrowsArgumentException()
-    {
-        // Arrange
-        var schema = CreateTestSchema();
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => _dbFactory.Create(schema, "", false));
+        Assert.Throws<ArgumentNullException>(() => _dbFactory.Create(schema, null));
     }
 
     [Test]
@@ -231,7 +167,7 @@ public class SqliteDbFactoryTests
         _mockSynthesizer.SynthesizeCreate(Arg.Any<string>()).Returns("CREATE TABLE test (id INTEGER);");
 
         // Act
-        _dbFactory.Create(schema, _testDbPath, false);
+        _dbFactory.Create(schema, _mockConnection);
 
         // Assert
         _synthesizerFactory.Received().Invoke(SqliteDdlSqlSynthesisKind.TableOps, schema);

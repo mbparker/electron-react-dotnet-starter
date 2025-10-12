@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 using System.Text;
 using Autofac;
+using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
 
@@ -36,8 +37,8 @@ public abstract class IntegrationTestSeededBase<TContext> : IntegrationTestBase<
 
 public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDatabaseContext
 {
-    private string filename;
     private IContainer container;
+    private ISqliteConnection connection;
     
     protected Random Rng { get; } =  new(Environment.TickCount);
     protected ISqliteObjectRelationalMapper<TContext> Orm { get; private set; }
@@ -45,22 +46,24 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     [SetUp]
     public virtual void SetUp()
     {
-        filename = Path.GetTempFileName();
+        connection = Resolve<Func<ISqliteConnection>>()();
+        connection.OpenInMemory();
+        
         using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
         {
-            dbManager.Filename = filename;
-            dbManager.CreateDatabase(ifNotExists: false);
+            dbManager.UseConnection(connection.GetReference());
+            dbManager.CreateDatabase();
         }
 
         Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
-        Orm.Filename = filename;
+        Orm.UseConnection(connection.GetReference());
     }
 
     [TearDown]
     public virtual void TearDown()
     {
         Orm.Dispose();
-        File.Delete(filename);
+        connection.Dispose();
     }
     
     [OneTimeSetUp]

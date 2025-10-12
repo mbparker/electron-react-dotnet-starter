@@ -9,32 +9,24 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteDbFactory : ISqliteDbFactory
 {
-    private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory;
     
-    public SqliteDbFactory(Func<ISqliteConnection> connectionFactory,
-        Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory)
+    public SqliteDbFactory(Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory)
     {
-        this.connectionFactory = connectionFactory ?? throw new  ArgumentNullException(nameof(connectionFactory));
         this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory ?? throw new  ArgumentNullException(nameof(ddlSqlSynthesizerFactory));
     }
-    
-    public void Create(SqliteDbSchema schema, string dbFilename, bool dbFileMustExist) 
+
+    public void Create(SqliteDbSchema schema, ISqliteConnection connection)
     {
         if (schema is null) throw new ArgumentNullException(nameof(schema));
-        if (dbFilename is null) throw new ArgumentNullException(nameof(dbFilename));
-        if (dbFilename.Trim() == string.Empty) throw new ArgumentException(nameof(dbFilename));
+        if (connection is null) throw new ArgumentNullException(nameof(connection));
         var sql = SynthesizeCreateTablesAndIndexes(schema);
-        using (var connection = connectionFactory())
+        using (var cmd = connection.CreateCommand())
         {
-            connection.OpenReadWrite(dbFilename, dbFileMustExist);
-            using (var cmd = connection.CreateCommand())
-            {
-                cmd.ExecuteNonQuery(sql);
-            }
+            cmd.ExecuteNonQuery(sql);
         }
     }
-    
+
     private string SynthesizeCreateTablesAndIndexes(SqliteDbSchema schema)
     {
         var tableSynthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, schema);

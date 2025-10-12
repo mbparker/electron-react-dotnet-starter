@@ -4,10 +4,11 @@ namespace LibSqlite3Orm.Abstract.Orm;
 
 public interface ISqliteObjectRelationalMapperDatabaseManager<TContext> : IDisposable where TContext : ISqliteOrmDatabaseContext
 {
-    string Filename { get; set; }
     SqliteDbSchemaChanges DetectedSchemaChanges { get; }
-
-    bool CreateDatabase(bool ifNotExists);
+    
+    void UseConnection(ISqliteConnection connection);
+    
+    void CreateDatabase();
     bool Migrate();
     void DeleteDatabase();
 }
