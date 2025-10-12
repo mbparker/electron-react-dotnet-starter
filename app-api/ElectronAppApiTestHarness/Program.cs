@@ -45,7 +45,7 @@ try
 
             using (var dbManager = container.Resolve<ISqliteObjectRelationalMapperDatabaseManager<DemoContext>>())
             {
-                dbManager.UseConnection(connection.GetReference());
+                dbManager.UseConnection(connection);
                 
                 connection.OpenReadWrite(dbFilename, false);
                 //dbManager.DeleteDatabase();
@@ -84,7 +84,7 @@ try
             }
 
             using var orm = container.Resolve<ISqliteObjectRelationalMapper<DemoContext>>();
-            orm.UseConnection(connection.GetReference());
+            orm.UseConnection(connection);
 
             if (dbCreated)
             {
