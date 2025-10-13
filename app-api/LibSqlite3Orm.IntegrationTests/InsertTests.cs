@@ -55,6 +55,18 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
     }
     
     [Test]
+    public void Insert_WhenTableHasNoUniqueColumnsOtherThanPK_AddingASecondTmeDoesNotThrow()
+    {
+        var entity = CreateTestEntityMasterWithRandomValues();
+        
+        Assert.That(Orm.Insert(entity), Is.True);
+        Assert.That(entity.Id, Is.EqualTo(1));
+        
+        Assert.That(Orm.Insert(entity), Is.True);
+        Assert.That(entity.Id, Is.EqualTo(2));
+    }
+    
+    [Test]
     public void InsertMany_WhenMasterWithRandomFieldValues_RecordsStoredAccurately()
     {
         var entity1 = CreateTestEntityMasterWithRandomValues();
@@ -92,6 +104,19 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .SingleRecord();
         
         AssertThatRecordsMatch(entity, actual);
+    }
+    
+    [Test]
+    public void Insert_WhenViolatesUniqueColumn_Throws()
+    {
+        var entity1 = CreateTestEntityTagWithRandomValues();
+        Orm.Insert(entity1);
+        
+        var entity2 = CreateTestEntityTagWithRandomValues();
+        entity2.TagValue = entity1.TagValue;
+        
+        var ex = Assert.Throws<SqliteException>(() => Orm.Insert(entity2));
+        Assert.That(ex?.Message, Is.EqualTo("UNIQUE constraint failed: TestEntityTag.TagValue"));
     }
     
     [Test]

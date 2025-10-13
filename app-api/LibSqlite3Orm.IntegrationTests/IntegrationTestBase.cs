@@ -9,15 +9,56 @@ using LibSqlite3Orm.IntegrationTests.TestDataModel;
 
 namespace LibSqlite3Orm.IntegrationTests;
 
-public abstract class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDatabaseContext
+public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDatabaseContext
 {
+    protected Dictionary<long, TestEntityMaster> SeededMasterRecords { get; } = new();
+    protected Dictionary<long, TestEntityTag> SeededTagRecords { get; } = new();
+    protected Dictionary<string, TestEntityTagLink> SeededLinkRecords { get; } = new(StringComparer.OrdinalIgnoreCase);
+    
     public override void SetUp()
     {
+        SeededTagRecords.Clear();
+        SeededLinkRecords.Clear();
+        SeededMasterRecords.Clear();
         base.SetUp();
         DoSeedDatabase();
     }
 
-    protected abstract void SeedDatabase();
+    protected virtual void SeedDatabase()
+    {
+        var cnt = Rng.Next(10, 50);
+        for (var i = 0; i < cnt; i++)
+        {
+            var entity = CreateTestEntityMasterWithRandomValues();
+            Orm.Insert(entity);
+            SeededMasterRecords.Add(entity.Id, entity);
+        }
+        
+        cnt = Rng.Next(10, 25);
+        for (var i = 0; i < cnt; i++)
+        {
+            var entity = CreateTestEntityTagWithRandomValues();
+            Orm.Insert(entity);
+            SeededTagRecords.Add(entity.Id, entity);
+        }
+        
+        foreach(var entity in SeededMasterRecords.Values)
+        {
+            cnt = Rng.Next(1, 5);
+            var tagIds = new HashSet<long>();
+            for (var i = 0; i < cnt; i++)
+            {
+                var tagId = Rng.Next(1, SeededTagRecords.Count);
+                if (tagIds.Add(tagId))
+                {
+                    var link = new TestEntityTagLink { EntityId = entity.Id, TagId = tagId };
+                    Orm.Insert(link);
+                    SeededLinkRecords.Add(link.Id, link);
+                }
+            }
+
+        }
+    }
     
     private void DoSeedDatabase()
     {
@@ -137,7 +178,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     {
         return new TestEntityTag
         {
-            TagValue = GenerateRandomStringWithWords(Rng.Next(1, 10)),
+            TagValue = GenerateRandomStringWithWords(Rng.Next(1, 10)) + " - " + Guid.NewGuid().ToString("N"), // guarantee uniqueness
             Description = GenerateRandomStringWithWords(Rng.Next(1, 100))
         };
     }
