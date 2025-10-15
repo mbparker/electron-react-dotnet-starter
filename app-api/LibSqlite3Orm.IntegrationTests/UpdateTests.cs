@@ -64,6 +64,19 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
     }
     
     [Test]
+    public void Update_WhenLinkedTagIdChangesButViolatesConstraint_Throws()
+    {
+        var grouping = SeededLinkRecords.Values.GroupBy(x => x.EntityId).First(x => x.Count() > 1);
+        var linksForEntity = grouping.ToArray();
+        var linkEntity = linksForEntity[0];
+        
+        linkEntity.TagId = linksForEntity[1].TagId;
+        
+        var ex = Assert.Throws<SqliteException>(() => Orm.Update(linkEntity));
+        Assert.That(ex?.Message, Is.EqualTo("UNIQUE constraint failed: TestEntityTagLink.TagId, TestEntityTagLink.EntityId"));
+    }
+    
+    [Test]
     public void Update_WhenTagValueViolatesConstraint_Throws()
     {
         var entity = SeededTagRecords[1];
@@ -85,5 +98,32 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
         var ret = Orm.Update(entity);
         
         Assert.That(ret, Is.False);
+    }
+    
+    [Test]
+    public void UpdateMany_WhenAllUpdatedRecords_AreUpdatedAccurately()
+    {
+        var entity1 = CreateTestEntityMasterWithRandomValues();
+        entity1.Id = 2;
+        var entity2 = CreateTestEntityMasterWithRandomValues();
+        entity2.Id = 3;
+        var entity3 = CreateTestEntityMasterWithRandomValues();
+        entity3.Id = 4;
+        TestEntityMaster[] entities = [entity1, entity2, entity3];
+
+        var ret = Orm.UpdateMany(entities);
+        
+        Assert.That(ret, Is.EqualTo(3));
+        var insertedIds = entities.Select(y => y.Id).ToArray();
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .Where(x => insertedIds.Contains(x.Id))
+            .AsEnumerable()
+            .ToArray();
+        
+        Assert.That(actual.Length, Is.EqualTo(entities.Length));
+
+        for (var i = 0; i < entities.Length; i++)
+            AssertThatRecordsMatch(entities[i], actual[i]);
     }
 }
