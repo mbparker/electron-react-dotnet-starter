@@ -65,14 +65,19 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         return GetEnumerator();
     }
 
-    IEnumerable<T> ISqliteEnumerable<T>.AsEnumerable()
-    {
-        return this;
-    }
-
     public T SingleRecord()
     {
-        return this.AsEnumerable().SingleOrDefault();
+        return this.SingleOrDefault();
+    }
+
+    public T[] AllRecords()
+    {
+        return AsEnumerable().ToArray();
+    }
+
+    public IEnumerable<T> AsEnumerable()
+    {
+        return this;
     }
 
     public ISqliteEnumerable<T> Skip(int count)

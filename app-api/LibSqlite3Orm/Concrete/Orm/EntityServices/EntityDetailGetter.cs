@@ -98,7 +98,7 @@ public class EntityDetailGetter : IEntityDetailGetter
         return new Lazy<TDetails>(() =>
         {
             var enumerable = GetDetailsQueryable<TTable, TDetails>(record, connection);
-            return enumerable.AsEnumerable().SingleOrDefault();
+            return enumerable.SingleRecord();
         });
     }
 

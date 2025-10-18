@@ -198,13 +198,11 @@ public class UpsertTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(entity1.Id, Is.EqualTo(SeededMasterRecords.Count + 1));
         Assert.That(entity3.Id, Is.EqualTo(SeededMasterRecords.Count + 2));
 
-        var insertedIds = entities.Select(y => y.Id).ToArray();
         var actual = Orm
             .Get<TestEntityMaster>()
-            .Where(x => insertedIds.Contains(x.Id))
-            .OrderBy(x  => x.Id)
-            .AsEnumerable()
-            .ToArray();
+            .Where(x => entities.Select(y => y.Id).Contains(x.Id))
+            .OrderBy(x => x.Id)
+            .AllRecords();
         
         Assert.That(actual.Length, Is.EqualTo(entities.Length));
 

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Data;
 using System.Linq.Expressions;
 using System.Text;
 using LibSqlite3Orm.Abstract.Orm;
@@ -16,6 +17,9 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private string currentMemberDbFieldName;
 	private string currentInStatementValue;
 	private string currentMethodCall;
+	private object currentConstValue;
+	private List<string> currentConstArrayValues = [];
+	private bool inContainsCall;
 
 	public SqliteWhereClauseBuilder(IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
 	{
@@ -165,30 +169,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 						break;
 
 					case TypeCode.Object:
-						if (c.Value.GetType().IsArray)
-						{
-							// The only reason we should get an array is for making an IN statement.
-							// However, we don't know what the field is yet. So just build and store off the value.
-							var isStrArray = c.Value.GetType().GetElementType() == typeof(string);
-							var vals = new List<string>();
-							foreach (var val in (IEnumerable)c.Value)
-							{
-								if (isStrArray)
-									vals.Add($"'{val}'");
-								else
-									vals.Add($"{val}");
-							}
-
-							var sb = new StringBuilder();
-							sb.Append("IN (");
-							sb.Append(string.Join(',', vals));
-							sb.Append(')');
-							currentInStatementValue = sb.ToString();
-							break;
-						}
-						
-						throw new NotSupportedException($"The constant for '{c.Value}' is not supported yet");
-
+						currentConstValue = c.Value;
+						break;
 					default:
 						sqlBuilder.Append(c.Value);
 						break;
@@ -204,18 +186,58 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		if (m.Expression is ParameterExpression)
 		{
 			var memberDbField = GetDbFieldNameForMemberName(m.Member.Name);
-			if (BuildingInStatement())
+			
+			if (BuildingInClause() && !ArrayValuesBuilt())
 			{
-				sqlBuilder.Append($"{memberDbField} {currentInStatementValue}");
-				currentInStatementValue = null;
-			}
-			else
-			{
-				// Write out the field name. A visit elsewhere will write out the operator and value operand.
+				var elementType = currentConstValue.GetType().GetElementType();
+				if (Type.GetTypeCode(elementType) == TypeCode.Object && (elementType?.IsClass ?? false))
+				{
+					// Array of objects - use expression  to pick the correct field values out of each array element object
+					var isStringField =  m.Member.GetValueType() == typeof(string);
+					foreach (var val in (IEnumerable)currentConstValue)
+					{
+						var fieldVal = m.Member.GetValue(val);
+						if (isStringField)
+							currentConstArrayValues.Add($"'{fieldVal}'");
+						else
+							currentConstArrayValues.Add($"{fieldVal}");
+					}
+				}
+				else
+				{
+					// Basic array of values
+					var isStrArray =  elementType == typeof(string);
+					foreach (var val in (IEnumerable)currentConstValue)
+					{
+						if (isStrArray)
+							currentConstArrayValues.Add($"'{val}'");
+						else
+							currentConstArrayValues.Add($"{val}");
+					}
+				}
+				
 				sqlBuilder.Append(memberDbField);
-				currentMemberDbFieldName = memberDbField;
+				sqlBuilder.Append(" IN (");
+				sqlBuilder.Append(string.Join(',', currentConstArrayValues));
+				sqlBuilder.Append(')');
 			}
-
+			else 
+			{
+				if (inContainsCall && ArrayValuesBuilt())
+				{
+					inContainsCall = false;
+					currentConstArrayValues.Clear();
+					currentConstValue = null;
+				}
+				else
+				{
+					if (currentConstValue is not null)
+						throw new InvalidExpressionException($"Unhandled member access: {m.Member.Name}");
+					sqlBuilder.Append(memberDbField);
+					currentMemberDbFieldName = memberDbField;
+				}
+			}
+			
 			return m;
 		} 
 		
@@ -275,6 +297,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
 			return $"Visiting Method Call: {currentMethodCall}";
 		}));
+		if (mc.Method.Name == "Contains")
+			inContainsCall = true;
 		return base.VisitMethodCall(mc);
 	}
 
@@ -283,9 +307,15 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		return !string.IsNullOrWhiteSpace(currentMemberDbFieldName);
 	}
 
-	private bool BuildingInStatement()
+	private bool BuildingInClause()
 	{
-		return !string.IsNullOrWhiteSpace(currentInStatementValue);
+		return inContainsCall && currentConstValue is not null && currentConstValue.GetType().IsArray;// &&
+		       //currentConstArrayValues.Count == 0;
+	}
+	
+	private bool ArrayValuesBuilt()
+	{
+		return currentConstArrayValues.Count > 0;
 	}
 
 	private bool BuildingLikeStatement()
