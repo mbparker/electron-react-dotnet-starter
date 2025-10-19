@@ -6,7 +6,7 @@ Boilerplate project for cross platform Electron apps using React with MUI for th
 
 UI is Typescript, and uses tsyringe for dependency injection. Webpack is used for building rather than Vite because it preserves the injected type metadata required by tsyringe. No framework (such as Next.Js) is used.
 
-.NET backend is C# and uses Autofac for dependency injection. SQLite3 support is built in using a custom written lightweight ORM.
+.NET backend is C# and uses Autofac for dependency injection. SQLite3 support is provided by LibSqlite3Orm.
 
 SignalR is used for communication between the front and backend. RESTful APIs could be easily added if that is preferred.
 
@@ -23,4 +23,4 @@ You can then begin building your own app using this repo as a launch pad.
 
 # KNOWN ISSUES
 
-* The ORM is slow. It was designed to be simple and easy to use for local app storage use cases. If you need a high performance ORM, you will need to swap it out for something like Dapper, or a full blown ORM such as Entity Framework Core. That said, performance is being worked on.
+* The LibSqlite3Orm project is has been improved, but is still slow when compared to some other ORMs. It was designed to be simple and easy to use for local app storage use cases. If you need a high performance ORM, you will need to swap it out for something like Dapper, or a full blown ORM such as Entity Framework Core. That said, performance is being worked on.

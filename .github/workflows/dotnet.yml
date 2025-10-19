@@ -45,37 +45,7 @@ jobs:
           dotnet --info
 
       - name: Clean .NET tools cache
-        run: dotnet nuget locals all --clear
-
-      # --- Run NUnit Tests (before build) ---
-      # --- macOS agents are run on Apple Silicon CPUS! ---
-      - name: Run Unit Tests (macOS)
-        if: runner.os == 'macOS'
-        # working-directory: app-api
-        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx" --arch arm64
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Run Integration Tests (macOS)
-        if: runner.os == 'macOS'
-        # working-directory: app-api
-        run: dotnet test ./app-api/LibSqlite3Orm.UnitTests/LibSqlite3Orm.UnitTests.csproj --logger "trx;LogFileName=test-results.trx" --arch arm64
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
-
-      - name: Run Unit Tests (Windows, Linux)
-        if: runner.os != 'macOS'
-        # working-directory: app-api
-        run: dotnet test ./app-api/LibSqlite3Orm.UnitTests/LibSqlite3Orm.UnitTests.csproj --logger "trx;LogFileName=test-results.trx"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Run Integration Tests (Linux)
-        if: runner.os == 'Linux'
-        # working-directory: app-api
-        run: dotnet test ./app-api/LibSqlite3Orm.IntegrationTests/LibSqlite3Orm.IntegrationTests.csproj --logger "trx;LogFileName=test-results.trx"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}          
+        run: dotnet nuget locals all --clear  
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -114,7 +84,7 @@ jobs:
 
       - name: Zip x64 Mac App (macOS)
         if: runner.os == 'macOS'
-        run: |          
+        run: |
           cd app-ui/dist/mac && zip -r ElectronStarterApp-mac-x64.zip ElectronStarterApp.app
         shell: bash
 
