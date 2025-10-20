@@ -25,13 +25,13 @@ public class DemoContext : SqliteOrmDatabaseContext
         customTagLink
             .WithForeignKey(x => x.TagId)
             .References<CustomTag>(x => x.Id)
-            .HasNavigationProperty(x => x.Tag)
+            .HasOne(x => x.Tag)
             .OnDelete(SqliteForeignKeyAction.Cascade);
         customTagLink
             .WithForeignKey(x => x.EntityId)
             .References<DemoEntity>(x => x.Id)
-            .HasNavigationProperty(x => x.Entity)
-            .HasForeignNavigationProperty<DemoEntity>(x => x.Tags)
+            .HasOne(x => x.Entity)
+            .WithMany<DemoEntity>(x => x.Tags)
             .OnDelete(SqliteForeignKeyAction.Cascade);
         
         builder.HasIndex<DemoEntity>().WithColumn(x => x.StringValue).UsingCollation().SortedAscending();
