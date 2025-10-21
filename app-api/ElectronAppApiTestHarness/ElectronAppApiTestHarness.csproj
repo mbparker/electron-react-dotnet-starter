@@ -12,7 +12,7 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="8.4.0" />
-      <PackageReference Include="LibSqlite3Orm" Version="1.2.59" />
+      <PackageReference Include="LibSqlite3Orm" Version="1.2.62" />
     </ItemGroup>
 
     <ItemGroup>

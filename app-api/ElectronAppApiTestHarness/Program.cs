@@ -213,7 +213,7 @@ try
                         recCnt = 0;
                         elapsedStep = ExecuteTimed(() =>
                         {
-                            var entityRecords = orm.Get<DemoEntity>(loadNavigationProps: false).AsEnumerable();
+                            var entityRecords = orm.Get<DemoEntity>(recursiveLoad: false).AsEnumerable();
                             foreach (var record in entityRecords)
                             {
                                 recCnt++;
@@ -234,7 +234,7 @@ try
                         recCnt = 0;
                         elapsedStep = ExecuteTimed(() =>
                         {
-                            var linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: false).AsEnumerable();
+                            var linkRecords = orm.Get<CustomTagLink>(recursiveLoad: false).AsEnumerable();
                             foreach (var record in linkRecords)
                             {
                                 recCnt++;
@@ -255,7 +255,7 @@ try
                         recCnt = 0;
                         elapsedStep = ExecuteTimed(() =>
                         {
-                            var entityRecords = orm.Get<DemoEntity>(loadNavigationProps: true).AsEnumerable();
+                            var entityRecords = orm.Get<DemoEntity>(recursiveLoad: true).AsEnumerable();
                             foreach (var record in entityRecords)
                             {
                                 recCnt++;
@@ -276,7 +276,7 @@ try
                         recCnt = 0;
                         elapsedStep = ExecuteTimed(() =>
                         {
-                            var linkRecords = orm.Get<CustomTagLink>(loadNavigationProps: true).AsEnumerable();
+                            var linkRecords = orm.Get<CustomTagLink>(recursiveLoad: true).AsEnumerable();
                             foreach (var record in linkRecords)
                             {
                                 recCnt++;
