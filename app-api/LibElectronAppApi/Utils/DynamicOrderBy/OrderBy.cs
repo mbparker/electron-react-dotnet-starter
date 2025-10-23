@@ -11,5 +11,5 @@ public class OrderBy<T, TKey> : IOrderBy
         this.expression = expression;
     }
 
-    public dynamic Expression => this.expression;
+    public dynamic Expression => expression;
 }
