@@ -11,6 +11,7 @@ public class LiteralExpression : FilterExpression
     public LiteralType Type { get; set; }
 
     public LiteralExpression(object value, LiteralType type)
+        : base(nameof(LiteralExpression))
     {
         Value = value;
         Type = type;

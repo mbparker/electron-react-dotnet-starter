@@ -11,6 +11,7 @@ public class UnaryExpression : FilterExpression
     public FilterExpression Operand { get; set; }
 
     public UnaryExpression(UnaryOperator op, FilterExpression operand)
+        : base(nameof(UnaryExpression))
     {
         Operator = op;
         Operand = operand;

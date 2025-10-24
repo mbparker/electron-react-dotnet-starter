@@ -9,6 +9,7 @@ public class FunctionExpression : FilterExpression
     public List<FilterExpression> Arguments { get; set; }
 
     public FunctionExpression(string functionName, List<FilterExpression> arguments)
+        : base(nameof(FunctionExpression))
     {
         FunctionName = functionName;
         Arguments = arguments ?? new List<FilterExpression>();

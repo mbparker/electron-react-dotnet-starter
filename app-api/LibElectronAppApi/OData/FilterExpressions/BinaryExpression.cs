@@ -12,6 +12,7 @@ public class BinaryExpression : FilterExpression
     public FilterExpression Right { get; set; }
 
     public BinaryExpression(FilterExpression left, BinaryOperator op, FilterExpression right)
+        : base(nameof(BinaryExpression))
     {
         Left = left;
         Operator = op;

@@ -5,4 +5,9 @@ namespace LibElectronAppApi.OData.FilterExpressions;
 /// </summary>
 public abstract class FilterExpression
 {
+    protected FilterExpression(string typeName)
+    {
+        TypeName = typeName;
+    }
+    public string TypeName { get; set; }
 }

@@ -131,7 +131,25 @@ internal class FilterTokenizer
             _position++;
         }
 
-        // Check for type suffix (L, D, M, F)
+        // Is it a datetime?
+        if (_position < _input.Length && "-:.TtZz".Contains(_input[_position]))
+        {
+            while (_position < _input.Length && (char.IsDigit(_input[_position]) || "-:.Tt".Contains(_input[_position])))
+            {
+                sb.Append(_input[_position]);
+                _position++;
+            }
+            
+            if (_position < _input.Length && "Zz".Contains(_input[_position]))
+            {
+                sb.Append(_input[_position]);
+                _position++;
+                _tokens.Add(new Token(TokenType.DateTime, sb.ToString(), start));
+            }
+            
+            _tokens.Add(new Token(TokenType.String, sb.ToString(), start));
+        }
+        else // Check for type suffix (L, D, M, F)
         if (_position < _input.Length && "LDMFlmdf".Contains(_input[_position]))
         {
             _position++;

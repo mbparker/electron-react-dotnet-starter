@@ -1,8 +1,12 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace LibElectronAppApi.OData.FilterExpressions.Operators;
 
 /// <summary>
 /// Binary operators supported in OData filters
 /// </summary>
+[JsonConverter(typeof(StringEnumConverter))]
 public enum BinaryOperator
 {
     Equal,              // eq

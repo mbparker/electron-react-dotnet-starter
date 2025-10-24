@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectronAppApiTestHarness",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectronAppRebrander", "ElectronAppRebrander\ElectronAppRebrander.csproj", "{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{80AD6BC8-DA9A-431C-BC75-526ADC3A315A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibApiTests", "LibApiTests\LibApiTests.csproj", "{8B199636-1133-4B40-A97F-F63CBC09A184}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -30,8 +34,15 @@ Global
 		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Release|Any CPU.Build.0 = Release|Any CPU
 		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{93BD5F60-1A5C-405B-AA39-4B74CE0B6257}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B199636-1133-4B40-A97F-F63CBC09A184}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B199636-1133-4B40-A97F-F63CBC09A184}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B199636-1133-4B40-A97F-F63CBC09A184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B199636-1133-4B40-A97F-F63CBC09A184}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8B199636-1133-4B40-A97F-F63CBC09A184} = {80AD6BC8-DA9A-431C-BC75-526ADC3A315A}
 	EndGlobalSection
 EndGlobal

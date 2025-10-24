@@ -5,6 +5,7 @@ internal enum TokenType
     Property,
     String,
     Number,
+    DateTime,
     Boolean,
     Null,
     Operator,

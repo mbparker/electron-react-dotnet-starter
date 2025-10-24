@@ -1,3 +1,4 @@
+using System.Globalization;
 using LibElectronAppApi.OData.FilterExpressions.Operators;
 
 namespace LibElectronAppApi.OData.FilterExpressions.Parsing;
@@ -169,6 +170,14 @@ internal class FilterExpressionParser
             return new LiteralExpression(value, LiteralType.String);
         }
 
+        if (_tokenizer.Match(TokenType.DateTime))
+        {
+            var value = _tokenizer.Current.Value;
+            _tokenizer.Advance();
+            if (DateTime.TryParse(value, null, DateTimeStyles.AdjustToUniversal, out var dateTimeValue))
+                return new LiteralExpression(dateTimeValue, LiteralType.DateTime);
+        }
+
         if (_tokenizer.Match(TokenType.Number))
         {
             var value = _tokenizer.Current.Value;
@@ -177,14 +186,14 @@ internal class FilterExpressionParser
             // Try to parse as different numeric types
             if (value.Contains("."))
             {
-                if (double.TryParse(value, out double doubleValue))
+                if (double.TryParse(value, out var doubleValue))
                     return new LiteralExpression(doubleValue, LiteralType.Number);
             }
             else
             {
-                if (int.TryParse(value, out int intValue))
+                if (int.TryParse(value, out var intValue))
                     return new LiteralExpression(intValue, LiteralType.Number);
-                if (long.TryParse(value, out long longValue))
+                if (long.TryParse(value, out var longValue))
                     return new LiteralExpression(longValue, LiteralType.Number);
             }
                 

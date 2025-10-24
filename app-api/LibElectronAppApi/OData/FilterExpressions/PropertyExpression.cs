@@ -8,6 +8,7 @@ public class PropertyExpression : FilterExpression
     public string PropertyName { get; set; }
 
     public PropertyExpression(string propertyName)
+        : base(nameof(PropertyExpression))
     {
         PropertyName = propertyName;
     }
