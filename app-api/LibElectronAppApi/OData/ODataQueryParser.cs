@@ -172,8 +172,6 @@ public class ODataQueryParser
         return Parse(uri.Query);
     }
 
-    #region Filter Expression Parsing
-
     /// <summary>
     /// Parses an OData filter string into a FilterExpression tree
     /// </summary>
@@ -190,6 +188,4 @@ public class ODataQueryParser
         var parser = new FilterExpressionParser(tokenizer);
         return parser.Parse();
     }
-
-    #endregion
 }
