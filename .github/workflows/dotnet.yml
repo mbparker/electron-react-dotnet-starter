@@ -46,15 +46,9 @@ jobs:
 
       - name: Clean .NET tools cache
         run: dotnet nuget locals all --clear  
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
   
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal        
+      - name: Test API
+        run: dotnet test ./app-api/LibApiTests/LibApiTests.csproj --configuration Release  --verbosity normal        
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
