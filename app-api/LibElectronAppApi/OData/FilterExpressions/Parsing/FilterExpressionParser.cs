@@ -182,22 +182,80 @@ internal class FilterExpressionParser
         {
             var value = _tokenizer.Current.Value;
             _tokenizer.Advance();
+
+            // Handle hex number
+            if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                var hexString = value.Remove(0, 2);
                 
-            // Try to parse as different numeric types
+                if ("ULul".Contains(hexString[^1]))
+                {
+                    if (hexString.EndsWith("ul", StringComparison.OrdinalIgnoreCase) ||
+                        hexString.EndsWith("lu", StringComparison.OrdinalIgnoreCase))
+                        return new LiteralExpression(ulong.Parse(hexString.Remove(hexString.Length - 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture), LiteralType.Number);
+                    var valueOnly = hexString.Remove(hexString.Length - 1);
+                    switch (char.ToLower(hexString[^1]))
+                    {
+                        case 'l':
+                            return new LiteralExpression(long.Parse(valueOnly, NumberStyles.HexNumber, CultureInfo.InvariantCulture), LiteralType.Number);
+                        case 'u':
+                            return new LiteralExpression(ulong.Parse(valueOnly, NumberStyles.HexNumber, CultureInfo.InvariantCulture), LiteralType.Number);
+
+                    }
+                }
+                
+                if (int.TryParse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var intValue))
+                    return new LiteralExpression(intValue, LiteralType.Number);
+                if (long.TryParse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var longValue))
+                    return new LiteralExpression(longValue, LiteralType.Number);
+            }
+
+            // Handle 2 char suffix - unsigned long
+            if (value.EndsWith("ul", StringComparison.OrdinalIgnoreCase) || value.EndsWith("lu", StringComparison.OrdinalIgnoreCase))
+                return new LiteralExpression(ulong.Parse(value.Remove(value.Length - 2)), LiteralType.Number);
+            
+            // Handle supported numeric suffixes
+            if ("ULDMFulmdf".Contains(value[^1]))
+            {
+                var valueOnly = value.Remove(value.Length - 1);
+                switch (char.ToLower(value[^1]))
+                {
+                    case 'f':
+                        return new LiteralExpression(float.Parse(valueOnly), LiteralType.Number);
+                    case 'd':
+                        return new LiteralExpression(double.Parse(valueOnly), LiteralType.Number);
+                    case 'm':
+                        return new LiteralExpression(decimal.Parse(valueOnly), LiteralType.Number);
+                    case 'l':
+                        return new LiteralExpression(long.Parse(valueOnly), LiteralType.Number);
+                    case 'u':
+                        return new LiteralExpression(ulong.Parse(valueOnly), LiteralType.Number);
+
+                }
+            }
+                
+            // Yay! Now we get to guess!
             if (value.Contains("."))
             {
+                // We know it's a real number
+                if (float.TryParse(value, out var floatValue))
+                    return new LiteralExpression(floatValue, LiteralType.Number);
                 if (double.TryParse(value, out var doubleValue))
                     return new LiteralExpression(doubleValue, LiteralType.Number);
+                if (decimal.TryParse(value, out var decimalValue))
+                    return new LiteralExpression(decimalValue, LiteralType.Number);
             }
             else
             {
+                // It's an integer
                 if (int.TryParse(value, out var intValue))
                     return new LiteralExpression(intValue, LiteralType.Number);
                 if (long.TryParse(value, out var longValue))
                     return new LiteralExpression(longValue, LiteralType.Number);
             }
-                
-            return new LiteralExpression(value, LiteralType.Number);
+
+            // Wtf did you pass me??
+            throw new ApplicationException($"Number value: {value} cannot be parsed by any supported numeric types.");
         }
 
         if (_tokenizer.Match(TokenType.Boolean))

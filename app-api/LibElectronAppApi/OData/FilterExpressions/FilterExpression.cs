@@ -10,4 +10,9 @@ public abstract class FilterExpression
         TypeName = typeName;
     }
     public string TypeName { get; set; }
+
+    public T As<T>() where T : FilterExpression
+    {
+        return (T)this;
+    }
 }

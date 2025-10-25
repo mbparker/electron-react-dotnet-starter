@@ -118,14 +118,29 @@ internal class FilterTokenizer
     {
         int start = _position;
         var sb = new StringBuilder();
+        
+        bool isHex = false;
 
         if (_input[_position] == '-')
         {
             sb.Append(_input[_position]);
             _position++;
         }
+        else if (_input[_position] == '0')
+        {
+            sb.Append(_input[_position]);
+            _position++;
+            if (_position < _input.Length && "xX".Contains(_input[_position]))
+            {
+                sb.Append(_input[_position]);
+                _position++;
+                isHex = true;
+            }
+        }
 
-        while (_position < _input.Length && (char.IsDigit(_input[_position]) || _input[_position] == '.'))
+        while (_position < _input.Length && (char.IsDigit(_input[_position]) ||
+                                             (isHex && char.IsAsciiHexDigit(_input[_position])) ||
+                                             (!isHex && _input[_position] == '.')))
         {
             sb.Append(_input[_position]);
             _position++;
@@ -149,10 +164,16 @@ internal class FilterTokenizer
             
             _tokens.Add(new Token(TokenType.String, sb.ToString(), start));
         }
-        else // Check for type suffix (L, D, M, F)
-        if (_position < _input.Length && "LDMFlmdf".Contains(_input[_position]))
+        else // Check for type suffix (U, L, D, M, F)
+        if (_position < _input.Length && "ULDMFulmdf".Contains(_input[_position]))
         {
+            sb.Append(_input[_position]);
             _position++;
+            if (_position < _input.Length && "ULul".Contains(_input[_position]))
+            {
+                sb.Append(_input[_position]);
+                _position++;
+            }
         }
 
         _tokens.Add(new Token(TokenType.Number, sb.ToString(), start));

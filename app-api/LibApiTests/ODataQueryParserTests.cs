@@ -1,5 +1,6 @@
 using LibElectronAppApi.OData;
 using LibElectronAppApi.OData.FilterExpressions;
+using LibElectronAppApi.OData.FilterExpressions.Operators;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -8,8 +9,57 @@ namespace LibApiTests;
 [TestFixture]
 public class ODataQueryParserTests
 {
+    [TestCase("$filter=val eq 1L", typeof(long), 1L)]
+    [TestCase("$filter=val eq 1l", typeof(long), 1L)]
+    [TestCase("$filter=val eq 1U", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1u", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1ul", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1lu", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1UL", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1LU", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1Ul", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1Lu", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1uL", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1lU", typeof(ulong), 1U)]
+    [TestCase("$filter=val eq 1.0f", typeof(float), 1.0F)]
+    [TestCase("$filter=val eq 1.0F", typeof(float), 1.0F)]
+    [TestCase("$filter=val eq 1.0d", typeof(double), 1.0D)]
+    [TestCase("$filter=val eq -1.000001d", typeof(double), -1.000001D)]
+    [TestCase("$filter=val eq 1.24D", typeof(double), 1.24D)]
+    [TestCase("$filter=val eq 1.0m", typeof(decimal), "1.0")]
+    [TestCase("$filter=val eq 1.42M", typeof(decimal), "1.42")]
+    [TestCase("$filter=val eq -1.42M", typeof(decimal), "-1.42")]
+    [TestCase("$filter=val eq 0xF1", typeof(int), 0xF1)]
+    [TestCase("$filter=val eq 0xf1", typeof(int), 0xF1)]
+    [TestCase("$filter=val eq 0XF1", typeof(int), 0xF1)]
+    [TestCase("$filter=val eq 0Xf1", typeof(int), 0xF1)]
+    [TestCase("$filter=val eq 0xFFFFFFFF", typeof(int), -1)]
+    [TestCase("$filter=val eq 0x7FFFFFFF", typeof(int), int.MaxValue)]
+    [TestCase("$filter=val eq 0xFFFFFFFFFFFFFFFF", typeof(long), -1L)]
+    [TestCase("$filter=val eq 0xFFFFFFFFFFFFFFFFU", typeof(ulong), 0xFFFFFFFFFFFFFFFFU)]
+    [TestCase("$filter=val eq -2147483648", typeof(int), int.MinValue)]
+    [TestCase("$filter=val eq 2147483647", typeof(int), int.MaxValue)]
+    [TestCase("$filter=val eq 2147483648", typeof(long), 2147483648)]
+    [TestCase("$filter=val eq -9223372036854775808", typeof(long), long.MinValue)]
+    [TestCase("$filter=val eq 9223372036854775807", typeof(long), long.MaxValue)]
+    public void Parse_WhenFilterContainsNumericLiteral_ProducesCorrectNumericInstance(string queryString, Type expectedType, object expectedValue)
+    {
+        if (expectedType == typeof(decimal)) expectedValue = decimal.Parse((string)expectedValue);
+        
+        var actual = ODataQueryParser.Parse(queryString);
+        
+        Assert.That(actual, Is.Not.Null);
+        Assert.That(actual.Filter, Is.Not.Null);
+        Assert.That(actual.Filter, Is.TypeOf<BinaryExpression>());
+        Assert.That(actual.Filter.As<BinaryExpression>().Right, Is.TypeOf<LiteralExpression>());
+        Assert.That(actual.Filter.As<BinaryExpression>().Right.As<LiteralExpression>().Type, Is.EqualTo(LiteralType.Number));
+        Assert.That(actual.Filter.As<BinaryExpression>().Right.As<LiteralExpression>().Value, Is.Not.Null);
+        Assert.That(actual.Filter.As<BinaryExpression>().Right.As<LiteralExpression>().Value, Is.TypeOf(expectedType));
+        Assert.That(actual.Filter.As<BinaryExpression>().Right.As<LiteralExpression>().Value, Is.EqualTo(expectedValue));
+    }
+        
     [TestCaseSource(nameof(GetTestCases))]
-    public void ParseFromUri_WhenInvoked_CorrectlyParsesQueryString(string queryString, ODataQueryOptions expected)
+    public void Parse_WhenInvoked_CorrectlyParsesQueryString(string queryString, ODataQueryOptions expected)
     { 
         var actual = ODataQueryParser.Parse(queryString);
         
