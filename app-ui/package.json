@@ -16,28 +16,28 @@
     "buildlinux-arm64": "npm run buildui && npm run buildapi -- --runtime linux-arm64 && npm run buildelectron -- -c builder-config-arm64.json"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.9.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
     "@microsoft/signalr": "^9.0.6",
     "tsyringe": "^4.10.0",
     "reflect-metadata": "^0.2.2",
-    "@reduxjs/toolkit": "^2.9.0",
+    "@reduxjs/toolkit": "^2.9.2",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
     "lucide-react": "^0.511.0",
-    "@mui/material": "^7.3.2",
+    "@mui/material": "^7.3.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.5",
-    "@mui/icons-material": "^7.3.2",
-    "@mui/x-data-grid": "^8.11.2",
-    "@mui/x-data-grid-generator": "^8.11.2"
+    "@mui/icons-material": "^7.3.4",
+    "@mui/x-data-grid": "^8.15.0",
+    "@mui/x-data-grid-generator": "^8.15.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
-    "@types/react": "^18.3.23",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@types/react-router-dom": "^5.3.3",
     "typescript": "^5.8.3",
 
