@@ -8,8 +8,6 @@ public static class ContainerRegistration
     {
         var builder = new ContainerBuilder();
         builder.RegisterModule<LibElectronAppApi.ContainerModule>();
-        builder.RegisterModule<LibSqlite3Orm.ContainerModule>();
-        builder.RegisterType<DemoContext>().SingleInstance();
         return builder.Build();
     }
 }

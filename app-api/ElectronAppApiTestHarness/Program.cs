@@ -5,6 +5,8 @@ using System.Diagnostics;
 using Autofac;
 using ElectronAppApiTestHarness;
 using LibElectronAppApi.Abstract;
+using LibElectronAppApi.Database;
+using LibElectronAppApi.Database.Models;
 using LibSqlite3Orm;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
@@ -35,7 +37,7 @@ try
         };
 
         var dbFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-            "test.sqlite");
+            "music-man.sqlite");
         
         using (var connection = container.Resolve<Func<ISqliteConnection>>().Invoke())
         {
@@ -43,16 +45,19 @@ try
             
             bool dbCreated = false;
 
-            using (var dbManager = container.Resolve<ISqliteObjectRelationalMapperDatabaseManager<DemoContext>>())
+            using (var dbManager = container.Resolve<ISqliteObjectRelationalMapperDatabaseManager<MusicManagerDbContext>>())
             {
                 dbManager.UseConnection(connection);
-                
+
+                var dbExists = fileOps.FileExists(dbFilename);
                 connection.OpenReadWrite(dbFilename, false);
                 //dbManager.DeleteDatabase();
+                //dbExists = false;
 
-                if (!fileOps.FileExists(dbFilename))
+                if (!dbExists)
                 {
-                    connection.OpenReadWrite(dbFilename, false);
+                    if (!connection.Connected)
+                        connection.OpenReadWrite(dbFilename, false);
                     dbManager.CreateDatabase();
                     dbCreated = true;   
                 }
@@ -83,7 +88,7 @@ try
                 return stopwatch.Elapsed;
             }
 
-            using var orm = container.Resolve<ISqliteObjectRelationalMapper<DemoContext>>();
+            using var orm = container.Resolve<ISqliteObjectRelationalMapper<MusicManagerDbContext>>();
             orm.UseConnection(connection);
 
             if (dbCreated)
@@ -94,70 +99,36 @@ try
                     orm.BeginTransaction();
                     try
                     {
-                        var random = new Random(Environment.TickCount);
-
-                        // Seed the demo data
-                        var entities = new List<DemoEntity>();
-                        for (var i = 1; i <= 100; i++)
+                        // Seed the default data
+                        var genres = new List<Genre>();
+                        genres.Add(new Genre { Name = "Unspecified"});
+                        genres.Add(new Genre { Name = "Heavy Metal"});
+                        orm.InsertMany(genres);
+                        
+                        var artists = new List<Artist>();
+                        artists.Add(new Artist { Name = "Unknown"});
+                        artists.Add(new Artist { Name = "Various"});
+                        artists.Add(new Artist { Name = "Iron Maiden"});
+                        orm.InsertMany(artists);
+                        
+                        var albums = new List<Album>();
+                        albums.Add(new Album
                         {
-                            var isEven = i % 2 == 0;
-                            var isSixth = i % 6 == 0;
-                            var isEighth = i % 8 == 0;
-                            var entity = new DemoEntity
-                            {
-                                EnumValue = isEven ? Entitykind.Kind1 : Entitykind.Kind2,
-                                StringValue = $"This is string value {i}", BoolValue = isSixth,
-                                LongValue = long.MinValue,
-                                ULongValue = isEighth ? null : ulong.MaxValue, GuidValue = Guid.NewGuid(),
-                                Int128Value = Int128.MinValue, UInt128Value = UInt128.MaxValue,
-                                DateTimeOffsetValue = DateTimeOffset.Now,
-                                DateOnlyValue = DateOnly.FromDateTime(DateTime.Today), DateTimeValue = DateTime.Now,
-                                DecimalValue = Decimal.MaxValue, DoubleValue = double.MinValue,
-                                TimeOnlyValue = TimeOnly.FromDateTime(DateTime.Now),
-                                TimeSpanValue = isEighth ? null : TimeSpan.FromTicks(Environment.TickCount),
-                                BlobValue = GenerateRandomBlob()
-                            };
-
-                            byte[] GenerateRandomBlob()
-                            {
-                                var len = random.Next(0, 4096);
-                                if (len == 0) return null;
-                                var buff = new byte[len];
-                                random.NextBytes(buff);
-                                return buff;
-                            }
-
-                            entities.Add(entity);
-                        }
-
-                        totalRecordCount += orm.InsertMany(entities);
-
-                        var tags = new List<CustomTag>();
-                        for (var i = 1; i <= 25; i++)
+                            Name = "Iron Maiden", ArtistId = artists[2].Id,
+                            ReleaseDate = DateOnly.FromDateTime(new DateTime(1980, 4, 11))
+                        });
+                        orm.InsertMany(albums);
+                        
+                        var tracks = new List<Track>();
+                        tracks.Add(new Track
                         {
-                            var tag = new CustomTag { TagValue = $"This is tag text {i}" };
-                            tags.Add(tag);
-                        }
-
-                        totalRecordCount += orm.InsertMany(tags);
-
-                        var links = new List<CustomTagLink>();
-                        foreach (var entity in entities)
-                        {
-                            var tagIds = new HashSet<long>();
-                            var count = random.Next(0, 15);
-                            for (var i = 0; i < count; i++)
-                            {
-                                var index = random.Next(0, tags.Count - 1);
-                                if (tagIds.Add(index))
-                                {
-                                    var link = new CustomTagLink { EntityId = entity.Id, TagId = tags[index].Id };
-                                    links.Add(link);
-                                }
-                            }
-                        }
-
-                        totalRecordCount += orm.InsertMany(links);
+                            Name = "Iron Maiden", GenreId = genres[1].Id, ArtistId = artists[2].Id, 
+                            AlbumId = albums[0].Id, TrackNumber = 8, Rating = 4.2f,
+                            Duration = TimeSpan.FromMinutes(3.717),
+                            DateAdded = new DateTimeOffset(DateTime.Now),
+                            Filename = "/path/to/iron maiden/iron maiden/iron maiden.mp3"
+                        });
+                        orm.InsertMany(tracks);
 
                         orm.CommitTransaction();
                     }
@@ -173,126 +144,11 @@ try
                     $"Seeded {totalRecordCount} record(s) in {creationTime.TotalSeconds} second(s)");
             }
 
-            var dumpFilename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                "test-sqlite-record-dump.txt");
-            ConsoleLogger.WriteLine(ConsoleColor.Green, $"Creating dump file at: {dumpFilename}");
-            
-            var elapsedOverall = ExecuteTimed(() =>
+            var recs = orm.Get<Track>(true).Where(x => x.Artist.Value.Name == "Iron Maiden").AsEnumerable();
+            foreach (var rec in recs)
             {
-                using (var stream = fileOps.CreateFileStream(dumpFilename, FileMode.Create))
-                {
-                    using (var writer = new StreamWriter(stream))
-                    {
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        writer.WriteLine("DUMPING ALL CUSTOM TAG ENTITIES");
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        sqlStatementCount = 0;
-                        var recCnt = 0;
-                        var elapsedStep = ExecuteTimed(() =>
-                        {
-                            var tagRecords = orm.Get<CustomTag>().AsEnumerable();
-                            foreach (var record in tagRecords)
-                            {
-                                recCnt++;
-                                writer.WriteLine(record.ToString());
-                            }
-                        });
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        ConsoleLogger.WriteLine(ConsoleColor.Green,
-                            $"Read {recCnt} {nameof(CustomTag)} record(s), executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
-
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        writer.WriteLine("DUMPING ALL (MAIN) ENTITIES - WITHOUT NAVIGATION PROPS");
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        sqlStatementCount = 0;
-                        recCnt = 0;
-                        elapsedStep = ExecuteTimed(() =>
-                        {
-                            var entityRecords = orm.Get<DemoEntity>(recursiveLoad: false).AsEnumerable();
-                            foreach (var record in entityRecords)
-                            {
-                                recCnt++;
-                                writer.WriteLine(record.ToString());
-                            }
-                        });
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        ConsoleLogger.WriteLine(ConsoleColor.Green,
-                            $"Read {recCnt} {nameof(DemoEntity)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
-
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        writer.WriteLine("DUMPING ALL CUSTOM TAG LINK ENTITIES - WITHOUT NAVIGATION PROPS");
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        sqlStatementCount = 0;
-                        recCnt = 0;
-                        elapsedStep = ExecuteTimed(() =>
-                        {
-                            var linkRecords = orm.Get<CustomTagLink>(recursiveLoad: false).AsEnumerable();
-                            foreach (var record in linkRecords)
-                            {
-                                recCnt++;
-                                writer.WriteLine(record.ToString());
-                            }
-                        });
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        ConsoleLogger.WriteLine(ConsoleColor.Green,
-                            $"Read {recCnt} {nameof(CustomTagLink)} record(s) without navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
-
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        writer.WriteLine("DUMPING ALL (MAIN) ENTITIES - *WITH* NAVIGATION PROPS");
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        sqlStatementCount = 0;
-                        recCnt = 0;
-                        elapsedStep = ExecuteTimed(() =>
-                        {
-                            var entityRecords = orm.Get<DemoEntity>(recursiveLoad: true).AsEnumerable();
-                            foreach (var record in entityRecords)
-                            {
-                                recCnt++;
-                                writer.WriteLine(record.ToString());
-                            }
-                        });
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        ConsoleLogger.WriteLine(ConsoleColor.Green,
-                            $"Read {recCnt} {nameof(DemoEntity)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
-
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        writer.WriteLine("DUMPING ALL CUSTOM TAG LINK ENTITIES - *WITH* NAVIGATION PROPS");
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        sqlStatementCount = 0;
-                        recCnt = 0;
-                        elapsedStep = ExecuteTimed(() =>
-                        {
-                            var linkRecords = orm.Get<CustomTagLink>(recursiveLoad: true).AsEnumerable();
-                            foreach (var record in linkRecords)
-                            {
-                                recCnt++;
-                                writer.WriteLine(record.ToString());
-                            }
-                        });
-                        writer.WriteLine(
-                            "--------------------------------------------------------------------------------");
-                        ConsoleLogger.WriteLine(ConsoleColor.Green,
-                            $"Read {recCnt} {nameof(CustomTagLink)} record(s) with navigation props, executing {sqlStatementCount} SQL queries in {elapsedStep.TotalSeconds} second(s)");
-                    }
-                }
-            });
-
-            ConsoleLogger.WriteLine(ConsoleColor.Green,
-                $"Created dump file, executing {sqlStatementCountTotal} total SQL queries in {elapsedOverall.TotalSeconds} second(s)");
+                Console.WriteLine(rec.Filename);
+            }
         }
     }
 }

@@ -13,7 +13,6 @@ builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(contBldr =>
 {
     contBldr.RegisterModule<ContainerModule>();
-    contBldr.RegisterModule<LibSqlite3Orm.ContainerModule>();
     contBldr.RegisterType<ApiAppCore>().As<IApiAppCore>().SingleInstance();
 });
 
