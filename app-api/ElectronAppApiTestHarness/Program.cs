@@ -122,7 +122,7 @@ try
                         var tracks = new List<Track>();
                         tracks.Add(new Track
                         {
-                            Name = "Iron Maiden", GenreId = genres[1].Id, ArtistId = artists[2].Id, 
+                            Name = "Iron Maiden", GenreId = null, ArtistId = artists[2].Id, 
                             AlbumId = albums[0].Id, TrackNumber = 8, Rating = 4.2f,
                             Duration = TimeSpan.FromMinutes(3.717),
                             DateAdded = new DateTimeOffset(DateTime.Now),
@@ -148,6 +148,7 @@ try
             foreach (var rec in recs)
             {
                 Console.WriteLine(rec.Filename);
+                Console.WriteLine(rec.Genre.Value?.Name ?? "Not Set");
             }
         }
     }

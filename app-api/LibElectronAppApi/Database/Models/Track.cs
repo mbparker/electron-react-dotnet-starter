@@ -5,7 +5,7 @@ namespace LibElectronAppApi.Database.Models;
 
 public class Track : NamedEntity
 {
-    public long GenreId { get; set; }
+    public long? GenreId { get; set; }
     public long ArtistId { get; set; }
     public long AlbumId { get; set; }
     public float Rating { get; set; }

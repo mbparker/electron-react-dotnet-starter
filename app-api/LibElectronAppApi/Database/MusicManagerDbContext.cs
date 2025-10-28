@@ -40,7 +40,7 @@ public class MusicManagerDbContext : SqliteOrmDatabaseContext
         var trackTable = builder.HasTable<Track>();
         trackTable.WithPrimaryKey(x => x.Id).IsAutoIncrement();
         trackTable.WithColumn(x => x.Name).IsNotNull().UsingCollation();
-        trackTable.WithColumn(x => x.GenreId).IsNotNull();
+        trackTable.WithColumn(x => x.GenreId);
         trackTable.WithColumn(x => x.ArtistId).IsNotNull();
         trackTable.WithColumn(x => x.AlbumId).IsNotNull();
         trackTable.WithColumn(x => x.DateAdded).IsNotNull();
@@ -53,7 +53,8 @@ public class MusicManagerDbContext : SqliteOrmDatabaseContext
             .References<Genre>(x => x.Id)
             .HasOne(x => x.Genre)
             .OnDelete(SqliteForeignKeyAction.SetNull)
-            .OnUpdate(SqliteForeignKeyAction.Cascade);
+            .OnUpdate(SqliteForeignKeyAction.Cascade)
+            .IsOptional();
         trackTable.WithForeignKey(x => x.ArtistId)
             .References<Artist>(x => x.Id)
             .HasOne(x => x.Artist)
