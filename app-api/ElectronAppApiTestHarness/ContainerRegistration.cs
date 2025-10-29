@@ -7,6 +7,7 @@ public static class ContainerRegistration
     public static IContainer RegisterDependencies()
     {
         var builder = new ContainerBuilder();
+        builder.RegisterModule<LibSqlite3Orm.ContainerModule>();
         builder.RegisterModule<LibElectronAppApi.ContainerModule>();
         return builder.Build();
     }

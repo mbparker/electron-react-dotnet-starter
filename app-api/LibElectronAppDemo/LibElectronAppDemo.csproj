@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latestmajor</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\01.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\02.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\03.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\04.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\05.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\06.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\07.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\08.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\09.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\10.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\11.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\12.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\13.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\14.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\15.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\16.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\covers\17.png" />
+      <EmbeddedResource Include="Resources\MusicManagerData\discography.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Autofac" Version="8.4.0" />
+      <PackageReference Include="LibSqlite3Orm" Version="1.4.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    </ItemGroup>
+
+</Project>

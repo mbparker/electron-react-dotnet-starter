@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace LibElectronAppApi.Database.Models;
+namespace LibElectronAppDemo.Database.Models;
 
 public class NamedEntityWithImage : NamedEntity
 {

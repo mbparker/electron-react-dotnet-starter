@@ -1,17 +1,21 @@
 using LibElectronAppApi.Abstract;
 using LibElectronAppApi.Models;
+using LibElectronAppDemo.Abstract;
 
 namespace LibElectronAppApi.Concrete;
 
 public class AppCore : IAppCore
 {
     private readonly IBackgroundTaskManager backgroundTaskManager;
+    private readonly IDemoProvider demoProvider;
     private bool uiClosing;
     private bool initialized;
+    private string dbFilename;
 
-    public AppCore(IBackgroundTaskManager backgroundTaskManager)
+    public AppCore(IBackgroundTaskManager backgroundTaskManager, IDemoProvider demoProvider)
     {
         this.backgroundTaskManager = backgroundTaskManager;
+        this.demoProvider = demoProvider;
         HookEvents();
     }
 
@@ -49,6 +53,11 @@ public class AppCore : IAppCore
     public void CancelInteractiveTask(Guid taskId)
     {
         backgroundTaskManager.GetById(taskId)?.Cancel();
+    }
+
+    public void ReCreateDemoDatabase()
+    {
+        dbFilename = demoProvider.CreateDemoDb();
     }
     
     private void HookEvents()

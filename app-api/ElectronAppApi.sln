@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{80AD6BC8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibApiTests", "LibApiTests\LibApiTests.csproj", "{8B199636-1133-4B40-A97F-F63CBC09A184}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibElectronAppDemo", "LibElectronAppDemo\LibElectronAppDemo.csproj", "{0BD378F4-4D50-4800-887A-8790D775FD00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -38,6 +40,10 @@ Global
 		{8B199636-1133-4B40-A97F-F63CBC09A184}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8B199636-1133-4B40-A97F-F63CBC09A184}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8B199636-1133-4B40-A97F-F63CBC09A184}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BD378F4-4D50-4800-887A-8790D775FD00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BD378F4-4D50-4800-887A-8790D775FD00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BD378F4-4D50-4800-887A-8790D775FD00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BD378F4-4D50-4800-887A-8790D775FD00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

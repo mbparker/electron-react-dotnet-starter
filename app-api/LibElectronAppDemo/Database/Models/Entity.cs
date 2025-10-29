@@ -1,4 +1,4 @@
-namespace LibElectronAppApi.Database.Models;
+namespace LibElectronAppDemo.Database.Models;
 
 public class Entity
 {

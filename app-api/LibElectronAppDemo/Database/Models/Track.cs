@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
 
-namespace LibElectronAppApi.Database.Models;
+namespace LibElectronAppDemo.Database.Models;
 
 public class Track : NamedEntity
 {

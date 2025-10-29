@@ -1,8 +1,8 @@
-using LibElectronAppApi.Database.Models;
+using LibElectronAppDemo.Database.Models;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Types.Orm;
 
-namespace LibElectronAppApi.Database;
+namespace LibElectronAppDemo.Database;
 
 public class MusicManagerDbContext : SqliteOrmDatabaseContext
 {

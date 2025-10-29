@@ -1,0 +1,755 @@
+{
+  "artist": "Iron Maiden",
+  "studio_albums": [
+    {
+      "album": "Iron Maiden",
+      "release_date": "1980-04-14",
+      "tracks": [
+        {
+          "title": "Prowler",
+          "duration_ms": 236000
+        },
+        {
+          "title": "Remember Tomorrow",
+          "duration_ms": 328000
+        },
+        {
+          "title": "Running Free",
+          "duration_ms": 199000
+        },
+        {
+          "title": "Phantom of the Opera",
+          "duration_ms": 427000
+        },
+        {
+          "title": "Transylvania",
+          "duration_ms": 251000
+        },
+        {
+          "title": "Strange World",
+          "duration_ms": 334000
+        },
+        {
+          "title": "Charlotte the Harlot",
+          "duration_ms": 253000
+        },
+        {
+          "title": "Iron Maiden",
+          "duration_ms": 216000
+        }
+      ]
+    },
+    {
+      "album": "Killers",
+      "release_date": "1981-02-02",
+      "tracks": [
+        {
+          "title": "The Ides of March",
+          "duration_ms": 106000
+        },
+        {
+          "title": "Wrathchild",
+          "duration_ms": 174000
+        },
+        {
+          "title": "Murders in the Rue Morgue",
+          "duration_ms": 258000
+        },
+        {
+          "title": "Another Life",
+          "duration_ms": 203000
+        },
+        {
+          "title": "Genghis Khan",
+          "duration_ms": 187000
+        },
+        {
+          "title": "Innocent Exile",
+          "duration_ms": 233000
+        },
+        {
+          "title": "Killers",
+          "duration_ms": 301000
+        },
+        {
+          "title": "Prodigal Son",
+          "duration_ms": 367000
+        },
+        {
+          "title": "Purgatory",
+          "duration_ms": 200000
+        },
+        {
+          "title": "Drifter",
+          "duration_ms": 289000
+        }
+      ]
+    },
+    {
+      "album": "The Number of the Beast",
+      "release_date": "1982-03-22",
+      "tracks": [
+        {
+          "title": "Invaders",
+          "duration_ms": 203000
+        },
+        {
+          "title": "Children of the Damned",
+          "duration_ms": 279000
+        },
+        {
+          "title": "The Prisoner",
+          "duration_ms": 342000
+        },
+        {
+          "title": "22 Acacia Avenue",
+          "duration_ms": 396000
+        },
+        {
+          "title": "The Number of the Beast",
+          "duration_ms": 290000
+        },
+        {
+          "title": "Run to the Hills",
+          "duration_ms": 228000
+        },
+        {
+          "title": "Gangland",
+          "duration_ms": 227000
+        },
+        {
+          "title": "Hallowed Be Thy Name",
+          "duration_ms": 431000
+        }
+      ]
+    },
+    {
+      "album": "Piece of Mind",
+      "release_date": "1983-05-16",
+      "tracks": [
+        {
+          "title": "Where Eagles Dare",
+          "duration_ms": 370000
+        },
+        {
+          "title": "Revelations",
+          "duration_ms": 408000
+        },
+        {
+          "title": "Flight of Icarus",
+          "duration_ms": 231000
+        },
+        {
+          "title": "Die With Your Boots On",
+          "duration_ms": 325000
+        },
+        {
+          "title": "The Trooper",
+          "duration_ms": 252000
+        },
+        {
+          "title": "Still Life",
+          "duration_ms": 294000
+        },
+        {
+          "title": "Quest for Fire",
+          "duration_ms": 221000
+        },
+        {
+          "title": "Sun and Steel",
+          "duration_ms": 207000
+        },
+        {
+          "title": "To Tame a Land",
+          "duration_ms": 447000
+        }
+      ]
+    },
+    {
+      "album": "Powerslave",
+      "release_date": "1984-09-03",
+      "tracks": [
+        {
+          "title": "Aces High",
+          "duration_ms": 271000
+        },
+        {
+          "title": "2 Minutes to Midnight",
+          "duration_ms": 360000
+        },
+        {
+          "title": "Losfer Words (Big 'Orra)",
+          "duration_ms": 256000
+        },
+        {
+          "title": "Flash of the Blade",
+          "duration_ms": 242000
+        },
+        {
+          "title": "The Duellists",
+          "duration_ms": 366000
+        },
+        {
+          "title": "Back in the Village",
+          "duration_ms": 321000
+        },
+        {
+          "title": "Powerslave",
+          "duration_ms": 427000
+        },
+        {
+          "title": "Rime of the Ancient Mariner",
+          "duration_ms": 813000
+        }
+      ]
+    },
+    {
+      "album": "Somewhere in Time",
+      "release_date": "1986-09-29",
+      "tracks": [
+        {
+          "title": "Caught Somewhere in Time",
+          "duration_ms": 446000
+        },
+        {
+          "title": "Wasted Years",
+          "duration_ms": 307000
+        },
+        {
+          "title": "Sea of Madness",
+          "duration_ms": 341000
+        },
+        {
+          "title": "Heaven Can Wait",
+          "duration_ms": 441000
+        },
+        {
+          "title": "The Loneliness of the Long Distance Runner",
+          "duration_ms": 391000
+        },
+        {
+          "title": "Stranger in a Strange Land",
+          "duration_ms": 344000
+        },
+        {
+          "title": "Deja-Vu",
+          "duration_ms": 256000
+        },
+        {
+          "title": "Alexander the Great",
+          "duration_ms": 515000
+        }
+      ]
+    },
+    {
+      "album": "Seventh Son of a Seventh Son",
+      "release_date": "1988-04-11",
+      "tracks": [
+        {
+          "title": "Moonchild",
+          "duration_ms": 341000
+        },
+        {
+          "title": "Infinite Dreams",
+          "duration_ms": 369000
+        },
+        {
+          "title": "Can I Play with Madness",
+          "duration_ms": 211000
+        },
+        {
+          "title": "The Evil That Men Do",
+          "duration_ms": 274000
+        },
+        {
+          "title": "Seventh Son of a Seventh Son",
+          "duration_ms": 588000
+        },
+        {
+          "title": "The Prophecy",
+          "duration_ms": 305000
+        },
+        {
+          "title": "The Clairvoyant",
+          "duration_ms": 269000
+        },
+        {
+          "title": "Only the Good Die Young",
+          "duration_ms": 281000
+        }
+      ]
+    },
+    {
+      "album": "No Prayer for the Dying",
+      "release_date": "1990-10-01",
+      "tracks": [
+        {
+          "title": "Tailgunner",
+          "duration_ms": 254000
+        },
+        {
+          "title": "Holy Smoke",
+          "duration_ms": 229000
+        },
+        {
+          "title": "No Prayer for the Dying",
+          "duration_ms": 263000
+        },
+        {
+          "title": "Public Enema Number One",
+          "duration_ms": 244000
+        },
+        {
+          "title": "Fates Warning",
+          "duration_ms": 246000
+        },
+        {
+          "title": "The Assassin",
+          "duration_ms": 258000
+        },
+        {
+          "title": "Run Silent Run Deep",
+          "duration_ms": 274000
+        },
+        {
+          "title": "Hooks in You",
+          "duration_ms": 247000
+        },
+        {
+          "title": "Bring Your Daughter... to the Slaughter",
+          "duration_ms": 284000
+        },
+        {
+          "title": "Mother Russia",
+          "duration_ms": 332000
+        }
+      ]
+    },
+    {
+      "album": "Fear of the Dark",
+      "release_date": "1992-05-11",
+      "tracks": [
+        {
+          "title": "Be Quick or Be Dead",
+          "duration_ms": 204000
+        },
+        {
+          "title": "From Here to Eternity",
+          "duration_ms": 221000
+        },
+        {
+          "title": "Afraid to Shoot Strangers",
+          "duration_ms": 424000
+        },
+        {
+          "title": "Fear Is the Key",
+          "duration_ms": 334000
+        },
+        {
+          "title": "Childhood's End",
+          "duration_ms": 269000
+        },
+        {
+          "title": "Wasting Love",
+          "duration_ms": 351000
+        },
+        {
+          "title": "The Fugitive",
+          "duration_ms": 291000
+        },
+        {
+          "title": "Chains of Misery",
+          "duration_ms": 216000
+        },
+        {
+          "title": "The Apparition",
+          "duration_ms": 235000
+        },
+        {
+          "title": "Judas Be My Guide",
+          "duration_ms": 191000
+        },
+        {
+          "title": "Weekend Warrior",
+          "duration_ms": 332000
+        },
+        {
+          "title": "Fear of the Dark",
+          "duration_ms": 437000
+        }
+      ]
+    },
+    {
+      "album": "The X Factor",
+      "release_date": "1995-10-02",
+      "tracks": [
+        {
+          "title": "Sign of the Cross",
+          "duration_ms": 671000
+        },
+        {
+          "title": "Lord of the Flies",
+          "duration_ms": 305000
+        },
+        {
+          "title": "Man on the Edge",
+          "duration_ms": 250000
+        },
+        {
+          "title": "Fortunes of War",
+          "duration_ms": 444000
+        },
+        {
+          "title": "Look for the Truth",
+          "duration_ms": 310000
+        },
+        {
+          "title": "The Aftermath",
+          "duration_ms": 383000
+        },
+        {
+          "title": "Judgement of Heaven",
+          "duration_ms": 308000
+        },
+        {
+          "title": "Blood on the World's Hands",
+          "duration_ms": 356000
+        },
+        {
+          "title": "The Edge of Darkness",
+          "duration_ms": 401000
+        },
+        {
+          "title": "2 A.M.",
+          "duration_ms": 337000
+        },
+        {
+          "title": "The Unbeliever",
+          "duration_ms": 488000
+        }
+      ]
+    },
+    {
+      "album": "Virtual XI",
+      "release_date": "1998-03-23",
+      "tracks": [
+        {
+          "title": "Futureal",
+          "duration_ms": 176000
+        },
+        {
+          "title": "The Angel and the Gambler",
+          "duration_ms": 592000
+        },
+        {
+          "title": "Lightning Strikes Twice",
+          "duration_ms": 290000
+        },
+        {
+          "title": "The Clansman",
+          "duration_ms": 539000
+        },
+        {
+          "title": "When Two Worlds Collide",
+          "duration_ms": 378000
+        },
+        {
+          "title": "The Educated Fool",
+          "duration_ms": 406000
+        },
+        {
+          "title": "Don't Look to the Eyes of a Stranger",
+          "duration_ms": 482000
+        },
+        {
+          "title": "Como Estais Amigos",
+          "duration_ms": 329000
+        }
+      ]
+    },
+    {
+      "album": "Brave New World",
+      "release_date": "2000-05-29",
+      "tracks": [
+        {
+          "title": "The Wicker Man",
+          "duration_ms": 275000
+        },
+        {
+          "title": "Ghost of the Navigator",
+          "duration_ms": 411000
+        },
+        {
+          "title": "Brave New World",
+          "duration_ms": 366000
+        },
+        {
+          "title": "Blood Brothers",
+          "duration_ms": 428000
+        },
+        {
+          "title": "The Mercenary",
+          "duration_ms": 284000
+        },
+        {
+          "title": "Dream of Mirrors",
+          "duration_ms": 562000
+        },
+        {
+          "title": "The Fallen Angel",
+          "duration_ms": 244000
+        },
+        {
+          "title": "The Nomad",
+          "duration_ms": 548000
+        },
+        {
+          "title": "Out of the Silent Planet",
+          "duration_ms": 408000
+        },
+        {
+          "title": "The Thin Line Between Love and Hate",
+          "duration_ms": 503000
+        }
+      ]
+    },
+    {
+      "album": "Dance of Death",
+      "release_date": "2003-09-08",
+      "tracks": [
+        {
+          "title": "Wildest Dreams",
+          "duration_ms": 233000
+        },
+        {
+          "title": "Rainmaker",
+          "duration_ms": 228000
+        },
+        {
+          "title": "No More Lies",
+          "duration_ms": 442000
+        },
+        {
+          "title": "Montsegur",
+          "duration_ms": 352000
+        },
+        {
+          "title": "Dance of Death",
+          "duration_ms": 517000
+        },
+        {
+          "title": "Gates of Tomorrow",
+          "duration_ms": 313000
+        },
+        {
+          "title": "New Frontier",
+          "duration_ms": 304000
+        },
+        {
+          "title": "Paschendale",
+          "duration_ms": 508000
+        },
+        {
+          "title": "Face in the Sand",
+          "duration_ms": 392000
+        },
+        {
+          "title": "Age of Innocence",
+          "duration_ms": 366000
+        },
+        {
+          "title": "Journeyman",
+          "duration_ms": 427000
+        }
+      ]
+    },
+    {
+      "album": "A Matter of Life and Death",
+      "release_date": "2006-08-25",
+      "tracks": [
+        {
+          "title": "Different World",
+          "duration_ms": 265000
+        },
+        {
+          "title": "These Colours Don't Run",
+          "duration_ms": 412000
+        },
+        {
+          "title": "Brighter Than a Thousand Suns",
+          "duration_ms": 529000
+        },
+        {
+          "title": "The Pilgrim",
+          "duration_ms": 308000
+        },
+        {
+          "title": "The Longest Day",
+          "duration_ms": 467000
+        },
+        {
+          "title": "Out of the Shadows",
+          "duration_ms": 337000
+        },
+        {
+          "title": "The Reincarnation of Benjamin Breeg",
+          "duration_ms": 442000
+        },
+        {
+          "title": "For the Greater Good of God",
+          "duration_ms": 561000
+        },
+        {
+          "title": "Lord of Light",
+          "duration_ms": 444000
+        },
+        {
+          "title": "The Legacy",
+          "duration_ms": 561000
+        }
+      ]
+    },
+    {
+      "album": "The Final Frontier",
+      "release_date": "2010-08-13",
+      "tracks": [
+        {
+          "title": "Satellite 15... The Final Frontier",
+          "duration_ms": 523000
+        },
+        {
+          "title": "El Dorado",
+          "duration_ms": 397000
+        },
+        {
+          "title": "Mother of Mercy",
+          "duration_ms": 318000
+        },
+        {
+          "title": "Coming Home",
+          "duration_ms": 339000
+        },
+        {
+          "title": "The Alchemist",
+          "duration_ms": 274000
+        },
+        {
+          "title": "Isle of Avalon",
+          "duration_ms": 549000
+        },
+        {
+          "title": "Starblind",
+          "duration_ms": 477000
+        },
+        {
+          "title": "The Talisman",
+          "duration_ms": 540000
+        },
+        {
+          "title": "The Man Who Would Be King",
+          "duration_ms": 508000
+        },
+        {
+          "title": "When the Wild Wind Blows",
+          "duration_ms": 665000
+        }
+      ]
+    },
+    {
+      "album": "The Book of Souls",
+      "release_date": "2015-09-04",
+      "tracks": [
+        {
+          "title": "If Eternity Should Fail",
+          "duration_ms": 520000
+        },
+        {
+          "title": "Speed of Light",
+          "duration_ms": 268000
+        },
+        {
+          "title": "The Great Unknown",
+          "duration_ms": 401000
+        },
+        {
+          "title": "The Red and the Black",
+          "duration_ms": 817000
+        },
+        {
+          "title": "When the River Runs Deep",
+          "duration_ms": 356000
+        },
+        {
+          "title": "The Book of Souls",
+          "duration_ms": 644000
+        },
+        {
+          "title": "Death or Glory",
+          "duration_ms": 312000
+        },
+        {
+          "title": "Shadows of the Valley",
+          "duration_ms": 447000
+        },
+        {
+          "title": "Tears of a Clown",
+          "duration_ms": 289000
+        },
+        {
+          "title": "The Man of Sorrows",
+          "duration_ms": 406000
+        },
+        {
+          "title": "Empire of the Clouds",
+          "duration_ms": 1092000
+        }
+      ]
+    },
+    {
+      "album": "Senjutsu",
+      "release_date": "2021-09-03",
+      "tracks": [
+        {
+          "title": "Senjutsu",
+          "duration_ms": 482000
+        },
+        {
+          "title": "Stratego",
+          "duration_ms": 297000
+        },
+        {
+          "title": "The Writing on the Wall",
+          "duration_ms": 382000
+        },
+        {
+          "title": "Lost in a Lost World",
+          "duration_ms": 617000
+        },
+        {
+          "title": "Days of Future Past",
+          "duration_ms": 246000
+        },
+        {
+          "title": "The Time Machine",
+          "duration_ms": 428000
+        },
+        {
+          "title": "Darkest Hour",
+          "duration_ms": 467000
+        },
+        {
+          "title": "Death of the Celts",
+          "duration_ms": 629000
+        },
+        {
+          "title": "The Parchment",
+          "duration_ms": 770000
+        },
+        {
+          "title": "Hell on Earth",
+          "duration_ms": 671000
+        }
+      ]
+    }
+  ]
+}

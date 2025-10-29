@@ -14,4 +14,6 @@ public interface IAppCore
     void AppNotify(int eventId, object eventData = null);
     
     void CancelInteractiveTask(Guid taskId);
+
+    void ReCreateDemoDatabase();
 }
