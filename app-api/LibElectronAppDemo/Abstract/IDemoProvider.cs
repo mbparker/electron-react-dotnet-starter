@@ -2,5 +2,5 @@ namespace LibElectronAppDemo.Abstract;
 
 public interface IDemoProvider
 {
-    string CreateDemoDb(string dbFilename = null);
+    string CreateDemoDb(bool dropExisting = false, string dbFilename = null);
 }

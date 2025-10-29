@@ -19,18 +19,26 @@ public class DemoProvider : IDemoProvider
         this.databaseSeeder = databaseSeeder;
     }
 
-    public string CreateDemoDb(string dbFilename = null)
+    public string CreateDemoDb(bool dropExisting = false, string dbFilename = null)
     {
         var dbManager = dbManagerFactory();
         dbFilename ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
             "music-man.sqlite");
         using var connection = connectionFactory();
         dbManager.UseConnection(connection);
+        if (dropExisting)
+        {
+            connection.OpenReadWrite(dbFilename, mustExist: false);
+            dbManager.DeleteDatabase();
+        }
+
         connection.OpenReadWrite(dbFilename, mustExist: false);
-        dbManager.DeleteDatabase();
-        connection.OpenReadWrite(dbFilename, mustExist: false);
-        dbManager.CreateDatabase();
-        databaseSeeder.SeedDatabase(connection);
+        if (!dbManager.IsDatabaseInitialized())
+        {
+            dbManager.CreateDatabase();
+            databaseSeeder.SeedDatabase(connection);
+        }
+
         return dbFilename;
     }
 }
