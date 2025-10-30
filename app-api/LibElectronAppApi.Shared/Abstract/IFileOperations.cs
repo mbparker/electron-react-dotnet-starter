@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace LibElectronAppApi.Abstract;
+namespace LibElectronAppApi.Shared.Abstract;
 
 public interface IFileOperations
 {

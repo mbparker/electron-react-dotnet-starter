@@ -1,3 +1,4 @@
+using LibElectronAppApi.Shared.Abstract;
 using LibElectronAppDemo.Abstract;
 using LibElectronAppDemo.Database;
 using LibElectronAppDemo.Database.Models;
@@ -17,7 +18,7 @@ public class DatabaseSeeder : IDatabaseSeeder
         this.dataExtractor = dataExtractor;    
     }
     
-    public void SeedDatabase(ISqliteConnection connection)
+    public void SeedDatabase(IBackgroundTaskProgressHandler progressHandler, ISqliteConnection connection)
     {
         using var orm = ormFactory();
         orm.UseConnection(connection);

@@ -5,19 +5,12 @@
         <LangVersion>latestmajor</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
-        <Configurations>Release;Debug</Configurations>
-        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="8.4.0" />
-      <PackageReference Include="LibSqlite3Orm" Version="1.4.1" />
+      <PackageReference Include="Magick.NET-Q8-x64" Version="14.9.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\LibElectronAppApi.Shared\LibElectronAppApi.Shared.csproj" />
-      <ProjectReference Include="..\LibElectronAppDemo\LibElectronAppDemo.csproj" />
     </ItemGroup>
 
 </Project>

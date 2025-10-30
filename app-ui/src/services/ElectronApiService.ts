@@ -68,4 +68,11 @@ export class ElectronApiService {
             this.appApi.performReload();
         });
     }
+
+    public async getApiUrl(): Promise<string> {
+        return await new Promise<string>((resolve) => {
+            this.appApi.onGetApiUrl((result: string) => resolve(result));
+            this.appApi.getApiUrl();
+        });
+    }
 }

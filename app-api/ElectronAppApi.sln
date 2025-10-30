@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibApiTests", "LibApiTests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibElectronAppDemo", "LibElectronAppDemo\LibElectronAppDemo.csproj", "{0BD378F4-4D50-4800-887A-8790D775FD00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibElectronAppApi.Shared", "LibElectronAppApi.Shared\LibElectronAppApi.Shared.csproj", "{F4E6224C-096C-4CD9-99C5-7D6273E293A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -44,6 +46,10 @@ Global
 		{0BD378F4-4D50-4800-887A-8790D775FD00}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0BD378F4-4D50-4800-887A-8790D775FD00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0BD378F4-4D50-4800-887A-8790D775FD00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4E6224C-096C-4CD9-99C5-7D6273E293A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4E6224C-096C-4CD9-99C5-7D6273E293A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4E6224C-096C-4CD9-99C5-7D6273E293A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4E6224C-096C-4CD9-99C5-7D6273E293A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

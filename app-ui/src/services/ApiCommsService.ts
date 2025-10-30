@@ -2,12 +2,17 @@ import * as signalR from "@microsoft/signalr"
 import {EventEmitter} from "../utils/EventEmitter";
 import {injectable} from "tsyringe";
 import {Utils} from "../utils/Utils";
+import {ElectronApiService} from "./ElectronApiService";
 
 @injectable()
 export class ApiCommsService {
 
     private hubConnection: signalR.HubConnection = <any>undefined;
     private connected: boolean = false;
+
+    public constructor(
+        private readonly electronApi: ElectronApiService) {
+    }
 
     public OnReconnecting: EventEmitter<Error | undefined> = new EventEmitter<Error | undefined>();
     public OnPingClient: EventEmitter<any> = new EventEmitter<any>();
@@ -19,9 +24,9 @@ export class ApiCommsService {
     }
 
     public async startConnection(): Promise<void> {
-
+        const apiUrl = await this.electronApi.getApiUrl();
         this.hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl('http://localhost:5149/comms')
+            .withUrl(`${apiUrl}/comms`)
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();

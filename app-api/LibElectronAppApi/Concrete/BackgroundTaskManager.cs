@@ -1,5 +1,6 @@
 using LibElectronAppApi.Abstract;
 using LibElectronAppApi.Models;
+using LibElectronAppApi.Shared.Abstract;
 
 namespace LibElectronAppApi.Concrete;
 

@@ -1,3 +1,4 @@
+using LibElectronAppApi.Shared.Abstract;
 using LibElectronAppDemo.Abstract;
 using LibElectronAppDemo.Database;
 using LibSqlite3Orm.Abstract;
@@ -19,11 +20,31 @@ public class DemoProvider : IDemoProvider
         this.databaseSeeder = databaseSeeder;
     }
 
-    public string CreateDemoDb(bool dropExisting = false, string dbFilename = null)
+    public ISqliteConnection TryConnectToDemoDb(string dbFilename = null)
     {
-        var dbManager = dbManagerFactory();
-        dbFilename ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-            "music-man.sqlite");
+        using var dbManager = dbManagerFactory();
+        dbFilename = ResolveDbFilename(dbFilename);
+        var connection = connectionFactory();
+        dbManager.UseConnection(connection);
+        try
+        {
+            connection.OpenReadWrite(dbFilename, mustExist: true);
+            if (dbManager.IsDatabaseInitialized())
+                return connection;
+            connection.Dispose();
+            return null;
+        }
+        catch (Exception)
+        {
+            connection.Dispose();
+            return null;
+        }
+    }
+
+    public void CreateDemoDb(IBackgroundTaskProgressHandler progressHandler, bool dropExisting = false, string dbFilename = null)
+    {
+        using var dbManager = dbManagerFactory();
+        dbFilename = ResolveDbFilename(dbFilename);
         using var connection = connectionFactory();
         dbManager.UseConnection(connection);
         if (dropExisting)
@@ -36,9 +57,13 @@ public class DemoProvider : IDemoProvider
         if (!dbManager.IsDatabaseInitialized())
         {
             dbManager.CreateDatabase();
-            databaseSeeder.SeedDatabase(connection);
+            databaseSeeder.SeedDatabase(progressHandler, connection);
         }
+    }
 
-        return dbFilename;
+    private string ResolveDbFilename(string requestedFilename = null)
+    {
+        return requestedFilename ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+            "music-man.sqlite");        
     }
 }

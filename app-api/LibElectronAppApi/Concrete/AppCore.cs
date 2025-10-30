@@ -1,6 +1,10 @@
 using LibElectronAppApi.Abstract;
 using LibElectronAppApi.Models;
 using LibElectronAppDemo.Abstract;
+using LibElectronAppDemo.Database;
+using LibSqlite3Orm.Abstract;
+using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibElectronAppApi.Concrete;
 
@@ -8,25 +12,38 @@ public class AppCore : IAppCore
 {
     private readonly IBackgroundTaskManager backgroundTaskManager;
     private readonly IDemoProvider demoProvider;
+    private readonly Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory;
+    private ISqliteConnection dbConnection;
+    private ISqliteObjectRelationalMapper<MusicManagerDbContext> orm;
     private bool uiClosing;
     private bool initialized;
-    private string dbFilename;
 
-    public AppCore(IBackgroundTaskManager backgroundTaskManager, IDemoProvider demoProvider)
+    public AppCore(IBackgroundTaskManager backgroundTaskManager, IDemoProvider demoProvider,
+        Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory)
     {
         this.backgroundTaskManager = backgroundTaskManager;
         this.demoProvider = demoProvider;
+        this.ormFactory = ormFactory;
         HookEvents();
     }
 
     public event EventHandler<AppNotificationEventArgs> AppNotification;
     public event EventHandler<TaskProgressEventArgs> TaskProgress;
+
+    public bool IsDbConnected => dbConnection?.Connected ?? false;
     
     public void InitCore()
     {
         if (!initialized && !uiClosing)
         {
             // Do init stuff here
+            dbConnection = demoProvider.TryConnectToDemoDb();
+            if (dbConnection is not null)
+            {
+                orm = ormFactory();
+                orm.UseConnection(dbConnection);
+            }
+
             initialized = true;
             AppNotify(1);
         }
@@ -39,6 +56,8 @@ public class AppCore : IAppCore
             uiClosing = true;
             if (initialized)
             {
+                dbConnection?.Dispose();
+                dbConnection = null;
                 // Do deinit stuff here
                 initialized = false;
             }
@@ -55,9 +74,31 @@ public class AppCore : IAppCore
         backgroundTaskManager.GetById(taskId)?.Cancel();
     }
 
-    public void ReCreateDemoDatabase()
+    public Guid ReCreateDemoDb()
     {
-        dbFilename = demoProvider.CreateDemoDb();
+        return backgroundTaskManager.Create("Recreate Database",
+            ph =>
+            {
+                dbConnection?.Dispose();
+                demoProvider.CreateDemoDb(ph, dropExisting: true);
+                dbConnection =  demoProvider.TryConnectToDemoDb();
+            }).Start().TaskId;
+    }
+    
+    public Guid CreateDemoDbIfNeeded()
+    {
+        return backgroundTaskManager.Create("Ensure Database Created",
+            ph =>
+            {
+                dbConnection?.Dispose();
+                demoProvider.CreateDemoDb(ph);
+                dbConnection =  demoProvider.TryConnectToDemoDb();
+            }).Start().TaskId;
+    }
+
+    public ODataQueryResult<T> GetData<T>(string odataQuery) where T : new()
+    {
+        return IsDbConnected ? orm.ODataQuery<T>(odataQuery) : null;
     }
     
     private void HookEvents()

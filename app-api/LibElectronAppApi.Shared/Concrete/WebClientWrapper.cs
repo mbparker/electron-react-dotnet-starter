@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using LibElectronAppApi.Abstract;
+using LibElectronAppApi.Shared.Abstract;
 using Newtonsoft.Json;
 
-namespace LibElectronAppApi.Concrete;
+namespace LibElectronAppApi.Shared.Concrete;
 
 public class WebClientWrapper : IWebClient
 {

@@ -1,4 +1,4 @@
-namespace LibElectronAppApi.Abstract;
+namespace LibElectronAppApi.Shared.Abstract;
 
 public interface IWebClient : IDisposable
 {

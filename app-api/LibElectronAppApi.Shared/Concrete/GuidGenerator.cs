@@ -1,6 +1,6 @@
-using LibElectronAppApi.Abstract;
+using LibElectronAppApi.Shared.Abstract;
 
-namespace LibElectronAppApi.Concrete;
+namespace LibElectronAppApi.Shared.Concrete;
 
 public class GuidGenerator : IGuidGenerator
 {

@@ -4,14 +4,12 @@ const path = require("path");
 const cProcess = require('child_process').spawn
 const fs = require('fs');
 const os = require('os');
+const net = require('net');
 
 // PROJECT SPECIFIC CONSTANTS
-const APP_API_PORT = 5149;
 const APP_NAME = 'ElectronApp';
 const APP_API_NAME = `${APP_NAME}ApiHost`;
 //
-
-process.env.ASPNETCORE_URLS = `http://localhost:${APP_API_PORT}`;
 
 function getDateString() {
   const date = new Date();
@@ -19,6 +17,53 @@ function getDateString() {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day =`${date.getDate()}`.padStart(2, '0');
   return `${APP_NAME}_App_NodeMain_${year}-${month}-${day}`
+}
+
+async function checkPortAvailability(port) {
+    return new Promise((resolve) => {
+        const server = net.createServer();
+
+        server.once('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(false); // Port is in use
+            } else {
+                // Handle other potential errors if needed
+                resolve(false);
+            }
+        });
+
+        server.once('listening', () => {
+            server.close(() => {
+                resolve(true); // Port is available
+            });
+        });
+
+        server.listen(port);
+    });
+}
+
+async function getAvailablePort() {
+    const startPort = 5000; // Starting port to check from
+    const endPort = 6000;   // Ending port to check up to
+
+    for (let port = startPort; port <= endPort; port++) {
+        const isAvailable = await checkPortAvailability(port);
+        if (isAvailable) {
+            console.debug(`Port ${port} is available.`);
+            return port; // Return the first available port found
+        }
+    }
+    console.error('No available ports found in the specified range.');
+    return null;
+}
+
+async function setServerUrl() {
+    const port = await getAvailablePort();
+    if (!port) {
+        throw new Error('Cannot find a port for the server to run on.');
+    }
+    process.env.ASPNETCORE_URLS = `http://localhost:${port}`;
+    console.info(`Server url set: ${process.env.ASPNETCORE_URLS}`);
 }
 
 let localAppData;
@@ -80,6 +125,10 @@ ipcMain.on('perform-reload', (evt, ...args) => {
 
 ipcMain.on('perform-app-quit', (evt, ...args) => {
   app.quit();
+});
+
+ipcMain.on('get-api-url', (evt, ...args) => {
+    evt.sender.send('get-api-url-result', process.env.ASPNETCORE_URLS);
 });
 
 const menuTemplate = [
@@ -181,15 +230,18 @@ function startApi() {
 
   let binFilePath = path.join(currentApiPath, binaryFile);
   let options = { cwd: currentApiPath };
-  let parameters = [];
+  let parameters = [`--urls "${process.env.ASPNETCORE_URLS}"`];
   console.log(`Launching .NET Backend: ${binFilePath}`);
   try {
     apiProcess = cProcess(binFilePath, parameters, options);
 
     if (apiProcess) {
-      apiProcess.stdout.on('data', (data) => {
-        console.log(`stdout: ${data.toString()}`);
-      });
+        apiProcess.stdout.on('data', (data) => {
+            console.log(`stdout: ${data.toString()}`);
+        });
+        apiProcess.stderr.on('data', (data) => {
+            console.error(`stderr: ${data.toString()}`);
+        });
     } else {
       console.warn('Failed to create API process.');
     }
@@ -199,11 +251,16 @@ function startApi() {
 }
 
 app.on('ready', () => {
-  createSplashWindow();
-  startApi();
-  setTimeout(() => {
-    createWindow();
-  }, 2000);
+    createSplashWindow();
+    setServerUrl().then(() => {
+        startApi();
+        setTimeout(() => {
+            createWindow();
+        }, 2000);
+    }).catch(err => {
+        console.error(err);
+        app.quit();
+    });
 })
 
 app.on('window-all-closed', () => {

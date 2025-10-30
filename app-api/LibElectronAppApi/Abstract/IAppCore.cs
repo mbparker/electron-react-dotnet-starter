@@ -1,4 +1,5 @@
 using LibElectronAppApi.Models;
+using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibElectronAppApi.Abstract;
 
@@ -6,6 +7,8 @@ public interface IAppCore
 {
     event EventHandler<AppNotificationEventArgs> AppNotification;
     event EventHandler<TaskProgressEventArgs> TaskProgress;
+    
+    bool IsDbConnected { get; }
     
     void InitCore();
 
@@ -15,5 +18,9 @@ public interface IAppCore
     
     void CancelInteractiveTask(Guid taskId);
 
-    void ReCreateDemoDatabase();
+    Guid ReCreateDemoDb();
+    
+    Guid CreateDemoDbIfNeeded();
+
+    ODataQueryResult<T> GetData<T>(string odataQuery) where T : new();
 }

@@ -30,18 +30,20 @@ try
     };
         
     var demoProvider = container.Resolve<IDemoProvider>();
-    var dbFilename = demoProvider.CreateDemoDb();
-        
-    using (var connection = container.Resolve<Func<ISqliteConnection>>().Invoke())
+    demoProvider.CreateDemoDb(progressHandler: null);
+    var connection = demoProvider.TryConnectToDemoDb();
+    if (connection is not null)
     {
-        using var orm = container.Resolve<ISqliteObjectRelationalMapper<MusicManagerDbContext>>();
-        orm.UseConnection(connection);
-        connection.OpenReadWrite(dbFilename, true);
-
-        var recs = orm.Get<Track>(true).AsEnumerable();
-        foreach (var rec in recs)
+        using (connection)
         {
-            Console.WriteLine(rec.Filename);
+            using var orm = container.Resolve<ISqliteObjectRelationalMapper<MusicManagerDbContext>>();
+            orm.UseConnection(connection);
+
+            var recs = orm.Get<Track>(true).AsEnumerable();
+            foreach (var rec in recs)
+            {
+                Console.WriteLine(rec.Filename);
+            }            
         }
     }
 }
