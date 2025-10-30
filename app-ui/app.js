@@ -11,6 +11,8 @@ const APP_NAME = 'ElectronApp';
 const APP_API_NAME = `${APP_NAME}ApiHost`;
 //
 
+let apiPort = null;
+
 function getDateString() {
   const date = new Date();
   const year = date.getFullYear();
@@ -57,13 +59,13 @@ async function getAvailablePort() {
     return null;
 }
 
-async function setServerUrl() {
+async function selectApiPort() {
     const port = await getAvailablePort();
     if (!port) {
         throw new Error('Cannot find a port for the server to run on.');
     }
-    process.env.ASPNETCORE_URLS = `http://localhost:${port}`;
-    console.info(`Server url set: ${process.env.ASPNETCORE_URLS}`);
+    apiPort = port;
+    console.info(`Server port selected: ${apiPort}`);
 }
 
 let localAppData;
@@ -127,8 +129,8 @@ ipcMain.on('perform-app-quit', (evt, ...args) => {
   app.quit();
 });
 
-ipcMain.on('get-api-url', (evt, ...args) => {
-    evt.sender.send('get-api-url-result', process.env.ASPNETCORE_URLS);
+ipcMain.on('get-api-port', (evt, ...args) => {
+    evt.sender.send('get-api-port-result', apiPort);
 });
 
 const menuTemplate = [
@@ -230,7 +232,7 @@ function startApi() {
 
   let binFilePath = path.join(currentApiPath, binaryFile);
   let options = { cwd: currentApiPath };
-  let parameters = [`--urls "${process.env.ASPNETCORE_URLS}"`];
+  let parameters = ['--port', apiPort];
   console.log(`Launching .NET Backend: ${binFilePath}`);
   try {
     apiProcess = cProcess(binFilePath, parameters, options);
@@ -252,7 +254,7 @@ function startApi() {
 
 app.on('ready', () => {
     createSplashWindow();
-    setServerUrl().then(() => {
+    selectApiPort().then(() => {
         startApi();
         setTimeout(() => {
             createWindow();

@@ -8,7 +8,8 @@
   "scripts": {
     "buildui": "webpack --mode production",
     "buildelectron": "electron-builder build",
-    "buildapi": "dotnet publish ../app-api/ElectronAppApiHost --self-contained --output ./dist/api",
+    "clean": "node -e \"require('fs').rmSync('./dist/api', { recursive: true, force: true });\"",
+    "buildapi": "npm run clean && dotnet publish ../app-api/ElectronAppApiHost --self-contained --output ./dist/api",
     "buildmac-x64": "npm run buildui && npm run buildapi -- --runtime osx-x64 && npm run buildelectron -- -c builder-config.json -c.mac.identity=null",
     "buildmac-arm64": "npm run buildui && npm run buildapi -- --runtime osx-arm64 && npm run buildelectron -- -c builder-config-arm64.json -c.mac.identity=null",
     "buildwin": "npm run buildui && npm run buildapi -- --runtime win-x64 && npm run buildelectron -- -c builder-config.json",

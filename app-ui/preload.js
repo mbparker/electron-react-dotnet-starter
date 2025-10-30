@@ -13,6 +13,6 @@ contextBridge.exposeInMainWorld('appApi', {
     onShowSaveDialog: (callback) => ipcRenderer.on('show-save-dialog-result', (_event, result) => callback(result)),
     showOpenDialog: (options) => ipcRenderer.send('show-open-dialog', options),
     onShowOpenDialog: (callback) => ipcRenderer.on('show-open-dialog-result', (_event, result) => callback(result)),
-    getApiUrl: () => ipcRenderer.send('get-api-url'),
-    onGetApiUrl: (callback) => ipcRenderer.on('get-api-url-result', (_event, url) => callback(url)),
+    getApiPort: () => ipcRenderer.send('get-api-port'),
+    onGetApiPort: (callback) => ipcRenderer.on('get-api-port-result', (_event, port) => callback(port)),
 })

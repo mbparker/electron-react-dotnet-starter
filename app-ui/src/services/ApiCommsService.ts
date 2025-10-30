@@ -24,9 +24,9 @@ export class ApiCommsService {
     }
 
     public async startConnection(): Promise<void> {
-        const apiUrl = await this.electronApi.getApiUrl();
+        const apiPort = await this.electronApi.getApiPort();
         this.hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl(`${apiUrl}/comms`)
+            .withUrl(`http://localhost:${apiPort}/comms`)
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();

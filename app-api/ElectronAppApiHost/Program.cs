@@ -5,7 +5,24 @@ using ElectronAppApiHost.Abstract;
 using ElectronAppApiHost.Concrete;
 using ElectronAppApiHost.Hubs;
 
+var port = 0;
+if (args.Length == 2 && args[0] == "--port")
+    if (int.TryParse(args[1], out var portValue))
+        port = portValue;
+
+if (port == 0)
+{
+    Console.WriteLine("Invalid port number.");
+    Environment.ExitCode = 1;
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(opt =>
+{
+    opt.ListenLocalhost(port);
+});
 
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 
