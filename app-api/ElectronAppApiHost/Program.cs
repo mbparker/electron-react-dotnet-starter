@@ -12,7 +12,7 @@ if (args.Length == 2 && args[0] == "--port")
 
 if (port == 0)
 {
-    Console.WriteLine("Invalid port number.");
+    Console.Error.WriteLine($"Missing or invalid port number. Arguments passed:\n\t{string.Join(' ', args)}");
     Environment.ExitCode = 1;
     return;
 }

@@ -239,10 +239,10 @@ function startApi() {
 
     if (apiProcess) {
         apiProcess.stdout.on('data', (data) => {
-            console.log(`stdout: ${data.toString()}`);
+            console.log(`<API>\n${data.toString()}</API>`);
         });
         apiProcess.stderr.on('data', (data) => {
-            console.error(`stderr: ${data.toString()}`);
+            console.error(`<API_ERROR>\n${data.toString()}</API_ERROR>`);
         });
     } else {
       console.warn('Failed to create API process.');
