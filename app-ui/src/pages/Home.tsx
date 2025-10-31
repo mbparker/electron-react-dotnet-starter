@@ -6,6 +6,7 @@ import {Track} from "../models/demoData/Track";
 import {useService} from "../ContainerContext";
 import {ApiCommsService} from "../services/ApiCommsService";
 import {Utils} from "../utils/Utils";
+import {ColumnDefs} from "../models/demoData/ColumnDefs";
 
 const Home = () => {
 
@@ -27,7 +28,7 @@ const Home = () => {
     const apiComms = useService(ApiCommsService);
 
     const loadTracks = async () => {
-        while(!apiComms.isConnected) {
+        while(!apiComms.isConnected || !await apiComms.isDbConnected()) {
             await Utils.sleep(100);
         }
         const queryResult = await apiComms.getTracks("$count=true");
@@ -54,7 +55,7 @@ const Home = () => {
                 </Button>
             </Stack>
             <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '50%', marginTop: '1rem' }}>
-                <DataGrid {...data} rows={data.rows.slice(0, nbRows)} loading={tracksLoading} />
+                <DataGrid columns={ColumnDefs.getTrackColumnDefs()} rows={tracks} loading={tracksLoading} />
             </div>
         </Box>
     );

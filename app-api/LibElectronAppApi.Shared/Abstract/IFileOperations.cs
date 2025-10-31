@@ -44,4 +44,5 @@ public interface IFileOperations
     void WriteAllTextToFile(string path, string content);
 
     string GetNameOfDirectoryNoPath(string path);
+    string GetLocalAppDataPathForCurrentPlatform();
 }

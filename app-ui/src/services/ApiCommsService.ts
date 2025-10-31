@@ -101,6 +101,10 @@ export class ApiCommsService {
         await this.hubConnection.invoke('CancelInteractiveTask', taskId);
     }
 
+    public async isDbConnected(): Promise<boolean> {
+        return await this.hubConnection.invoke('IsDbConnected');
+    }
+
     public async getGenres(odataQuery: string): Promise<ODataQueryResult<Genre>> {
         return await this.hubConnection.invoke('GetGenres', odataQuery);
     }

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text;
 using LibElectronAppApi.Shared.Abstract;
 
@@ -149,4 +150,24 @@ public class FileOperations : IFileOperations
     {
         return new DirectoryInfo(path).Name;
     }
+
+    public string GetLocalAppDataPathForCurrentPlatform()
+    {
+        var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var appDataSubPath = GetPlatformSpecificAppDataPath();
+        var result = Path.Combine(userProfilePath, appDataSubPath);
+        if (!DirectoryExists(result)) CreateDirectory(result);
+        return result;
+    }
+    
+    private string GetPlatformSpecificAppDataPath()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return "AppData\\Local";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return "Library/Application Support";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return "local/etc"; 
+        throw new PlatformNotSupportedException();
+    }    
 }

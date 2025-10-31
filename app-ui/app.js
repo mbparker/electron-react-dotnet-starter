@@ -6,10 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const net = require('net');
 
-// PROJECT SPECIFIC CONSTANTS
 const APP_NAME = 'ElectronApp';
-const APP_API_NAME = `${APP_NAME}ApiHost`;
-//
 
 let apiPort = null;
 
@@ -71,11 +68,15 @@ async function selectApiPort() {
 let localAppData;
 if (os.platform() === 'win32') {
   localAppData = 'AppData/Local';
+} else if (os.platform() === 'darwin') {
+  localAppData = 'Library/Application Support';
+} else if (os.platform() === 'linux') {
+    localAppData = 'local/etc';
 } else {
-  localAppData = '.local/share';
+    throw new Error(`Unsupported platform: ${os.platform()}`);
 }
 
-let logFilename = `${os.homedir()}/${localAppData}/${APP_API_NAME}/Logs/${getDateString()}.log`;
+let logFilename = `${os.homedir()}/${localAppData}/${APP_NAME}/Logs/${getDateString()}.log`;
 if (!fs.existsSync(path.dirname(logFilename))) {
   fs.mkdirSync(path.dirname(logFilename), {recursive: true});
 }
@@ -224,7 +225,7 @@ function createWindow () {
 }
 
 function startApi() {
-  let binaryFile = APP_API_NAME;
+  let binaryFile = `${APP_NAME}ApiHost`;
 
   if (os.platform() === 'win32') {
     binaryFile = binaryFile + '.exe';

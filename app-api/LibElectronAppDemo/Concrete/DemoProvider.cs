@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using LibElectronAppApi.Shared;
 using LibElectronAppApi.Shared.Abstract;
 using LibElectronAppDemo.Abstract;
 using LibElectronAppDemo.Database;
@@ -11,13 +13,16 @@ public class DemoProvider : IDemoProvider
     private readonly Func<ISqliteConnection> connectionFactory;
     private readonly Func<ISqliteObjectRelationalMapperDatabaseManager<MusicManagerDbContext>> dbManagerFactory;
     private readonly IDatabaseSeeder databaseSeeder;
+    private readonly IFileOperations fileOperations;
 
     public DemoProvider(Func<ISqliteConnection> connectionFactory,
-        Func<ISqliteObjectRelationalMapperDatabaseManager<MusicManagerDbContext>> dbManagerFactory, IDatabaseSeeder databaseSeeder)
+        Func<ISqliteObjectRelationalMapperDatabaseManager<MusicManagerDbContext>> dbManagerFactory, IDatabaseSeeder databaseSeeder,
+        IFileOperations fileOperations)
     {
         this.connectionFactory = connectionFactory;
         this.dbManagerFactory = dbManagerFactory;
         this.databaseSeeder = databaseSeeder;
+        this.fileOperations = fileOperations;
     }
 
     public ISqliteConnection TryConnectToDemoDb(string dbFilename = null)
@@ -63,7 +68,13 @@ public class DemoProvider : IDemoProvider
 
     private string ResolveDbFilename(string requestedFilename = null)
     {
-        return requestedFilename ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-            "music-man.sqlite");        
+        var result = requestedFilename ?? Path.Combine(fileOperations.GetLocalAppDataPathForCurrentPlatform(), 
+            SharedConstants.AppName, "music-man.sqlite");
+        var dir = Path.GetDirectoryName(result);
+        if (string.IsNullOrWhiteSpace(dir))
+            throw new ApplicationException("Unable to determine directory name for database storage.");
+        if (!fileOperations.DirectoryExists(dir))
+            fileOperations.CreateDirectory(dir);
+        return result;
     }
 }
