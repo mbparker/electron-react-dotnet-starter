@@ -52,6 +52,7 @@ const Home = () => {
 
     const getODataFilter = () : FilterExpression | undefined => {
         //TODO: Convert the MUI grid filter model to the OData model structure.
+        console.log('MUI Filter', filterModel);
         return undefined;
     }
 

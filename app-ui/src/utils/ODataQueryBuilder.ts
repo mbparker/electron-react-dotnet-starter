@@ -315,25 +315,25 @@ export class ODataQueryBuilder {
         // Escape single quotes in strings
         const escapedString = String(expression.value).replace(/'/g, "''");
         return `'${escapedString}'`;
-      
+
       case LiteralType.Boolean:
         return String(expression.value).toLowerCase();
-      
+
       case LiteralType.Number:
         return String(expression.value);
-      
+
       case LiteralType.DateTime:
         if (expression.value instanceof Date) {
           return expression.value.toISOString();
         }
         return String(expression.value);
-      
+
       case LiteralType.Guid:
         return String(expression.value);
-      
+
       case LiteralType.Null:
         return 'null';
-      
+
       default:
         return String(expression.value);
     }
@@ -355,7 +355,7 @@ export class ODataQueryBuilder {
   private needsParentheses(expression: BinaryExpression): boolean {
     // Check if left or right operands are binary expressions with lower precedence
     const precedence = this.getOperatorPrecedence(expression.operator);
-    
+
     if (expression.left.type === 'binary') {
       const leftPrecedence = this.getOperatorPrecedence((expression.left as BinaryExpression).operator);
       if (leftPrecedence < precedence) {
@@ -404,14 +404,14 @@ export class ODataQueryBuilder {
   /**
    * Static method to build a query string from options
    */
-  static buildQuery(options: ODataQueryOptions, includeQuestionMark: boolean = true): string {
+  static buildQuery(options: ODataQueryOptions, includeQuestionMark: boolean = false): string {
     return new ODataQueryBuilder(options).build(includeQuestionMark);
   }
 
   /**
    * Static method to build an unencoded query string from options
    */
-  static buildQueryUnencoded(options: ODataQueryOptions, includeQuestionMark: boolean = true): string {
+  static buildQueryUnencoded(options: ODataQueryOptions, includeQuestionMark: boolean = false): string {
     return new ODataQueryBuilder(options).buildUnencoded(includeQuestionMark);
   }
 }
