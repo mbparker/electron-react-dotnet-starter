@@ -139,7 +139,9 @@ const Home = () => {
         const odataQuery = buildODataQuery();
         const queryResult = await apiComms.getTracks(odataQuery);
         setTrackCount(queryResult.count);
-        setTracks(queryResult.entities);
+        setTracks(queryResult.entities.map(x => {
+            return {...x, albumReleaseDate: x.album};
+        }));
     }
 
     useEffect(() => {

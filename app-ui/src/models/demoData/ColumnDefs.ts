@@ -35,7 +35,7 @@ export class ColumnDefs {
                 nestedField: 'album.value.name'
             },
             {
-                field: 'album',
+                field: 'albumReleaseDate',
                 headerName: 'Release Date',
                 valueGetter: (v: LazyShim<Album>) => {
                     const val = v?.value?.releaseDate;
