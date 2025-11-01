@@ -7,6 +7,7 @@ import {ApiCommsService} from "../services/ApiCommsService";
 import {Utils} from "../utils/Utils";
 import {ColumnDef, ColumnDefs} from "../models/demoData/ColumnDefs";
 import {
+    FilterBuilder,
     FilterExpression,
     ODataQueryBuilder,
     ODataQueryOptions,
@@ -51,9 +52,32 @@ const Home = () => {
     }
 
     const getODataFilter = () : FilterExpression | undefined => {
-        //TODO: Convert the MUI grid filter model to the OData model structure.
-        console.log('MUI Filter', filterModel);
-        return undefined;
+
+        let exps = filterModel.items.map((item) => {
+            if (!item.value) return undefined;
+            switch (item.operator) {
+                case 'contains':
+                    return FilterBuilder.contains(getEffectiveField(item.field), item.value);
+                case 'doesNotContain':
+                    return FilterBuilder.not(FilterBuilder.contains(getEffectiveField(item.field), item.value));
+                case 'startsWith':
+                    return FilterBuilder.startsWith(getEffectiveField(item.field), item.value);
+                case 'endsWith':
+                    return FilterBuilder.endsWith(getEffectiveField(item.field), item.value);
+                case 'equals':
+                    return FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.string(item.value));
+                case 'doesNotEqual':
+                    return FilterBuilder.not(FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.string(item.value)));
+                default:
+                    return undefined;
+            }
+        });
+
+        exps = exps.filter(x => !!x);
+
+        // the free version of the MUI DataGrid only supports a single filter.
+        // the filter expressions could be joined here, returning a single binary expression at the end.
+        return exps.pop();
     }
 
     const buildODataQuery = () => {
@@ -75,9 +99,7 @@ const Home = () => {
             setFirstRender(false);
         }
         const odataQuery = buildODataQuery();
-        console.log('OData Query', odataQuery);
         const queryResult = await apiComms.getTracks(odataQuery);
-        console.log('Query Results', queryResult);
         setTrackCount(queryResult.count);
         setTracks(queryResult.entities);
     }
