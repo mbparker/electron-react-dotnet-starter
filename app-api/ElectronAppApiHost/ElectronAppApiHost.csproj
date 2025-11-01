@@ -14,7 +14,7 @@
     <ItemGroup>
       <PackageReference Include="Autofac" Version="8.4.0" />
       <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
-      <PackageReference Include="LibSqlite3Orm" Version="1.4.5" />
+      <PackageReference Include="LibSqlite3Orm" Version="1.4.6" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.10" />
       <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="9.0.10" />
     </ItemGroup>

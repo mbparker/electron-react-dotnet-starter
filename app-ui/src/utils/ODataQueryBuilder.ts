@@ -466,7 +466,7 @@ export class FilterBuilder {
    * Creates a datetime literal expression
    */
   static datetime(value: Date): LiteralExpression {
-    return { type: 'literal', value, literalType: LiteralType.DateTime };
+    return { type: 'literal', value: new Date(value), literalType: LiteralType.DateTime };
   }
 
   /**
