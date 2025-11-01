@@ -2,8 +2,10 @@ using LibElectronAppApi.Abstract;
 using LibElectronAppApi.Models;
 using LibElectronAppDemo.Abstract;
 using LibElectronAppDemo.Database;
+using LibSqlite3Orm;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Models.Orm.Events;
 using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibElectronAppApi.Concrete;
@@ -13,17 +15,20 @@ public class AppCore : IAppCore
     private readonly IBackgroundTaskManager backgroundTaskManager;
     private readonly IDemoProvider demoProvider;
     private readonly Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory;
+    private readonly IOrmGenerativeLogicTracer logicTracer;
     private ISqliteConnection dbConnection;
     private ISqliteObjectRelationalMapper<MusicManagerDbContext> orm;
     private bool uiClosing;
     private bool initialized;
 
     public AppCore(IBackgroundTaskManager backgroundTaskManager, IDemoProvider demoProvider,
-        Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory)
+        Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory,
+        IOrmGenerativeLogicTracer logicTracer)
     {
         this.backgroundTaskManager = backgroundTaskManager;
         this.demoProvider = demoProvider;
         this.ormFactory = ormFactory;
+        this.logicTracer =  logicTracer;
         HookEvents();
     }
 
@@ -98,12 +103,18 @@ public class AppCore : IAppCore
 
     public ODataQueryResult<T> GetData<T>(string odataQuery) where T : new()
     {
-        return IsDbConnected ? orm.ODataQuery<T>(odataQuery) : null;
+        return IsDbConnected ? orm.ODataQuery<T>(odataQuery) : new ODataQueryResult<T>([], 0);
     }
     
     private void HookEvents()
     {
         backgroundTaskManager.Progress += BackgroundTaskManagerOnProgress;
+        logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
+    }
+
+    private void LogicTracerOnSqlStatementExecuting(object sender, SqlStatementExecutingEventArgs e)
+    {
+        ConsoleLogger.WriteLine(e.Message.Value);
     }
 
     private void BackgroundTaskManagerOnProgress(object sender, TaskProgressEventArgs e)
