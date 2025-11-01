@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {DataGrid, GridColDef, GridFilterModel, GridSortModel} from '@mui/x-data-grid';
+import {DataGrid, GridColDef, GridFilterItem, GridFilterModel, GridSortModel} from '@mui/x-data-grid';
 import {Box, Button, Stack} from "@mui/material";
 import {Track} from "../models/demoData/Track";
 import {useService} from "../ContainerContext";
@@ -42,6 +42,24 @@ const Home = () => {
         return col?.nestedField ?? field;
     }
 
+    const getLiteralExpr = (filterItem: GridFilterItem) => {
+        const col = colDefs.filter(x => x.field == filterItem.field).pop();
+        if (col) {
+            switch (col.type) {
+                case 'string':
+                    return FilterBuilder.string(filterItem.value);
+                case 'number':
+                    return FilterBuilder.number(filterItem.value);
+                case 'boolean':
+                    return FilterBuilder.boolean(filterItem.value);
+                case 'dateTime':
+                case 'date':
+                    return FilterBuilder.datetime(filterItem.value);
+            }
+        }
+        throw new Error(`Column definition not found: ${filterItem.field}`);
+    }
+
     const getODataSorting = () : OrderByClause[] => {
         return sortModel.map((item) => {
             return {
@@ -65,9 +83,29 @@ const Home = () => {
                 case 'endsWith':
                     return FilterBuilder.endsWith(getEffectiveField(item.field), item.value);
                 case 'equals':
-                    return FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.string(item.value));
+                case '=':
+                case 'is':
+                    return FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
                 case 'doesNotEqual':
-                    return FilterBuilder.not(FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.string(item.value)));
+                case '!=':
+                case 'not':
+                    return FilterBuilder.ne(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
+                case '>':
+                case 'after':
+                    return FilterBuilder.gt(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
+                case '<':
+                case 'before':
+                    return FilterBuilder.lt(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
+                case '>=':
+                case 'onOrAfter':
+                    return FilterBuilder.ge(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
+                case '<=':
+                case 'onOrBefore':
+                    return FilterBuilder.le(FilterBuilder.property(getEffectiveField(item.field)), getLiteralExpr(item));
+                case 'isEmpty':
+                    return FilterBuilder.eq(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.null());
+                case 'isNotEmpty':
+                    return FilterBuilder.ne(FilterBuilder.property(getEffectiveField(item.field)), FilterBuilder.null());
                 default:
                     return undefined;
             }
