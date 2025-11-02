@@ -5,7 +5,7 @@ import {Track} from "../models/demoData/Track";
 import {useService} from "../ContainerContext";
 import {ApiCommsService} from "../services/ApiCommsService";
 import {Utils} from "../utils/Utils";
-import {ColumnDef, ColumnDefs} from "../models/demoData/ColumnDefs";
+import {ColumnDefs} from "../models/demoData/ColumnDefs";
 import {
     FilterBuilder,
     FilterExpression,
@@ -14,6 +14,7 @@ import {
     OrderByClause,
     OrderDirection
 } from "../utils/ODataQueryBuilder";
+import {ColumnDef} from "../MUIDataGridSupport/ColumnDef";
 
 const Home = () => {
 
