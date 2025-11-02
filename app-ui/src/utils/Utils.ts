@@ -6,4 +6,9 @@ export class Utils {
         })
     }
 
+    public static getUtcDate(date: string | number | Date): Date {
+        const dateObj = new Date(date);
+        return new Date(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), dateObj.getUTCDate());
+    }
+
 }

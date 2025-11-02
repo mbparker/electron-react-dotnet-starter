@@ -516,6 +516,18 @@ export class FilterBuilder {
     return FilterBuilder.binary(left, BinaryOperator.Or, right);
   }
 
+  static isAnyOf(propertyExpr: PropertyExpression, values: LiteralExpression[]): FilterExpression {
+      let result: FilterExpression = <any>undefined;
+      for (let i = 0; i < values.length; i++) {
+          if (i == 0) {
+              result = FilterBuilder.eq(propertyExpr, values[i]);
+              continue;
+          }
+          result = FilterBuilder.or(result, FilterBuilder.eq(propertyExpr, values[i]));
+      }
+      return result;
+  }
+
   static not(operand: FilterExpression): UnaryExpression {
     return FilterBuilder.unary(UnaryOperator.Not, operand);
   }

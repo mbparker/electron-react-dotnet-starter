@@ -1,10 +1,9 @@
-import {GridColDef, GridValidRowModel} from '@mui/x-data-grid';
 import {Track} from "./Track";
 import {LazyShim} from "../LazyShim";
 import {NamedEntity} from "./NamedEntity";
 import {Album} from "./Album";
-
-export type ColumnDef<T extends GridValidRowModel> = GridColDef<T> & { nestedField?: string };
+import {Utils} from "../../utils/Utils";
+import {ColumnDef} from "../../MUIDataGridSupport/ColumnDef";
 
 export class ColumnDefs {
 
@@ -29,7 +28,7 @@ export class ColumnDefs {
             {
                 field: 'album',
                 headerName: 'Album',
-                valueGetter: (v: LazyShim<NamedEntity>) => v?.value?.name ?? '',
+                valueGetter: (v: LazyShim<Album>) => v?.value?.name ?? '',
                 width: 150,
                 type: 'string',
                 nestedField: 'album.value.name'
@@ -38,9 +37,9 @@ export class ColumnDefs {
                 field: 'albumReleaseDate',
                 headerName: 'Release Date',
                 valueGetter: (v: LazyShim<Album>) => {
-                    const val = v?.value?.releaseDate;
-                    if (val) return new Date(val);
-                    return undefined
+                    let val = v?.value?.releaseDate;
+                    if (val) return Utils.getUtcDate(val);
+                    return undefined;
                 },
                 width: 150,
                 type: 'date',
