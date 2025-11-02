@@ -47,22 +47,54 @@ public class DemoProvider : IDemoProvider
 
     public void CreateDemoDb(IBackgroundTaskProgressHandler progressHandler, bool dropExisting = false, string dbFilename = null)
     {
-        using var dbManager = dbManagerFactory();
-        dbFilename = ResolveDbFilename(dbFilename);
-        using var connection = connectionFactory();
-        dbManager.UseConnection(connection);
-        if (dropExisting)
+        var exists = DatabaseExistsAndIsInitialized(dbFilename);
+
+        long totalWork = 6; // Initial calls to ReportProgress
+        long completedWork = 0;
+
+        void ReportProgress(string step, bool done = false)
         {
-            connection.OpenReadWrite(dbFilename, mustExist: false);
-            dbManager.DeleteDatabase();
+            if (!exists || dropExisting)
+                progressHandler?.ReportInteractiveTaskProgress("Creating database...", step, totalWork,
+                    done ? totalWork : completedWork++);
         }
 
-        connection.OpenReadWrite(dbFilename, mustExist: false);
-        if (!dbManager.IsDatabaseInitialized())
+        ReportProgress("Initializing");
+        try
         {
-            dbManager.CreateDatabase();
-            databaseSeeder.SeedDatabase(progressHandler, connection);
+            using var dbManager = dbManagerFactory();
+            dbFilename = ResolveDbFilename(dbFilename);
+            using var connection = connectionFactory();
+            dbManager.UseConnection(connection);
+            if (dropExisting)
+            {
+                ReportProgress("Removing existing database");
+                connection.OpenReadWrite(dbFilename, mustExist: false);
+                dbManager.DeleteDatabase();
+                ReportProgress("Existing database dropped");
+            }
+
+            ReportProgress("Connect to new database");
+            connection.OpenReadWrite(dbFilename, mustExist: false);
+            if (!exists || dropExisting)
+            {
+                ReportProgress("Create database schema");
+                dbManager.CreateDatabase();
+                databaseSeeder.SeedDatabase(progressHandler, connection, ref totalWork, completedWork);
+            }
         }
+        finally
+        {
+            ReportProgress("Done", true);
+        }
+    }
+
+    private bool DatabaseExistsAndIsInitialized(string dbFilename = null)
+    {
+        var testConnection = TryConnectToDemoDb(ResolveDbFilename(dbFilename));
+        var dbExists = testConnection is not null;
+        testConnection?.Dispose();
+        return dbExists;
     }
 
     private string ResolveDbFilename(string requestedFilename = null)

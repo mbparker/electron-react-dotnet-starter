@@ -37,18 +37,15 @@ public class AppCore : IAppCore
 
     public bool IsDbConnected => dbConnection?.Connected ?? false;
     
+    public bool EnableOrmTracing { get; set; }
+    
     public void InitCore()
     {
         if (!initialized && !uiClosing)
         {
             // Do init stuff here
-            dbConnection = demoProvider.TryConnectToDemoDb();
-            if (dbConnection is not null)
-            {
-                orm = ormFactory();
-                orm.UseConnection(dbConnection);
-            }
-
+            CreateDemoDbIfNeeded();
+            TryConnectToDemoDb();
             initialized = true;
             AppNotify(1);
         }
@@ -86,18 +83,7 @@ public class AppCore : IAppCore
             {
                 dbConnection?.Dispose();
                 demoProvider.CreateDemoDb(ph, dropExisting: true);
-                dbConnection =  demoProvider.TryConnectToDemoDb();
-            }).Start().TaskId;
-    }
-    
-    public Guid CreateDemoDbIfNeeded()
-    {
-        return backgroundTaskManager.Create("Ensure Database Created",
-            ph =>
-            {
-                dbConnection?.Dispose();
-                demoProvider.CreateDemoDb(ph);
-                dbConnection =  demoProvider.TryConnectToDemoDb();
+                TryConnectToDemoDb();              
             }).Start().TaskId;
     }
 
@@ -106,15 +92,45 @@ public class AppCore : IAppCore
         return IsDbConnected ? orm.ODataQuery<T>(odataQuery) : new ODataQueryResult<T>([], 0);
     }
     
+    private void CreateDemoDbIfNeeded()
+    {
+        backgroundTaskManager.Create("Create Database",
+            ph =>
+            {
+                dbConnection?.Dispose();
+                demoProvider.CreateDemoDb(ph);
+                TryConnectToDemoDb();
+            }).Start();
+    }    
+    
+    private void TryConnectToDemoDb()
+    {
+        dbConnection =  demoProvider.TryConnectToDemoDb();
+        if (dbConnection is not null)
+        {
+            orm?.Dispose();
+            orm = ormFactory();
+            orm.UseConnection(dbConnection);
+        }         
+    }    
+    
     private void HookEvents()
     {
         backgroundTaskManager.Progress += BackgroundTaskManagerOnProgress;
         logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
+        logicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
+    }
+
+    private void LogicTracerOnWhereClauseBuilderVisit(object sender, GenerativeLogicTraceEventArgs e)
+    {
+        if (EnableOrmTracing)
+            ConsoleLogger.WriteLine(e.Message.Value);
     }
 
     private void LogicTracerOnSqlStatementExecuting(object sender, SqlStatementExecutingEventArgs e)
     {
-        ConsoleLogger.WriteLine(e.Message.Value);
+        if (EnableOrmTracing)
+            ConsoleLogger.WriteLine(e.Message.Value);
     }
 
     private void BackgroundTaskManagerOnProgress(object sender, TaskProgressEventArgs e)

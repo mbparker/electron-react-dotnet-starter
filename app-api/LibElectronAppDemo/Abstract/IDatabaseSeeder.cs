@@ -5,5 +5,6 @@ namespace LibElectronAppDemo.Abstract;
 
 public interface IDatabaseSeeder
 {
-    void SeedDatabase(IBackgroundTaskProgressHandler progressHandler, ISqliteConnection connection);
+    void SeedDatabase(IBackgroundTaskProgressHandler progressHandler, ISqliteConnection connection, ref long totalWork,
+        long lastWorkCompleted);
 }

@@ -1,7 +1,4 @@
 import {Track} from "./Track";
-import {LazyShim} from "../LazyShim";
-import {NamedEntity} from "./NamedEntity";
-import {Album} from "./Album";
 import {Utils} from "../../utils/Utils";
 import {ColumnDef} from "../../MUIDataGridSupport/ColumnDef";
 
@@ -10,25 +7,25 @@ export class ColumnDefs {
     public static getTrackColumnDefs(): ColumnDef<Track>[] {
         return [
             {
-                field: 'genre',
+                field: 'genreName',
                 headerName: 'Genre',
-                valueGetter: (v: LazyShim<NamedEntity>) => v?.value?.name ?? '',
+                valueGetter: (v: never, r: Track) => r?.genre?.value?.name,
                 width: 150,
                 type: 'string',
                 nestedField: 'genre.value.name',
             },
             {
-                field: 'artist',
+                field: 'artistName',
                 headerName: 'Artist',
-                valueGetter: (v: LazyShim<NamedEntity>) => v?.value?.name ?? '',
+                valueGetter: (v: never, r: Track) => r?.artist?.value?.name,
                 width: 150,
                 type: 'string',
                 nestedField: 'artist.value.name'
             },
             {
-                field: 'album',
+                field: 'albumName',
                 headerName: 'Album',
-                valueGetter: (v: LazyShim<Album>) => v?.value?.name ?? '',
+                valueGetter: (v: never, r: Track) => r?.album?.value?.name,
                 width: 150,
                 type: 'string',
                 nestedField: 'album.value.name'
@@ -36,8 +33,8 @@ export class ColumnDefs {
             {
                 field: 'albumReleaseDate',
                 headerName: 'Release Date',
-                valueGetter: (v: LazyShim<Album>) => {
-                    let val = v?.value?.releaseDate;
+                valueGetter: (v: never, r: Track) => {
+                    let val = r?.album?.value?.releaseDate;
                     if (val) return Utils.getUtcDate(val);
                     return undefined;
                 },

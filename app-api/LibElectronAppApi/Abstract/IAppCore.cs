@@ -10,6 +10,8 @@ public interface IAppCore
     
     bool IsDbConnected { get; }
     
+    bool EnableOrmTracing { get; set; }
+    
     void InitCore();
 
     void DeInitCore();
@@ -19,8 +21,6 @@ public interface IAppCore
     void CancelInteractiveTask(Guid taskId);
 
     Guid ReCreateDemoDb();
-    
-    Guid CreateDemoDbIfNeeded();
 
     ODataQueryResult<T> GetData<T>(string odataQuery) where T : new();
 }

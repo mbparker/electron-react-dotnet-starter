@@ -42,11 +42,6 @@ public class CommunicationsHub : Hub
     {
         return appCore.ReCreateDemoDb();
     }
-
-    public Guid CreateDemoDbIfNeeded()
-    {
-        return appCore.CreateDemoDbIfNeeded();
-    }
     
     public ODataQueryResult<Genre> GetGenres(string odataQuery)
     {

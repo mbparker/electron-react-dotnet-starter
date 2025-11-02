@@ -105,6 +105,10 @@ export class ApiCommsService {
         return await this.hubConnection.invoke('IsDbConnected');
     }
 
+    public async reCreateDemoDb(): Promise<string> {
+        return await this.hubConnection.invoke('ReCreateDemoDb');
+    }
+
     public async getGenres(odataQuery: string): Promise<ODataQueryResult<Genre>> {
         return await this.hubConnection.invoke('GetGenres', odataQuery);
     }
