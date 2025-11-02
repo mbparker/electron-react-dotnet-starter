@@ -32,8 +32,7 @@
     "@emotion/styled": "^11.14.1",
     "@fontsource/roboto": "^5.2.5",
     "@mui/icons-material": "^7.3.4",
-    "@mui/x-data-grid": "^8.15.0",
-    "@mui/x-data-grid-generator": "^8.15.0"
+    "@mui/x-data-grid": "^8.15.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

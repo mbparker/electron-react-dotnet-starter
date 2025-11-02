@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {DataGrid, GridFilterModel, GridSortModel} from '@mui/x-data-grid';
+import {DataGrid, GridCellParams, GridFilterModel, GridRowParams, GridSortModel} from '@mui/x-data-grid';
 import {Box, Button, Stack} from "@mui/material";
 import {Track} from "../models/demoData/Track";
 import {useService} from "../ContainerContext";
@@ -15,9 +15,20 @@ const Home = () => {
 
     const recreateDatabase = () => { apiComms.reCreateDemoDb().then().catch(error => console.error(error)); };
 
+    const cellClicked = (p: GridCellParams<Track>) => {
+        if (p.row.album.value)
+            setCurrentAlbumArtwork(p.row.album.value.inlineImage);
+    };
+
+    const rowClicked = (p: GridRowParams<Track>) => {
+        if (p.row.album.value)
+            setCurrentAlbumArtwork(p.row.album.value.inlineImage);
+    }
+
     const [tracks, setTracks] = React.useState<Track[]>([]);
     const [trackCount, setTrackCount] = React.useState<number>();
     const [tracksLoading, setTracksLoading] = React.useState(false);
+    const [currentAlbumArtwork, setCurrentAlbumArtwork] = React.useState<string>('');
 
     const [paginationModel, setPaginationModel] = React.useState<PaginationState>(new PaginationState());
     const [sortModel, setSortModel] = React.useState<GridSortModel>([]);
@@ -65,7 +76,7 @@ const Home = () => {
                     columns={colDefs}
                     rows={tracks}
                     pageSizeOptions={[5, 10, 25]}
-                    rowCount={trackCount ?? 0}
+                    rowCount={trackCount}
                     paginationModel={paginationModel}
                     sortModel={sortModel}
                     filterModel={filterModel}
@@ -75,7 +86,12 @@ const Home = () => {
                     onPaginationModelChange={setPaginationModel}
                     onSortModelChange={setSortModel}
                     onFilterModelChange={setFilterModel}
+                    onCellClick={cellClicked}
+                    onRowClick={rowClicked}
                     loading={tracksLoading} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem', justifyItems: 'center', alignItems: 'center' }}>
+                <img src={currentAlbumArtwork} alt={'Album Artwork'} hidden={!currentAlbumArtwork} height={300} width={300}></img>
             </div>
         </Box>
     );
