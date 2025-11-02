@@ -8,6 +8,7 @@ import {ODataQueryResult} from "../models/ODataQueryResult";
 import {Genre} from "../models/demoData/Genre";
 import {Artist} from "../models/demoData/Artist";
 import {Album} from "../models/demoData/Album";
+import {AppNotification} from "../models/AppNotification";
 
 @injectable()
 export class ApiCommsService {
@@ -21,7 +22,7 @@ export class ApiCommsService {
 
     public OnReconnecting: EventEmitter<Error | undefined> = new EventEmitter<Error | undefined>();
     public OnPingClient: EventEmitter<any> = new EventEmitter<any>();
-    public OnAppNotification: EventEmitter<any> = new EventEmitter<any>();
+    public OnAppNotification: EventEmitter<AppNotification> = new EventEmitter<AppNotification>();
     public OnTaskProgress: EventEmitter<any> = new EventEmitter<any>();
 
     public get isConnected(): boolean {

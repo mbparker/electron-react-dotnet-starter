@@ -4,16 +4,21 @@ import {Box, Button, Stack} from "@mui/material";
 import {Track} from "../models/demoData/Track";
 import {useService} from "../ContainerContext";
 import {ApiCommsService} from "../services/ApiCommsService";
-import {Utils} from "../utils/Utils";
 import {ColumnDefs} from "../models/demoData/ColumnDefs";
 import {ColumnDef} from "../MUIDataGridSupport/ColumnDef";
 import {PaginationState} from "../MUIDataGridSupport/PaginationState";
 import {ODataQueryBuilderForMuiDataGrid} from "../MUIDataGridSupport/ODataQueryBuilderForMuiDataGrid";
 import {MuiDataGridState} from "../MUIDataGridSupport/MuiDataGridState";
+import {AppNotificationKind} from "../models/AppNotificationKind";
 
 const Home = () => {
 
-    const recreateDatabase = () => { apiComms.reCreateDemoDb().then().catch(error => console.error(error)); };
+    const recreateDatabase = () => {
+        setDbConnected(false);
+        setTrackCount(0);
+        setTracks([]);
+        apiComms.reCreateDemoDb().then().catch(error => console.error(error));
+    };
 
     const cellClicked = (p: GridCellParams<Track>) => {
         if (p.row.album.value)
@@ -25,8 +30,10 @@ const Home = () => {
             setCurrentAlbumArtwork(p.row.album.value.inlineImage);
     }
 
+    const [apiReady, setApiReady] = React.useState(false);
+    const [dbConnected, setDbConnected] = React.useState(false);
     const [tracks, setTracks] = React.useState<Track[]>([]);
-    const [trackCount, setTrackCount] = React.useState<number>();
+    const [trackCount, setTrackCount] = React.useState<number>(0);
     const [tracksLoading, setTracksLoading] = React.useState(false);
     const [currentAlbumArtwork, setCurrentAlbumArtwork] = React.useState<string>('');
 
@@ -34,9 +41,21 @@ const Home = () => {
     const [sortModel, setSortModel] = React.useState<GridSortModel>([]);
     const [filterModel, setFilterModel] = React.useState<GridFilterModel>({items: []});
     const [colDefs, setColDefs] = React.useState<ColumnDef<Track>[]>(ColumnDefs.getTrackColumnDefs());
-    const [firstRender, setFirstRender] = React.useState(true);
 
     const apiComms = useService(ApiCommsService);
+
+    apiComms.OnAppNotification.subscribe(notification => {
+        switch (notification.kind) {
+            case AppNotificationKind.ApiInitialized:
+                setApiReady(true);
+                break;
+            case AppNotificationKind.DatabaseConnected:
+                setDbConnected(true);
+                break;
+            default:
+                break;
+        }
+    });
 
     const buildODataQuery = () => {
         const gridState = new MuiDataGridState<Track>(filterModel, sortModel, paginationModel, colDefs);
@@ -44,15 +63,7 @@ const Home = () => {
     }
 
     const loadTracks = async () => {
-        if (firstRender) {
-            // We don't need this nonsense once the connection is established.
-            // It's only because this component is on the Home module which displays immediately.
-            // This also prevents calls on first run until the DB gets built.
-            while (!apiComms.isConnected || !await apiComms.isDbConnected()) {
-                await Utils.sleep(100);
-            }
-            setFirstRender(false);
-        }
+        if (!dbConnected) return;
         const odataQuery = buildODataQuery();
         const queryResult = await apiComms.getTracks(odataQuery);
         setTrackCount(queryResult.count ?? 0);
@@ -62,12 +73,12 @@ const Home = () => {
     useEffect(() => {
         setTracksLoading(true);
         loadTracks().then().finally(() => setTracksLoading(false));
-    }, [paginationModel, sortModel, filterModel]);
+    }, [paginationModel, sortModel, filterModel, dbConnected]);
 
     return (
         <Box sx={{ width: '100%', height: '100%' }}>
             <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                <Button size="small" disabled={firstRender} onClick={recreateDatabase}>
+                <Button size="small" disabled={!apiReady} onClick={recreateDatabase}>
                     Recreate Database
                 </Button>
             </Stack>

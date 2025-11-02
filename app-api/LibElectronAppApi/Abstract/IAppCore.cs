@@ -16,7 +16,7 @@ public interface IAppCore
 
     void DeInitCore();
 
-    void AppNotify(int eventId, object eventData = null);
+    void AppNotify(AppNotificationKind kind, object eventData = null);
     
     void CancelInteractiveTask(Guid taskId);
 

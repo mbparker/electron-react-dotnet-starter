@@ -2,13 +2,13 @@ namespace LibElectronAppApi.Models;
 
 public class AppNotificationEventArgs
 {
-    public AppNotificationEventArgs(int eventId, object eventData = null)
+    public AppNotificationEventArgs(AppNotificationKind kind, object eventData = null)
     {
-        EventId = eventId;
+        Kind = kind;
         EventData = eventData;
     }
         
-    public int EventId { get; }
+    public AppNotificationKind Kind { get; }
         
     public object EventData { get; }
 }

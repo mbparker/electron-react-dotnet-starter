@@ -47,7 +47,7 @@ public class AppCore : IAppCore
             CreateDemoDbIfNeeded();
             TryConnectToDemoDb();
             initialized = true;
-            AppNotify(1);
+            AppNotify(AppNotificationKind.ApiInitialized);
         }
     }
 
@@ -66,9 +66,9 @@ public class AppCore : IAppCore
         }
     }
     
-    public void AppNotify(int eventId, object eventData = null)
+    public void AppNotify(AppNotificationKind kind, object eventData = null)
     {
-        AppNotification?.Invoke(this, new AppNotificationEventArgs(eventId, eventData));
+        AppNotification?.Invoke(this, new AppNotificationEventArgs(kind, eventData));
     }
     
     public void CancelInteractiveTask(Guid taskId)
@@ -111,6 +111,7 @@ public class AppCore : IAppCore
             orm?.Dispose();
             orm = ormFactory();
             orm.UseConnection(dbConnection);
+            AppNotify(AppNotificationKind.DatabaseConnected);
         }         
     }    
     
