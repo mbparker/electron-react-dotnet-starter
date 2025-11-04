@@ -8,7 +8,7 @@ UI is Typescript, and uses tsyringe for dependency injection. Webpack is used fo
 
 .NET backend is C# and uses Autofac for dependency injection. SQLite3 support is provided by LibSqlite3Orm.
 
-SignalR is used for communication between the front and backend. RESTful APIs could be easily added if that is preferred.
+SignalR is used for command and control communication between the front and backend. RESTful APIs are used for data access type requests.
 
 
 # USAGE
