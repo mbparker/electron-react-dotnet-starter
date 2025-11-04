@@ -1,5 +1,6 @@
 using LibElectronAppApi.Models;
-using LibSqlite3Orm.Models.Orm.OData;
+using LibElectronAppDemo.Database;
+using LibSqlite3Orm.Abstract.Orm;
 
 namespace LibElectronAppApi.Abstract;
 
@@ -12,6 +13,8 @@ public interface IAppCore
     
     bool EnableOrmTracing { get; set; }
     
+    ISqliteObjectRelationalMapper<MusicManagerDbContext> Orm { get; }
+    
     void InitCore();
 
     void DeInitCore();
@@ -21,6 +24,4 @@ public interface IAppCore
     void CancelInteractiveTask(Guid taskId);
 
     Guid ReCreateDemoDb();
-
-    ODataQueryResult<T> GetData<T>(string odataQuery) where T : new();
 }

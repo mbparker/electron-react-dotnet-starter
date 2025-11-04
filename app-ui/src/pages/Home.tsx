@@ -15,6 +15,7 @@ const Home = () => {
 
     const recreateDatabase = () => {
         setDbConnected(false);
+        setCurrentAlbumArtwork('');
         setTrackCount(0);
         setTracks([]);
         apiComms.reCreateDemoDb().then().catch(error => console.error(error));
@@ -65,7 +66,7 @@ const Home = () => {
     const loadTracks = async () => {
         if (!dbConnected) return;
         const odataQuery = buildODataQuery();
-        const queryResult = await apiComms.getTracks(odataQuery);
+        const queryResult = await apiComms.odataApiGet<Track>('demo/track', odataQuery);
         setTrackCount(queryResult.count ?? 0);
         setTracks(queryResult.entities);
     }
@@ -82,7 +83,7 @@ const Home = () => {
                     Recreate Database
                 </Button>
             </Stack>
-            <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '50%', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '75%', marginTop: '1rem' }}>
                 <DataGrid
                     columns={colDefs}
                     rows={tracks}
@@ -102,7 +103,7 @@ const Home = () => {
                     loading={tracksLoading} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', marginTop: '1rem', justifyItems: 'center', alignItems: 'center' }}>
-                <img src={currentAlbumArtwork} alt={'Album Artwork'} hidden={!currentAlbumArtwork} height={300} width={300}></img>
+                <img src={currentAlbumArtwork} alt={'Album Artwork'} hidden={!currentAlbumArtwork} height={450} width={450}></img>
             </div>
         </Box>
     );

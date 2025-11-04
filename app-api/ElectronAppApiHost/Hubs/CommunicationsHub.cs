@@ -1,7 +1,5 @@
 using ElectronAppApiHost.Models;
 using LibElectronAppApi.Abstract;
-using LibElectronAppDemo.Database.Models;
-using LibSqlite3Orm.Models.Orm.OData;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ElectronAppApiHost.Hubs;
@@ -42,26 +40,6 @@ public class CommunicationsHub : Hub
     {
         return appCore.ReCreateDemoDb();
     }
-    
-    public ODataQueryResult<Genre> GetGenres(string odataQuery)
-    {
-        return appCore.GetData<Genre>(odataQuery);
-    }
-    
-    public ODataQueryResult<Artist> GetArtists(string odataQuery)
-    {
-        return appCore.GetData<Artist>(odataQuery);
-    }
-    
-    public ODataQueryResult<Album> GetAlbums(string odataQuery)
-    {
-        return appCore.GetData<Album>(odataQuery);
-    }      
-    
-    public ODataQueryResult<Track> GetTracks(string odataQuery)
-    {
-        return appCore.GetData<Track>(odataQuery);
-    }      
     
     private async Task PingClient(IClientProxy client, PingResponse response)
     {

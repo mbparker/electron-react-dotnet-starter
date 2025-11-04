@@ -201,8 +201,8 @@ function createSplashWindow() {
 
 function createWindow () {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 1024,
+    width: 1450,
+    height: 1200,
     backgroundColor: '#2a2a2a',
     webPreferences: {
       nodeIntegration: true,

@@ -3,11 +3,7 @@ import {EventEmitter} from "../utils/EventEmitter";
 import {injectable} from "tsyringe";
 import {Utils} from "../utils/Utils";
 import {ElectronApiService} from "./ElectronApiService";
-import {Track} from "../models/demoData/Track";
 import {ODataQueryResult} from "../models/ODataQueryResult";
-import {Genre} from "../models/demoData/Genre";
-import {Artist} from "../models/demoData/Artist";
-import {Album} from "../models/demoData/Album";
 import {AppNotification} from "../models/AppNotification";
 
 @injectable()
@@ -15,6 +11,7 @@ export class ApiCommsService {
 
     private hubConnection: signalR.HubConnection = <any>undefined;
     private connected: boolean = false;
+    private restApiUrl: string = '';
 
     public constructor(
         private readonly electronApi: ElectronApiService) {
@@ -31,8 +28,10 @@ export class ApiCommsService {
 
     public async startConnection(): Promise<void> {
         const apiPort = await this.electronApi.getApiPort();
+        const host = `http://localhost:${apiPort}`;
+        this.restApiUrl = `${host}/api`;
         this.hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl(`http://localhost:${apiPort}/comms`)
+            .withUrl(`${host}/comms`)
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
@@ -110,19 +109,8 @@ export class ApiCommsService {
         return await this.hubConnection.invoke('ReCreateDemoDb');
     }
 
-    public async getGenres(odataQuery: string): Promise<ODataQueryResult<Genre>> {
-        return await this.hubConnection.invoke('GetGenres', odataQuery);
-    }
-
-    public async getArtists(odataQuery: string): Promise<ODataQueryResult<Artist>> {
-        return await this.hubConnection.invoke('GetArtists', odataQuery);
-    }
-
-    public async getAlbums(odataQuery: string): Promise<ODataQueryResult<Album>> {
-        return await this.hubConnection.invoke('GetAlbums', odataQuery);
-    }
-
-    public async getTracks(odataQuery: string): Promise<ODataQueryResult<Track>> {
-        return await this.hubConnection.invoke('GetTracks', odataQuery);
+    public async odataApiGet<T>(relativeUrl: string, odataQuery: string): Promise<ODataQueryResult<T>> {
+        const resp = await fetch(`${this.restApiUrl}/${relativeUrl}/?${odataQuery}`);
+        return await resp.json() as ODataQueryResult<T>;
     }
 }

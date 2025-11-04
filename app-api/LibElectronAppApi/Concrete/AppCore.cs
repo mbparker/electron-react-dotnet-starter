@@ -6,7 +6,6 @@ using LibSqlite3Orm;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm.Events;
-using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibElectronAppApi.Concrete;
 
@@ -17,7 +16,6 @@ public class AppCore : IAppCore
     private readonly Func<ISqliteObjectRelationalMapper<MusicManagerDbContext>> ormFactory;
     private readonly IOrmGenerativeLogicTracer logicTracer;
     private ISqliteConnection dbConnection;
-    private ISqliteObjectRelationalMapper<MusicManagerDbContext> orm;
     private bool uiClosing;
     private bool initialized;
 
@@ -38,6 +36,8 @@ public class AppCore : IAppCore
     public bool IsDbConnected => dbConnection?.Connected ?? false;
     
     public bool EnableOrmTracing { get; set; }
+    
+    public ISqliteObjectRelationalMapper<MusicManagerDbContext> Orm { get; private set; }
     
     public void InitCore()
     {
@@ -86,11 +86,6 @@ public class AppCore : IAppCore
                 TryConnectToDemoDb();              
             }).Start().TaskId;
     }
-
-    public ODataQueryResult<T> GetData<T>(string odataQuery) where T : new()
-    {
-        return IsDbConnected ? orm.ODataQuery<T>(odataQuery) : new ODataQueryResult<T>([], 0);
-    }
     
     private void CreateDemoDbIfNeeded()
     {
@@ -108,9 +103,9 @@ public class AppCore : IAppCore
         dbConnection =  demoProvider.TryConnectToDemoDb();
         if (dbConnection is not null)
         {
-            orm?.Dispose();
-            orm = ormFactory();
-            orm.UseConnection(dbConnection);
+            Orm?.Dispose();
+            Orm = ormFactory();
+            Orm.UseConnection(dbConnection);
             AppNotify(AppNotificationKind.DatabaseConnected);
         }         
     }    
