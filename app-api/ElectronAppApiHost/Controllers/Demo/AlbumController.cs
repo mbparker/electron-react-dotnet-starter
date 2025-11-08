@@ -6,17 +6,17 @@ namespace ElectronAppApiHost.Controllers.Demo;
 
 [ApiController]
 [Route("api/demo/[controller]")]
-public class TrackController : ControllerBase
+public class AlbumController : ControllerBase
 {
     private readonly IAppCore appCore;
     
-    public TrackController(IAppCore appCore)
+    public AlbumController(IAppCore appCore)
     {
         this.appCore = appCore;    
     }
     
     public IActionResult Get() 
     {
-        return Ok(appCore.Orm.ODataQuery<Track>(Request.QueryString.ToODataQuery()));
+        return Ok(appCore.Orm.ODataQuery<Album>(Request.QueryString.ToODataQuery()));
     }
 }
