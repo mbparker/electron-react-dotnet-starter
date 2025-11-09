@@ -31,6 +31,7 @@ var libProjectFilename = Path.Combine(apiPath, "LibElectronAppApi", "LibElectron
 var libSharedProjectFilename = Path.Combine(apiPath, "LibElectronAppApi.Shared", "LibElectronAppApi.Shared.csproj");
 var testHarnessProjectFilename = Path.Combine(apiPath, "ElectronAppApiTestHarness", "ElectronAppApiTestHarness.csproj");
 var hostProjectFilename = Path.Combine(apiPath, "ElectronAppApiHost", "ElectronAppApiHost.csproj");
+var libDemoProjectFilename = Path.Combine(apiPath, "LibElectronAppDemo", "LibElectronAppDemo.csproj");
 var packageJsonFilename = Path.Combine(uiPath, "package.json");
 var electronConfigFilename = Path.Combine(uiPath, "builder-config.json");
 var electronConfigArm64Filename = Path.Combine(uiPath, "builder-config-arm64.json");
@@ -46,9 +47,9 @@ string[] strReplFiles =
 
 string[] keyFiles =
 [
-    apiSolutionFilename, libProjectFilename, libSharedProjectFilename, testHarnessProjectFilename, hostProjectFilename, 
-    packageJsonFilename, electronConfigFilename, electronConfigArm64Filename, indexHtmlFilename, appJsFilename, 
-    appInitTsFilename, workflowFilename, readmeFilename
+    apiSolutionFilename, libProjectFilename, libSharedProjectFilename, libDemoProjectFilename, testHarnessProjectFilename, 
+    hostProjectFilename, packageJsonFilename, electronConfigFilename, electronConfigArm64Filename, indexHtmlFilename, 
+    appJsFilename, appInitTsFilename, workflowFilename, readmeFilename
 ];
 
 if (!keyFiles.All(File.Exists))
@@ -149,6 +150,7 @@ bool ProcessApi()
     {
         ProcessProject(libProjectFilename);
         ProcessProject(libSharedProjectFilename);
+        ProcessProject(libDemoProjectFilename);
         ProcessProject(hostProjectFilename);
         ProcessProject(testHarnessProjectFilename);
         return true;
@@ -178,7 +180,9 @@ bool ProcessSolutionFile()
         solutionText =
             solutionText.Replace("A601712B-0E49-4E7E-9475-B8045AB42E11", Guid.NewGuid().ToString("D").ToUpper());
         solutionText =
-            solutionText.Replace("F4E6224C-096C-4CD9-99C5-7D6273E293A2", Guid.NewGuid().ToString("D").ToUpper());        
+            solutionText.Replace("F4E6224C-096C-4CD9-99C5-7D6273E293A2", Guid.NewGuid().ToString("D").ToUpper());
+        solutionText =
+            solutionText.Replace("0BD378F4-4D50-4800-887A-8790D775FD00", Guid.NewGuid().ToString("D").ToUpper());    
 
         Console.WriteLine($"\tReplace 'ElectronApp' with '{newRootNamespace}'");
         solutionText = solutionText.Replace("ElectronAppRebrander", "AppRebrander"); // Don't let ElectronAppRebrander get renamed
