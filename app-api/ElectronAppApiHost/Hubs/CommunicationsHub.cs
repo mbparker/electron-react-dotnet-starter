@@ -26,9 +26,9 @@ public class CommunicationsHub : Hub
         return response;
     }
 
-    public void CancelInteractiveTask(Guid taskId)
+    public void CancelBackgroundTask(Guid taskId)
     {
-        appCore.CancelInteractiveTask(taskId);
+        appCore.CancelBackgroundTask(taskId);
     }
 
     public bool IsDbConnected()
@@ -36,9 +36,9 @@ public class CommunicationsHub : Hub
         return appCore.IsDbConnected;
     }
 
-    public Guid ReCreateDemoDb()
+    public Guid StartReCreateDemoDbTask()
     {
-        return appCore.ReCreateDemoDb();
+        return appCore.StartReCreateDemoDbTask();
     }
     
     private async Task PingClient(IClientProxy client, PingResponse response)

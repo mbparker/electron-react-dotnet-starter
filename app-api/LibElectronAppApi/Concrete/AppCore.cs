@@ -71,12 +71,12 @@ public class AppCore : IAppCore
         AppNotification?.Invoke(this, new AppNotificationEventArgs(kind, eventData));
     }
     
-    public void CancelInteractiveTask(Guid taskId)
+    public void CancelBackgroundTask(Guid taskId)
     {
         backgroundTaskManager.GetById(taskId)?.Cancel();
     }
 
-    public Guid ReCreateDemoDb()
+    public Guid StartReCreateDemoDbTask()
     {
         return backgroundTaskManager.Create("Recreate Database",
             ph =>

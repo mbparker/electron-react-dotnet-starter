@@ -21,7 +21,7 @@ public interface IAppCore
 
     void AppNotify(AppNotificationKind kind, object eventData = null);
     
-    void CancelInteractiveTask(Guid taskId);
+    void CancelBackgroundTask(Guid taskId);
 
-    Guid ReCreateDemoDb();
+    Guid StartReCreateDemoDbTask();
 }

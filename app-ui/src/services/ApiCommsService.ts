@@ -97,16 +97,35 @@ export class ApiCommsService {
         await this.hubConnection.invoke('ClientReady');
     }
 
-    public async cancelInteractiveTask(taskId: string): Promise<void> {
-        await this.hubConnection.invoke('CancelInteractiveTask', taskId);
+    public async cancelBackgroundTask(taskId: string): Promise<void> {
+        await this.hubConnection.invoke('CancelBackgroundTask', taskId);
+    }
+
+    public async waitForTask(taskFunc: Promise<string>) {
+        await new Promise<void>((resolve, reject) => {
+            let taskId = '';
+            const taskProgress = (progress: any) => {
+                if (progress.taskId == taskId && (!progress.showDialog)) {
+                    this.OnTaskProgress.unsubscribe(taskProgress);
+                    resolve();
+                }
+            }
+            this.OnTaskProgress.subscribe(taskProgress);
+            taskFunc.then((id) => {
+                taskId = id;
+            }).catch(err => {
+                this.OnTaskProgress.unsubscribe(taskProgress);
+                reject(err);
+            });
+        });
     }
 
     public async isDbConnected(): Promise<boolean> {
         return await this.hubConnection.invoke('IsDbConnected');
     }
 
-    public async reCreateDemoDb(): Promise<string> {
-        return await this.hubConnection.invoke('ReCreateDemoDb');
+    public async startReCreateDemoDbTask(): Promise<string> {
+        return await this.hubConnection.invoke('StartReCreateDemoDbTask');
     }
 
     public async odataApiGet<T>(relativeUrl: string, odataQuery: string): Promise<ODataQueryResult<T>> {

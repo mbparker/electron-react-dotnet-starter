@@ -13,13 +13,21 @@ import {AppNotificationKind} from "../models/AppNotificationKind";
 
 const Home = () => {
 
-    const recreateDatabase = () => {
+    const recreateDatabaseAsync = async () => {
         setDbConnected(false);
-        setCurrentAlbumArtwork('');
-        setTrackCount(0);
-        setTracks([]);
-        apiComms.reCreateDemoDb().then().catch(error => console.error(error));
+        try {
+            setCurrentAlbumArtwork('');
+            setTrackCount(0);
+            setTracks([]);
+            await apiComms.waitForTask(apiComms.startReCreateDemoDbTask());
+        } finally {
+            setDbConnected(true);
+        }
     };
+
+    const recreateDatabase = () => {
+        recreateDatabaseAsync().then().catch(console.error);
+    }
 
     const cellClicked = (p: GridCellParams<Track>) => {
         if (p.row.album.value)
@@ -64,16 +72,20 @@ const Home = () => {
     }
 
     const loadTracks = async () => {
-        if (!dbConnected) return;
-        const odataQuery = buildODataQuery();
-        const queryResult = await apiComms.odataApiGet<Track>('demo/track', odataQuery);
-        setTrackCount(queryResult.count ?? 0);
-        setTracks(queryResult.entities);
+        setTracksLoading(true);
+        try {
+            const odataQuery = buildODataQuery();
+            const queryResult = await apiComms.odataApiGet<Track>('demo/track', odataQuery);
+            setTrackCount(queryResult.count ?? 0);
+            setTracks(queryResult.entities);
+        } finally {
+            setTracksLoading(false);
+        }
     }
 
     useEffect(() => {
-        setTracksLoading(true);
-        loadTracks().then().finally(() => setTracksLoading(false));
+        if (!dbConnected) return;
+        loadTracks().then().catch(console.error);
     }, [paginationModel, sortModel, filterModel, dbConnected]);
 
     return (

@@ -37,7 +37,7 @@ const ProgressModal = () => {
     const handleCancelRequest = () => {
         if (taskId && !isCancelRequested) {
             const action = async () => {
-                await comms.cancelInteractiveTask(taskId);
+                await comms.cancelBackgroundTask(taskId);
             }
             setIsCancelRequested(true);
             action().then().catch(err => console.error(err));
