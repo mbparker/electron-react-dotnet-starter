@@ -11,11 +11,11 @@ const APP_NAME = 'ElectronApp';
 let apiPort = null;
 
 function getDateString() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day =`${date.getDate()}`.padStart(2, '0');
-  return `${APP_NAME}_App_NodeMain_${year}-${month}-${day}`
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${APP_NAME}_App_NodeMain_${year}-${month}-${day}`
 }
 
 async function checkPortAvailability(port) {
@@ -67,9 +67,9 @@ async function selectApiPort() {
 
 let localAppData;
 if (os.platform() === 'win32') {
-  localAppData = 'AppData/Local';
+    localAppData = 'AppData/Local';
 } else if (os.platform() === 'darwin') {
-  localAppData = 'Library/Application Support';
+    localAppData = 'Library/Application Support';
 } else if (os.platform() === 'linux') {
     localAppData = 'local/etc';
 } else {
@@ -78,11 +78,11 @@ if (os.platform() === 'win32') {
 
 let logFilename = `${os.homedir()}/${localAppData}/${APP_NAME}/Logs/${getDateString()}.log`;
 if (!fs.existsSync(path.dirname(logFilename))) {
-  fs.mkdirSync(path.dirname(logFilename), {recursive: true});
+    fs.mkdirSync(path.dirname(logFilename), {recursive: true});
 }
 
 let originalConsole = console;
-let logStream = fs.createWriteStream(logFilename, { flags: 'a', autoClose: true });
+let logStream = fs.createWriteStream(logFilename, {flags: 'a', autoClose: true});
 console = new console.Console(logStream, logStream, true);
 
 let splashWindow;
@@ -94,40 +94,40 @@ const currentUiPath = __dirname;
 let apiProcess;
 
 ipcMain.on('show-message-box', async (evt, ...args) => {
-  const result = await dialog.showMessageBox(mainWindow, args[0]);
-  evt.sender.send('show-message-box-result', result);
+    const result = await dialog.showMessageBox(mainWindow, args[0]);
+    evt.sender.send('show-message-box-result', result);
 });
 
 ipcMain.on('show-open-dialog', async (evt, ...args) => {
-  const result = await dialog.showOpenDialog(mainWindow, args[0]);
-  evt.sender.send('show-open-dialog-result', result);
+    const result = await dialog.showOpenDialog(mainWindow, args[0]);
+    evt.sender.send('show-open-dialog-result', result);
 });
 
 ipcMain.on('show-save-dialog', async (evt, ...args) => {
-  const result = await dialog.showSaveDialog(mainWindow, args[0]);
-  evt.sender.send('show-save-dialog-result', result);
+    const result = await dialog.showSaveDialog(mainWindow, args[0]);
+    evt.sender.send('show-save-dialog-result', result);
 });
 
 ipcMain.on('resolve-file-url', (evt, ...args) => {
-  try {
-    const result = url.pathToFileURL(path.join(currentUiPath, args[0])).toString();
-    evt.sender.send('resolve-file-url-result', result);
-  } catch (err) {
-    console.error(err);
-    evt.sender.send('resolve-file-url-result', args[0]);
-  }
+    try {
+        const result = url.pathToFileURL(path.join(currentUiPath, args[0])).toString();
+        evt.sender.send('resolve-file-url-result', result);
+    } catch (err) {
+        console.error(err);
+        evt.sender.send('resolve-file-url-result', args[0]);
+    }
 });
 
 ipcMain.on('open-url-external', async (evt, ...args) => {
-  await shell.openExternal(args[0], { activate: true });
+    await shell.openExternal(args[0], {activate: true});
 });
 
 ipcMain.on('perform-reload', (evt, ...args) => {
-  mainWindow?.reload();
+    mainWindow?.reload();
 });
 
 ipcMain.on('perform-app-quit', (evt, ...args) => {
-  app.quit();
+    app.quit();
 });
 
 ipcMain.on('get-api-port', (evt, ...args) => {
@@ -135,37 +135,37 @@ ipcMain.on('get-api-port', (evt, ...args) => {
 });
 
 const menuTemplate = [
-  {
-    label: 'File',
-    submenu: [
-      {
-        label: 'Reload',
-        click: () => {
-          mainWindow?.webContents.send('reload-clicked');
-        }
-      },
-        { type: 'separator' },
-        {
-            // This fixes the display bug where the "quit" role item shows the package name, not the product name.
-            label: 'Quit',
-            click: () => {
-                app.quit();
+    {
+        label: 'File',
+        submenu: [
+            {
+                label: 'Reload',
+                click: () => {
+                    mainWindow?.webContents.send('reload-clicked');
+                }
+            },
+            {type: 'separator'},
+            {
+                // This fixes the display bug where the "quit" role item shows the package name, not the product name.
+                label: 'Quit',
+                click: () => {
+                    app.quit();
+                }
             }
-        }
-    ]
-  },
-  {
-    label: 'View',
-    submenu: [
-      { role: 'toggleDevTools' },
-      { type: 'separator' },
-      { role: 'resetZoom' },
-      { role: 'zoomIn' },
-      { role: 'zoomOut' },
-      { type: 'separator' },
-      { role: 'togglefullscreen' }
-    ]
-  }
+        ]
+    },
+    {
+        label: 'View',
+        submenu: [
+            {role: 'toggleDevTools'},
+            {type: 'separator'},
+            {role: 'resetZoom'},
+            {role: 'zoomIn'},
+            {role: 'zoomOut'},
+            {type: 'separator'},
+            {role: 'togglefullscreen'}
+        ]
+    }
 ];
 
 const menu = Menu.buildFromTemplate(menuTemplate);
@@ -173,84 +173,84 @@ Menu.setApplicationMenu(menu);
 
 function createSplashWindow() {
 
-  splashWindow = new BrowserWindow({
-    width: 626,
-    height: 626,
-    transparent: true,
-    center: true,
-    frame: false,
-    closable: false,
-    resizable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    show: true
-  });
-  splashWindow.setIgnoreMouseEvents(true);
-  let targetUrl = url.pathToFileURL(path.join(currentUiPath, 'splash.html'));
-  splashWindow.loadURL(targetUrl.toString()).then(() => {
-    console.log('splash screen loaded');
-  }, (err) => {
-    console.log('failed to load splash screen');
-    console.error(err);
-  });
-  splashWindow.on('closed', () => {
-    splashWindow = null
-  });
+    splashWindow = new BrowserWindow({
+        width: 626,
+        height: 626,
+        transparent: true,
+        center: true,
+        frame: false,
+        closable: false,
+        resizable: false,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        show: true
+    });
+    splashWindow.setIgnoreMouseEvents(true);
+    let targetUrl = url.pathToFileURL(path.join(currentUiPath, 'splash.html'));
+    splashWindow.loadURL(targetUrl.toString()).then(() => {
+        console.log('splash screen loaded');
+    }, (err) => {
+        console.log('failed to load splash screen');
+        console.error(err);
+    });
+    splashWindow.on('closed', () => {
+        splashWindow = null
+    });
 
 }
 
-function createWindow () {
-  mainWindow = new BrowserWindow({
-    width: 1450,
-    height: 1200,
-    backgroundColor: '#2a2a2a',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: true,
-      webSecurity: true,
-      preload: currentPreloadPath,
-    }
-  })
+function createWindow() {
+    mainWindow = new BrowserWindow({
+        width: 1450,
+        height: 1200,
+        backgroundColor: '#2a2a2a',
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: true,
+            webSecurity: true,
+            preload: currentPreloadPath,
+        }
+    })
 
-  let targetUrl = url.pathToFileURL(path.join(currentUiPath, 'index.html'));
-  mainWindow.loadURL(targetUrl.toString()).then(() => {
-    // Open the DevTools.
-    //mainWindow.webContents.openDevTools();
-    splashWindow?.destroy();
-  });
+    let targetUrl = url.pathToFileURL(path.join(currentUiPath, 'index.html'));
+    mainWindow.loadURL(targetUrl.toString()).then(() => {
+        // Open the DevTools.
+        //mainWindow.webContents.openDevTools();
+        splashWindow?.destroy();
+    });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
+    mainWindow.on('closed', () => {
+        mainWindow = null
+    })
 }
 
 function startApi() {
-  let binaryFile = `${APP_NAME}ApiHost`;
+    let binaryFile = `${APP_NAME}ApiHost`;
 
-  if (os.platform() === 'win32') {
-    binaryFile = binaryFile + '.exe';
-  }
-
-  let binFilePath = path.join(currentApiPath, binaryFile);
-  let options = { cwd: currentApiPath };
-  let parameters = ['--port', apiPort];
-  console.log(`Launching .NET Backend: ${binFilePath}`);
-  try {
-    apiProcess = cProcess(binFilePath, parameters, options);
-
-    if (apiProcess) {
-        apiProcess.stdout.on('data', (data) => {
-            console.log(`<API>\n${data.toString()}</API>`);
-        });
-        apiProcess.stderr.on('data', (data) => {
-            console.error(`<API_ERROR>\n${data.toString()}</API_ERROR>`);
-        });
-    } else {
-      console.warn('Failed to create API process.');
+    if (os.platform() === 'win32') {
+        binaryFile = binaryFile + '.exe';
     }
-  } catch (err) {
-    console.error(err);
-  }
+
+    let binFilePath = path.join(currentApiPath, binaryFile);
+    let options = {cwd: currentApiPath};
+    let parameters = ['--port', apiPort];
+    console.log(`Launching .NET Backend: ${binFilePath}`);
+    try {
+        apiProcess = cProcess(binFilePath, parameters, options);
+
+        if (apiProcess) {
+            apiProcess.stdout.on('data', (data) => {
+                console.log(`<API>\n${data.toString()}</API>`);
+            });
+            apiProcess.stderr.on('data', (data) => {
+                console.error(`<API_ERROR>\n${data.toString()}</API_ERROR>`);
+            });
+        } else {
+            console.warn('Failed to create API process.');
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 app.on('ready', () => {
@@ -267,29 +267,29 @@ app.on('ready', () => {
 })
 
 app.on('window-all-closed', () => {
-  //if (process.platform !== 'darwin')
+    //if (process.platform !== 'darwin')
     app.quit();
 })
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow();
-  }
+    if (mainWindow === null) {
+        createWindow();
+    }
 })
 
 app.on('quit', (event, exitCode) => {
-  try {
-    console.info('Terminating API process...');
-    if (apiProcess) {
-      if (!apiProcess.kill()) {
-        console.warn('Failed to terminate API process.');
-      } else {
-        console.warn('API process terminated. Hasta la vista.');
-      }
-    } else {
-      console.warn('API process was never created.');
+    try {
+        console.info('Terminating API process...');
+        if (apiProcess) {
+            if (!apiProcess.kill()) {
+                console.warn('Failed to terminate API process.');
+            } else {
+                console.warn('API process terminated. Hasta la vista.');
+            }
+        } else {
+            console.warn('API process was never created.');
+        }
+    } finally {
+        this.console = originalConsole;
     }
-  } finally {
-    this.console = originalConsole;
-  }
 })
