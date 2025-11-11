@@ -50,7 +50,12 @@
   },
   "win": {
     "target": [
-      "nsis"
+      {
+        "target": "nsis",
+        "arch": [
+          "arm64"
+        ]
+      }
     ],
     "extraResources": [
     ]

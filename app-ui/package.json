@@ -12,7 +12,8 @@
     "buildapi": "npm run clean && dotnet publish ../app-api/ElectronAppApiHost --self-contained --output ./dist/api",
     "buildmac-x64": "npm run buildui && npm run buildapi -- --runtime osx-x64 && npm run buildelectron -- -c builder-config.json -c.mac.identity=null",
     "buildmac-arm64": "npm run buildui && npm run buildapi -- --runtime osx-arm64 && npm run buildelectron -- -c builder-config-arm64.json -c.mac.identity=null",
-    "buildwin": "npm run buildui && npm run buildapi -- --runtime win-x64 && npm run buildelectron -- -c builder-config.json",
+    "buildwin-x64": "npm run buildui && npm run buildapi -- --runtime win-x64 && npm run buildelectron -- -c builder-config.json",
+    "buildwin-arm64": "npm run buildui && npm run buildapi -- --runtime win-arm64 && npm run buildelectron -- -c builder-config-arm64.json",
     "buildlinux-x64": "npm run buildui && npm run buildapi -- --runtime linux-x64 && npm run buildelectron -- -c builder-config.json",
     "buildlinux-arm64": "npm run buildui && npm run buildapi -- --runtime linux-arm64 && npm run buildelectron -- -c builder-config-arm64.json"
   },

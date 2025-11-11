@@ -45,15 +45,22 @@ jobs:
           dotnet --info
 
       - name: Clean .NET tools cache
-        run: dotnet nuget locals all --clear  
-  
-      - name: Test API
-        run: dotnet test ./app-api/LibApiTests/LibApiTests.csproj --configuration Release  --verbosity normal        
+        run: dotnet nuget locals all --clear
 
-      - name: Build (Windows)
+      - name: Test API
+        run: dotnet test ./app-api/LibApiTests/LibApiTests.csproj --configuration Release  --verbosity normal
+
+      - name: Build (Windows x64)
         if: runner.os == 'Windows'
         working-directory: app-ui
-        run: npm run buildwin
+        run: npm run buildwin-x64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Build (Windows arm64)
+        if: runner.os == 'Windows'
+        working-directory: app-ui
+        run: npm run buildwin-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -97,10 +104,16 @@ jobs:
           cd app-ui/dist/mac-arm64 && zip -r ElectronStarterApp-mac-arm64.zip ElectronStarterApp.app
         shell: bash
 
-      - name: Zip win-unpacked directory (Windows)
+      - name: Zip win-unpacked directory (Windows x64)
         if: runner.os == 'Windows'
         run: |
           Compress-Archive -Path app-ui/dist/win-unpacked/* -DestinationPath app-ui/dist/ElectronStarterApp-win-x64.zip
+        shell: pwsh
+
+      - name: Zip win-unpacked directory (Windows arm64)
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path app-ui/dist/win-arm64-unpacked/* -DestinationPath app-ui/dist/ElectronStarterApp-win-arm64.zip
         shell: pwsh
 
       - name: Rename the x64 AppImage (Linux x64)
@@ -161,7 +174,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Upload Installer Artifact (Windows)
+      - name: Upload Installer Artifact (Windows x64)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
@@ -171,13 +184,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Upload Zip Artifact (Windows)
+      - name: Upload Zip Artifact (Windows x64)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: ElectronStarterApp-win-x64.zip
           path: |
             app-ui/dist/ElectronStarterApp-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Installer Artifact (Windows arm64)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-win-arm64.exe
+          path: |
+            app-ui/dist/ElectronStarterApp-win-arm64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Zip Artifact (Windows arm64)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElectronStarterApp-win-arm64.zip
+          path: |
+            app-ui/dist/ElectronStarterApp-win-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -235,6 +268,18 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ElectronStarterApp-win-x64.zip
+          path: artifacts/windows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-win-arm64.exe
+          path: artifacts/windows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ElectronStarterApp-win-arm64.zip
           path: artifacts/windows
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
