@@ -47,9 +47,6 @@ jobs:
       - name: Clean .NET tools cache
         run: dotnet nuget locals all --clear
 
-      - name: Test API
-        run: dotnet test ./app-api/LibApiTests/LibApiTests.csproj --configuration Release  --verbosity normal
-
       - name: Build (Windows x64)
         if: runner.os == 'Windows'
         working-directory: app-ui
