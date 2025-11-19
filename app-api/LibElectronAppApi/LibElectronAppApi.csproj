@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <LangVersion>13</LangVersion>
+        <LangVersion>14</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <Configurations>Release;Debug</Configurations>
@@ -10,8 +10,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="8.4.0" />
-      <PackageReference Include="LibSqlite3Orm" Version="1.5.1" />
+      <PackageReference Include="Autofac" Version="9.0.0" />
+      <PackageReference Include="LibSqlite3Orm" Version="1.5.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     </ItemGroup>
 
